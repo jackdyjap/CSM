@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+:root {
+  --latar: #f6f7f9;
+  --teks: #1b1f24;
+  --utama: #1d5fbf;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --latar: #111418;
+    --teks: #e7eaee;
+    --utama: #6ea8ff;
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-latar: var(--latar);
+  --color-teks: var(--teks);
+  --color-utama: var(--utama);
+}
+
+body {
+  background: var(--latar);
+  color: var(--teks);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}

@@ -14,12 +14,12 @@ begin;
 -- Alat bantu uji
 -- ---------------------------------------------------------------------
 create schema tests;
-grant usage on schema tests to anon, authenticated;
+grant usage on schema tests to anon, authenticated, service_role;
 
 create table tests.hasil (no serial primary key, nama text, lulus boolean, info text);
 create table tests.ids   (nama text primary key, id uuid not null);
 create table tests.nilai (nama text primary key, teks text);
-grant select on tests.ids, tests.nilai to anon, authenticated;
+grant select on tests.ids, tests.nilai to anon, authenticated, service_role;
 
 create function tests.id(p_nama text) returns uuid language sql stable as $$
   select id from tests.ids where nama = p_nama
@@ -131,10 +131,10 @@ insert into public.kelompok (id, tim_id, nama) values
   (tests.id('kel_a2'), tests.id('tim_a'), 'Kelompok A2'),
   (tests.id('kel_b1'), tests.id('tim_b'), 'Kelompok B1');
 
-insert into auth.users (id, email)
-  select id, nama || '@contoh.test' from tests.ids where id::text like '33333333%';
-insert into public.akun (id, nama_tampilan)
-  select id, initcap(nama) from tests.ids where id::text like '33333333%';
+-- Akun dibuat otomatis oleh sistem saat pengguna login dibuat (Fase 2).
+insert into auth.users (id, email, raw_user_meta_data)
+  select id, nama || '@contoh.test', jsonb_build_object('nama', initcap(nama))
+  from tests.ids where id::text like '33333333%';
 
 insert into public.penugasan_peran (akun_id, peran, tim_id, kelompok_id, jabatan) values
   (tests.id('admin'),   'admin',     null,              null,               null),
@@ -506,6 +506,138 @@ select tests.periksa('Otomatis: foto anggota terhapus masuk antrean hapus',
 
 select tests.harus_gagal('Data: satu anggota tidak bisa tercatat dua kali di satu pertemuan',
   $q$ insert into public.kehadiran (pertemuan_id, anggota_id, hadir) values (tests.id('rapat_a1'), tests.id('andi'), true) $q$);
+
+
+-- =====================================================================
+-- UJI 11 · FASE 2: AKUN OTOMATIS, UNDANGAN, TAUTAN ATUR ULANG
+-- =====================================================================
+select tests.keluar();
+create function tests.masuk_sebagai_layanan()
+returns void language plpgsql as $$
+begin
+  execute 'reset role';
+  perform set_config('request.jwt.claims', '{"role":"service_role"}', true);
+  execute 'set local role service_role';
+end $$;
+
+select tests.periksa('Akun: tercatat otomatis saat pengguna login dibuat (nama & login)',
+  (select nama_tampilan = 'Budi' and login = 'budi@contoh.test' from public.akun where id = tests.id('budi')));
+
+-- Pemimpin A1 (Budi)
+select tests.masuk_sebagai('budi');
+select tests.periksa('Peran saya (Budi): pemimpin Kelompok A1, bukan admin',
+  (select (r -> 'pemimpin' -> 0 ->> 'nama') = 'Kelompok A1' and not (r ->> 'admin')::boolean
+   from (select public.peran_saya() as r) x));
+select tests.harus_berhasil('Budi: membuat undangan anggota baru untuk A1',
+  $q$ select tests.simpan('undangan_baru', (select token from public.buat_undangan(tests.id('kel_a1')))) $q$);
+select tests.harus_berhasil('Budi: membuat undangan untuk profil Ani',
+  $q$ select tests.simpan('undangan_ani', (select token from public.buat_undangan(tests.id('kel_a1'), tests.id('ani')))) $q$);
+select tests.harus_gagal('Budi: tidak bisa membuat undangan untuk kelompok B1',
+  $q$ select * from public.buat_undangan(tests.id('kel_b1')) $q$);
+select tests.harus_gagal('Budi: tidak bisa mengundang Andi (sudah punya akun)',
+  $q$ select * from public.buat_undangan(tests.id('kel_a1'), tests.id('andi')) $q$);
+select tests.harus_gagal('Budi: tidak bisa mengundang Bima ke A1 (bukan anggota A1)',
+  $q$ select * from public.buat_undangan(tests.id('kel_a1'), tests.id('bima')) $q$);
+select tests.periksa('Budi: melihat status akun anggota A1 (Andi punya, Ani belum)',
+  (select punya_akun from public.status_akun_anggota(tests.id('kel_a1')) where anggota_id = tests.id('andi')) and
+  not (select punya_akun from public.status_akun_anggota(tests.id('kel_a1')) where anggota_id = tests.id('ani')));
+select tests.harus_gagal('Budi: tidak bisa melihat status akun kelompok B1',
+  $q$ select * from public.status_akun_anggota(tests.id('kel_b1')) $q$);
+select tests.harus_gagal('Budi: tidak bisa memanggil loket khusus server',
+  $q$ select public.layanan_pakai_undangan('x', tests.id('budi'), 'x') $q$);
+select tests.harus_berhasil('Budi: membuat tautan atur ulang untuk Andi (anggota A1)',
+  $q$ select tests.simpan('reset_andi', (select token from public.buat_tautan_atur_ulang(tests.id('u_andi')))) $q$);
+select tests.harus_gagal('Budi: tidak bisa membuat tautan atur ulang untuk Sari (sesama staf)',
+  $q$ select * from public.buat_tautan_atur_ulang(tests.id('sari')) $q$);
+select tests.harus_gagal('Budi: tidak bisa membuat tautan atur ulang untuk Bima (kelompok lain)',
+  $q$ select * from public.buat_tautan_atur_ulang(tests.id('u_bima')) $q$);
+select tests.harus_gagal('Budi: tidak bisa mengintip tabel tautan atur ulang',
+  $q$ select * from internal.tautan_atur_ulang $q$);
+
+-- Ketua Tim A (juga pemimpin A2)
+select tests.masuk_sebagai('ketua_a');
+select tests.periksa('Peran saya (Ketua A): ketua 1 tim dan pemimpin 1 kelompok',
+  (select jsonb_array_length(r -> 'ketua_tim') = 1 and jsonb_array_length(r -> 'pemimpin') = 1
+   from (select public.peran_saya() as r) x));
+select tests.harus_gagal('Ketua A: tidak bisa membuat undangan untuk A1 (hanya membaca)',
+  $q$ select * from public.buat_undangan(tests.id('kel_a1')) $q$);
+select tests.harus_berhasil('Ketua A (peran ganda): bisa membuat undangan untuk A2',
+  $q$ select tests.simpan('undangan_a2', (select token from public.buat_undangan(tests.id('kel_a2')))) $q$);
+
+-- Anggota (Andi)
+select tests.masuk_sebagai('u_andi');
+select tests.periksa('Peran saya (Andi): anggota Kelompok A1, tanpa peran staf',
+  (select (r -> 'anggota' ->> 'kelompok_nama') = 'Kelompok A1' and jsonb_array_length(r -> 'pemimpin') = 0
+   from (select public.peran_saya() as r) x));
+select tests.harus_gagal('Andi: tidak bisa membuat undangan',
+  $q$ select * from public.buat_undangan(tests.id('kel_a1')) $q$);
+select tests.harus_gagal('Andi: tidak bisa membuat tautan atur ulang',
+  $q$ select * from public.buat_tautan_atur_ulang(tests.id('u_andi')) $q$);
+
+-- Admin
+select tests.masuk_sebagai('admin');
+select tests.harus_berhasil('Admin: bisa membuat tautan atur ulang untuk pemimpin (Budi)',
+  $q$ select * from public.buat_tautan_atur_ulang(tests.id('budi')) $q$);
+
+-- Pengguna login baru dibuat oleh sistem (satu lewat nomor HP, satu lewat email)
+select tests.keluar();
+insert into tests.ids values
+  ('u_ani',  '33333333-0000-0000-0000-00000000000b'),
+  ('u_baru', '33333333-0000-0000-0000-00000000000c');
+insert into auth.users (id, email, raw_user_meta_data) values
+  (tests.id('u_ani'),  '6281234567890@hp.contoh.test', '{"nama":"Ani","login":"081234567890"}'),
+  (tests.id('u_baru'), 'baru@contoh.test',             '{"nama":"Anggota Lewat Undangan"}');
+select tests.periksa('Akun: pengguna nomor HP tercatat dengan login nomor HP-nya',
+  (select login = '081234567890' and nama_tampilan = 'Ani' from public.akun where id = tests.id('u_ani')));
+
+-- Server aplikasi (service_role)
+select tests.masuk_sebagai_layanan();
+select tests.periksa('Server: undangan Ani berlaku dan menyebut nama & kelompoknya',
+  (select berlaku and nama_anggota = 'Ani' and kelompok_nama = 'Kelompok A1'
+   from public.layanan_cek_undangan((select teks from tests.nilai where nama = 'undangan_ani'))));
+select tests.harus_berhasil('Server: memakai undangan Ani untuk akun barunya',
+  $q$ select public.layanan_pakai_undangan((select teks from tests.nilai where nama = 'undangan_ani'), tests.id('u_ani'), 'Ani') $q$);
+select tests.periksa('Server: akun baru Ani tersambung ke profil Ani',
+  (select anggota_id = tests.id('ani') from public.akun where id = tests.id('u_ani')));
+select tests.harus_gagal('Server: undangan yang sudah dipakai tidak bisa dipakai lagi',
+  $q$ select public.layanan_pakai_undangan((select teks from tests.nilai where nama = 'undangan_ani'), tests.id('u_baru'), 'X') $q$);
+select tests.harus_berhasil('Server: memakai undangan anggota baru',
+  $q$ select public.layanan_pakai_undangan((select teks from tests.nilai where nama = 'undangan_baru'), tests.id('u_baru'), 'Anggota Lewat Undangan') $q$);
+select tests.periksa('Server: profil anggota baru dibuat di A1 dan tersambung ke akunnya',
+  (select a.kelompok_id = tests.id('kel_a1') and a.nama_lengkap = 'Anggota Lewat Undangan'
+   from public.akun ak join public.anggota a on a.id = ak.anggota_id where ak.id = tests.id('u_baru')));
+select tests.harus_gagal('Server: token undangan asal-asalan ditolak',
+  $q$ select public.layanan_pakai_undangan('tidak-ada', tests.id('tanpa_peran'), 'X') $q$);
+select tests.periksa('Server: tautan atur ulang Andi berlaku',
+  (select berlaku from public.layanan_cek_tautan_atur_ulang((select teks from tests.nilai where nama = 'reset_andi'))));
+select tests.harus_berhasil('Server: memakai tautan atur ulang Andi',
+  $q$ select tests.simpan('reset_andi_akun',
+        public.layanan_pakai_tautan_atur_ulang((select teks from tests.nilai where nama = 'reset_andi'))::text) $q$);
+select tests.periksa('Server: tautan atur ulang menunjuk ke akun Andi',
+  (select teks from tests.nilai where nama = 'reset_andi_akun') = tests.id('u_andi')::text);
+select tests.harus_gagal('Server: tautan atur ulang tidak bisa dipakai dua kali',
+  $q$ select public.layanan_pakai_tautan_atur_ulang((select teks from tests.nilai where nama = 'reset_andi')) $q$);
+
+-- Undangan kedaluwarsa
+select tests.keluar();
+update public.undangan set kedaluwarsa_pada = now() - interval '1 day'
+ where token = (select teks from tests.nilai where nama = 'undangan_a2');
+select tests.masuk_sebagai_layanan();
+select tests.periksa('Server: undangan kedaluwarsa dinyatakan tidak berlaku',
+  not (select berlaku from public.layanan_cek_undangan((select teks from tests.nilai where nama = 'undangan_a2'))));
+select tests.harus_gagal('Server: undangan kedaluwarsa tidak bisa dipakai',
+  $q$ select public.layanan_pakai_undangan((select teks from tests.nilai where nama = 'undangan_a2'), tests.id('tanpa_peran'), 'X') $q$);
+
+-- Ani sekarang bisa login sebagai anggota
+select tests.masuk_sebagai('u_ani');
+select tests.periksa('Ani (akun baru): hanya melihat profilnya sendiri',
+  (select count(*) from public.anggota) = 1 and (select id from public.anggota) = tests.id('ani'));
+
+select tests.keluar();
+select tests.periksa('Log: pemakaian undangan dan tautan atur ulang tercatat',
+  (select count(*) from public.log_aktivitas where tindakan = 'pakai_undangan') = 2 and
+  (select count(*) from public.log_aktivitas where tindakan = 'buat_tautan_atur_ulang') = 2 and
+  (select count(*) from public.log_aktivitas where tindakan = 'pakai_tautan_atur_ulang') = 1);
 
 
 -- =====================================================================

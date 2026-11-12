@@ -25,3 +25,13 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
 - **QR pertemuan** berganti setiap 45 detik. Kode yang sedang tampil dan satu kode sebelumnya diterima, untuk memberi jeda bagi koneksi lambat. QR hanya berlaku untuk kelompok sendiri, pada hari pertemuan, selama pertemuan dibuka, dan sekali per anggota.
 - **Penandaan tidak aktif** tidak berlaku bila kelompok sama sekali tidak mengadakan pertemuan dalam 3 bulan terakhir, dan tidak berlaku untuk anggota yang bergabung kurang dari 3 bulan.
 - **Foto** disimpan di bucket privat `foto-anggota/<id anggota>/…` (maksimal 2 MB, jpeg/png/webp). Foto yang harus dihapus dicatat di `internal.antrean_hapus_foto`. Penghapusnya (Edge Function) belum dibuat.
+
+## Diputuskan saat Fase 2 (12 November 2026)
+
+6. **Login dengan email ATAU nomor HP, tanpa kode SMS (Cara B).**
+   - Nomor HP diubah di belakang layar menjadi alamat pengganti `62xxxx@hp.invalid` (akhiran `.invalid` tidak pernah menerima email). Pengguna cukup mengetik nomor HP-nya.
+   - Akun hanya dibuat lewat **tautan undangan** dari pemimpin (berlaku 7 hari, sekali pakai) atau oleh **Admin**.
+   - **Lupa kata sandi:** pemimpin/wakil membuat **tautan atur ulang** (berlaku 24 jam, sekali pakai) untuk anggotanya, lalu mengirimkannya lewat WhatsApp. Admin bisa membuatnya untuk akun siapa saja. Pemimpin tidak bisa membuatnya untuk sesama staf, supaya tidak ada pengambilalihan akun pemimpin.
+   - Verifikasi lewat SMS/WhatsApp (Cara A) bisa ditambahkan nanti.
+   - Pemulihan mandiri lewat email belum diaktifkan, karena pengiriman email bawaan Supabase terbatas. Bila diperlukan, pasang layanan email sendiri (SMTP) terlebih dahulu.
+7. **Kata sandi minimal 8 karakter.**

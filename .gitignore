@@ -1,4 +1,18 @@
-node_modules/
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+next-env.d.ts
+*.tsbuildinfo
+
+# env files (berisi kunci rahasia, JANGAN disimpan di GitHub)
 .env*
 !.env.example
+
+# misc
 .DS_Store
+*.pem
+npm-debug.log*
+.vercel
