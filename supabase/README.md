@@ -16,7 +16,7 @@ Isi folder ini:
 ## Menjalankan di proyek Supabase
 
 1. Buka proyek di supabase.com, lalu buka **SQL Editor**.
-2. Salin-tempel dan jalankan **satu per satu, berurutan**: lima file di `migrations/`, lalu `data/wilayah_01.sql` sampai `wilayah_04.sql`.
+2. Salin seluruh isi `fase1_sekali_jalan.sql` (gabungan kelima file `migrations/`), tempel, lalu klik Run. Data wilayah (`data/wilayah_01..04.sql`) dijalankan nanti di Fase 3.
 3. Jangan jalankan file di `tests/lokal/`. Isinya hanya tiruan Supabase untuk pengujian.
 
 ## Menjalankan uji di komputer (PostgreSQL 16)
