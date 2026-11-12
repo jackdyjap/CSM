@@ -12,7 +12,7 @@ Teknologi: **Next.js** (tampilan) + **Supabase** (login, database PostgreSQL, at
 
 | Fase | Isi | Status |
 |---|---|---|
-| 1 | Tabel, peran, dan aturan akses (RLS) | ✅ Selesai, 112 uji lulus (belum dijalankan di Supabase) |
+| 1 | Tabel, peran, dan aturan akses (RLS) | ✅ Selesai: 112 uji lulus, sudah berjalan di Supabase (data wilayah menyusul di Fase 3) |
 | 2 | Login, pengaturan peran, undangan | ⏳ |
 | 3 | Profil anggota (foto, wilayah), profil yang dibuat pemimpin | ⏳ |
 | 4 | Mode pertemuan: absensi manual, alasan tidak hadir, persembahan | ⏳ |
