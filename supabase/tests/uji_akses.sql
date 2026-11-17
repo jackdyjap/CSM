@@ -177,6 +177,8 @@ insert into storage.objects (bucket_id, name) values
   ('foto-anggota', tests.id('andi') || '/foto.jpg'),
   ('foto-anggota', tests.id('bima') || '/foto.jpg');
 
+select tests.simpan('catatan_bima', (select id::text from public.catatan_khusus where anggota_id = tests.id('bima') limit 1));
+
 -- Kode kartu QR Bima (untuk uji: pemimpin A1 men-scan kartu anggota B1).
 select tests.simpan('kartu_bima', (select kode_qr from public.anggota where id = tests.id('bima')));
 
@@ -808,10 +810,10 @@ select tests.harus_berhasil('Admin: menampilkan QR pertemuan B1',
   $q$ select * from public.token_qr_pertemuan(tests.id('rapat_b1')) $q$);
 select tests.harus_gagal('Admin: tetap TIDAK bisa menulis catatan khusus',
   $q$ select public.tulis_catatan(tests.id('bima'), 'umum', 'x') $q$);
-select tests.harus_gagal('Admin: tetap TIDAK bisa mengubah catatan khusus',
-  $q$ select public.ubah_catatan((select id from public.catatan_khusus where anggota_id = tests.id('bima') limit 1), 'diubah') $q$);
-select tests.harus_gagal('Admin: tetap TIDAK bisa menghapus catatan khusus',
-  $q$ select public.hapus_catatan((select id from public.catatan_khusus where anggota_id = tests.id('bima') limit 1)) $q$);
+select tests.harus_berhasil('Admin: bisa mengoreksi (mengubah) catatan khusus (keputusan 15)',
+  $q$ select public.ubah_catatan((select teks::uuid from tests.nilai where nama = 'catatan_bima'), 'diubah') $q$);
+select tests.harus_berhasil('Admin: bisa menghapus catatan khusus yang salah (keputusan 15)',
+  $q$ select public.hapus_catatan((select teks::uuid from tests.nilai where nama = 'catatan_bima')) $q$);
 select tests.periksa('Admin: menghapus pertemuan B1 yang dibuatnya',
   tests.baris_terkena($q$ delete from public.pertemuan where id = '55555555-0000-0000-0000-0000000000e1' $q$) = 1);
 
@@ -831,6 +833,83 @@ select tests.harus_gagal('Ketua Tim B: tetap tidak bisa menulis catatan',
 select tests.masuk_sebagai('u_bima');
 select tests.harus_gagal('Bima (anggota): tidak bisa menulis catatan tentang dirinya',
   $q$ select public.tulis_catatan(tests.id('bima'), 'umum', 'x') $q$);
+select tests.keluar();
+
+
+-- =====================================================================
+-- UJI · KOREKSI DATA (keputusan 13–15)
+-- =====================================================================
+-- Nama akun
+select tests.masuk_sebagai('admin');
+select tests.periksa('Admin: mengubah nama akun Budi',
+  tests.baris_terkena($q$ update public.akun set nama_tampilan = 'Budi Santoso' where id = tests.id('budi') $q$) = 1);
+select tests.masuk_sebagai('budi');
+select tests.periksa('Budi: tidak bisa mengubah nama akun Sari',
+  tests.baris_terkena($q$ update public.akun set nama_tampilan = 'X' where id = tests.id('sari') $q$) = 0);
+select tests.masuk_sebagai('u_andi');
+select tests.harus_gagal('Andi: tidak bisa memindahkan akunnya ke profil anggota lain',
+  $q$ update public.akun set anggota_id = tests.id('ani') where id = tests.id('u_andi') $q$);
+
+-- Nama tim/kelompok: khusus Admin
+select tests.masuk_sebagai('budi');
+select tests.periksa('Budi: tidak bisa mengganti nama kelompoknya',
+  tests.baris_terkena($q$ update public.kelompok set nama = 'X' where id = tests.id('kel_a1') $q$) = 0);
+select tests.masuk_sebagai('admin');
+select tests.periksa('Admin: mengganti nama kelompok',
+  tests.baris_terkena($q$ update public.kelompok set nama = 'Kelompok A1 Baru' where id = tests.id('kel_a1') $q$) = 1);
+select tests.periksa('Admin: mengganti nama tim',
+  tests.baris_terkena($q$ update public.tim set nama = 'Tim A Baru' where id = tests.id('tim_a') $q$) = 1);
+select tests.harus_gagal('Admin: tim yang masih punya kelompok tidak bisa dihapus',
+  $q$ delete from public.tim where id = tests.id('tim_b') $q$);
+
+-- Anggota: pindah kelompok, nonaktifkan, tanggal pertemuan
+select tests.masuk_sebagai('budi');
+select tests.harus_gagal('Budi: tidak bisa memindahkan anggota ke kelompok yang tidak dipimpinnya',
+  $q$ update public.anggota set kelompok_id = tests.id('kel_b1') where id = tests.id('ani') $q$);
+select tests.periksa('Budi: menonaktifkan anggota secara manual',
+  tests.baris_terkena($q$ update public.anggota set aktif = false where id = '44444444-0000-0000-0000-0000000000c1' $q$) = 1);
+select tests.periksa('Budi: tanggal nonaktif terisi otomatis',
+  (select dinonaktifkan_pada is not null from public.anggota where id = '44444444-0000-0000-0000-0000000000c1'));
+select tests.periksa('Budi: mengubah tanggal pertemuan yang salah',
+  tests.baris_terkena($q$ update public.pertemuan set tanggal = bantu.hari_ini_wib() - 10
+    where id = '55555555-0000-0000-0000-0000000000c1' $q$) = 1);
+select tests.masuk_sebagai('admin');
+select tests.periksa('Admin: memindahkan anggota A1 ke kelompok B1',
+  tests.baris_terkena($q$ update public.anggota set kelompok_id = tests.id('kel_b1')
+    where id = '44444444-0000-0000-0000-0000000000c1' $q$) = 1);
+
+-- Hapus kelompok beserta isinya
+select tests.masuk_sebagai('ketua_a');
+select tests.harus_gagal('Ketua Tim A (juga pemimpin A2): tidak bisa menghapus kelompok total',
+  $q$ select public.hapus_kelompok_total(tests.id('kel_a2'), 'Kelompok A2') $q$);
+select tests.masuk_sebagai('admin');
+select tests.harus_gagal('Admin: hapus kelompok ditolak bila nama yang diketik salah',
+  $q$ select public.hapus_kelompok_total(tests.id('kel_a2'), 'Kelompok A') $q$);
+select tests.periksa('Admin: kelompok A2 masih utuh setelah konfirmasi salah',
+  (select count(*) from public.kelompok where id = tests.id('kel_a2')) = 1);
+select tests.harus_berhasil('Admin: menghapus kelompok A2 beserta isinya (nama diketik benar)',
+  $q$ select tests.simpan('hapus_a2', public.hapus_kelompok_total(tests.id('kel_a2'), '  Kelompok A2 ')::text) $q$);
+select tests.periksa('Hapus total: kelompok, anggota, dan peran pemimpinnya hilang',
+  (select count(*) from public.kelompok where id = tests.id('kel_a2')) = 0 and
+  (select count(*) from public.anggota where id = tests.id('asep')) = 0 and
+  (select count(*) from public.penugasan_peran where kelompok_id = tests.id('kel_a2')) = 0);
+select tests.periksa('Hapus total: hasil menyebut jumlah anggota yang terhapus',
+  ((select teks from tests.nilai where nama = 'hapus_a2')::jsonb ->> 'anggota')::int >= 1);
+select tests.periksa('Hapus total: kelompok lain tidak tersentuh',
+  (select count(*) from public.anggota where kelompok_id = tests.id('kel_a1')) > 0);
+select tests.keluar();
+select tests.periksa('Hapus total: tercatat di log',
+  exists (select 1 from public.log_aktivitas where tindakan = 'hapus_kelompok_total'));
+
+-- Koreksi catatan (catatan Bima yang lama sudah dihapus Admin; pakai catatan Dewi)
+select tests.keluar();
+select tests.simpan('catatan_bima', (select id::text from public.catatan_khusus where anggota_id = tests.id('bima') limit 1));
+select tests.masuk_sebagai('ketua_b');
+select tests.harus_gagal('Ketua Tim B: tidak bisa mengubah catatan',
+  $q$ select public.ubah_catatan((select teks::uuid from tests.nilai where nama = 'catatan_bima'), 'x') $q$);
+select tests.masuk_sebagai('admin');
+select tests.harus_gagal('Admin: isi catatan tidak boleh dikosongkan',
+  $q$ select public.ubah_catatan((select teks::uuid from tests.nilai where nama = 'catatan_bima'), '   ') $q$);
 select tests.keluar();
 
 

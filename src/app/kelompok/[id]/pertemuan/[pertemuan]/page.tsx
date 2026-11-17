@@ -2,11 +2,12 @@ import { redirect } from "next/navigation";
 import { DaftarHadir, type BarisHadir } from "@/components/daftar-hadir";
 import { FormAksi } from "@/components/form-aksi";
 import { FormAlasan } from "@/components/form-alasan";
-import { Isian, IsianPanjang, Judul, Kotak, TautanTombol } from "@/components/ui";
+import { Isian, IsianPanjang, Judul, Kotak, Lipatan, TautanTombol } from "@/components/ui";
 import { waktuWib } from "@/lib/format";
 import { rupiah, tanggalPanjang, type Alasan } from "@/lib/pertemuan";
+import { hariIniWib } from "@/lib/profil";
 import { kelompokKelolaan, wajibMasuk } from "@/lib/sesi";
-import { bukaKembali, hapusPertemuan, simpanRingkasan, tutupAbsensi } from "../aksi";
+import { bukaKembali, hapusPertemuan, simpanRingkasan, tutupAbsensi, ubahTanggal } from "../aksi";
 
 type Kehadiran = {
   anggota_id: string;
@@ -96,7 +97,7 @@ export default async function HalamanPertemuan({ params }: PageProps<"/kelompok/
             inputMode="numeric"
             autoComplete="off"
             placeholder="Contoh: 150.000"
-            defaultValue={pertemuan.persembahan === null ? "" : String(Math.round(Number(pertemuan.persembahan)))}
+            defaultValue={pertemuan.persembahan === null ? "" : rupiah(pertemuan.persembahan).replace("Rp ", "")}
             keterangan={pertemuan.persembahan === null ? "Belum diisi." : `Tersimpan: ${rupiah(pertemuan.persembahan)}`}
           />
           <IsianPanjang
@@ -108,9 +109,12 @@ export default async function HalamanPertemuan({ params }: PageProps<"/kelompok/
         </FormAksi>
       </Kotak>
 
-      <Kotak judul="Hapus pertemuan">
-        <p className="mb-3 text-sm opacity-70">
-          Hanya bila pertemuan ini salah dicatat. Semua data kehadirannya ikut terhapus.
+      <Lipatan judul="Ubah tanggal / hapus pertemuan">
+        <FormAksi aksi={ubahTanggal.bind(null, id, pertemuanId)} tombol="Simpan tanggal" jenisTombol="biasa" tanpaReset>
+          <Isian label="Tanggal pertemuan" name="tanggal" type="date" max={hariIniWib()} defaultValue={pertemuan.tanggal} required />
+        </FormAksi>
+        <p className="text-sm opacity-70">
+          Hapus hanya bila pertemuan ini salah dicatat. Semua data kehadirannya ikut terhapus.
         </p>
         <FormAksi
           aksi={hapusPertemuan.bind(null, id, pertemuanId)}
@@ -118,7 +122,7 @@ export default async function HalamanPertemuan({ params }: PageProps<"/kelompok/
           jenisTombol="bahaya"
           konfirmasi={`Hapus pertemuan ${judul} beserta seluruh data kehadirannya?`}
         />
-      </Kotak>
+      </Lipatan>
     </main>
   );
 }

@@ -116,3 +116,18 @@ export function Pesan({ jenis, children }: { jenis: "galat" | "sukses" | "info";
     </p>
   );
 }
+
+/** Lipatan berisi alat koreksi data, tertutup secara bawaan supaya layar tetap rapi. */
+export function Lipatan({ judul, children }: { judul: string; children: ReactNode }) {
+  return (
+    <details className="group mt-3 rounded-lg border border-black/10 dark:border-white/10">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-3 text-sm font-medium">
+        {judul}
+        <span aria-hidden className="opacity-60 transition-transform group-open:rotate-180">
+          ▾
+        </span>
+      </summary>
+      <div className="space-y-4 border-t border-black/10 p-3 dark:border-white/10">{children}</div>
+    </details>
+  );
+}

@@ -177,6 +177,31 @@ export async function simpanAlasan(
   return { sukses: "Tersimpan." };
 }
 
+// ---------------------------------------------------------------- Ubah tanggal (keputusan 13)
+
+export async function ubahTanggal(
+  kelompokId: string,
+  pertemuanId: string,
+  _: HasilAksi,
+  fd: FormData,
+): Promise<HasilAksi> {
+  const tanggal = teks(fd, "tanggal");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(tanggal)) return { galat: "Tanggal tidak sah." };
+  if (tanggal > hariIniWib()) return { galat: "Tanggal pertemuan tidak boleh di masa depan." };
+
+  const { supabase, pemimpin, pertemuan } = await ambilPertemuan(kelompokId, pertemuanId);
+  if (!pemimpin || !pertemuan) return { galat: "Anda tidak berhak mengubah pertemuan ini." };
+
+  const { error } = await supabase.from("pertemuan").update({ tanggal }).eq("id", pertemuanId);
+  if (error) {
+    return {
+      galat: error.code === "23505" ? "Sudah ada pertemuan lain pada tanggal itu." : pesanGalat(error),
+    };
+  }
+  segarkan(kelompokId, pertemuanId);
+  return { sukses: "Tanggal pertemuan diubah." };
+}
+
 // ---------------------------------------------------------------- Hapus
 
 export async function hapusPertemuan(kelompokId: string, pertemuanId: string): Promise<HasilAksi> {
