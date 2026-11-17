@@ -73,3 +73,10 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
 14. **Hapus kelompok beserta isinya** (anggota, pertemuan, absensi, persembahan, proyek, catatan) hanya oleh Admin, setelah **mengetik nama kelompok persis**. Akun login anggota tidak ikut terhapus. Tercatat di log (`hapus_kelompok_total`).
 15. **Catatan khusus yang salah tulis** boleh diubah/dihapus oleh pemimpin kelompoknya **dan Admin**. Menulis catatan baru tetap hanya pemimpin/wakil.
 16. **Bukti transfer persembahan**: opsional (boleh menyusul); foto atau PDF, maksimal 5 berkas per pertemuan dan 5 MB per berkas; dilihat pemimpin/wakil, Ketua Tim terkait, dan Admin; diunggah/dihapus oleh pemimpin/wakil dan Admin; anggota tidak melihat. Disimpan di folder privat `bukti-persembahan/<id pertemuan>/`, dibuka lewat tautan sementara 1 jam. Foto dikecilkan di HP (sisi terpanjang 1600 piksel) dan berkas dikirim **langsung dari peramban ke Supabase Storage** (batas kiriman lewat server Vercel sekitar 4,5 MB); server hanya mencatat daftarnya. Daftar pertemuan menandai "Bukti belum ada" bila ada persembahan tanpa bukti.
+
+## Diputuskan saat Fase 5 (17 November 2026)
+
+17. **Tindak lanjut** (fungsi `tindak_lanjut`, migrasi `…1100`):
+    - **Absen**: anggota aktif yang tidak hadir di **3 pertemuan berturut-turut**, dihitung dari pertemuan yang absensinya sudah ditutup. Batasnya bisa diubah (parameter `p_batas_absen`).
+    - **Proyek**: masuk daftar **setelah tenggat lewat** bila belum "Selesai"; status "Tidak dikerjakan" langsung masuk daftar. Anggota yang bergabung setelah proyek diberikan hanya dihitung bila sudah diberi status.
+    - Dilihat oleh pemimpin/wakil, Ketua Tim terkait, dan Admin (dipakai juga untuk dashboard Fase 6).
