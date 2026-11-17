@@ -80,3 +80,5 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - **Absen**: anggota aktif yang tidak hadir di **3 pertemuan berturut-turut**, dihitung dari pertemuan yang absensinya sudah ditutup. Batasnya bisa diubah (parameter `p_batas_absen`).
     - **Proyek**: masuk daftar **setelah tenggat lewat** bila belum "Selesai"; status "Tidak dikerjakan" langsung masuk daftar. Anggota yang bergabung setelah proyek diberikan hanya dihitung bila sudah diberi status.
     - Dilihat oleh pemimpin/wakil, Ketua Tim terkait, dan Admin (dipakai juga untuk dashboard Fase 6).
+18. **Admin boleh menulis catatan khusus** di semua kelompok, tidak hanya membaca dan mengoreksi (mengubah keputusan 12 dan 15). Ketua Tim tetap hanya membaca; tidak seorang pun bisa menulis atau membaca catatan tentang dirinya sendiri. (Migrasi `…1200`.)
+19. **Profil anggota menampilkan status semua proyek ketaatan** anggota itu, dan pengelola (pemimpin/wakil/Admin) bisa langsung mengubahnya di sana. Ketua Tim membaca saja. Tampilan per proyek tetap ada.
