@@ -20,7 +20,7 @@ Teknologi: **Next.js** (tampilan) + **Supabase** (login, database PostgreSQL, at
 | 6 | Dashboard Ketua Tim | 🔧 Kode selesai, 291 uji database lulus; belum dicoba di Supabase |
 | 7 | QR kartu anggota | 🔧 Kode selesai, 304 uji database lulus; belum dicoba di Supabase |
 | 8 | QR pertemuan yang berganti otomatis, akun mandiri anggota | 🔧 Kode selesai, 315 uji database lulus; belum dicoba di Supabase |
-| 9 | Laporan demografi dan ekspor | ⏳ |
+| 9 | Laporan demografi dan ekspor | 🔧 Kode selesai, 328 uji database lulus; belum dicoba di Supabase |
 | 10 | Uji akses dengan akun tiap peran, lalu pilot | ⏳ |
 
 ## Struktur folder

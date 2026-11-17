@@ -1328,6 +1328,58 @@ select tests.keluar();
 
 
 -- =====================================================================
+-- UJI FASE 9 · LAPORAN DEMOGRAFI (keputusan 24)
+-- Angka laporan harus sama dengan jumlah anggota sebenarnya.
+-- =====================================================================
+select tests.keluar();
+select tests.simpan('n_aktif_semua', (select count(*)::text from public.anggota where aktif));
+select tests.simpan('n_semua',       (select count(*)::text from public.anggota));
+select tests.simpan('n_aktif_tim_a', (select count(*)::text from public.anggota a join public.kelompok k on k.id = a.kelompok_id
+                                       where a.aktif and k.tim_id = tests.id('tim_a')));
+select tests.simpan('n_aktif_t1',    (select count(*)::text from public.anggota where aktif and kelompok_id = tests.id('kel_t1')));
+
+select tests.masuk_sebagai('admin');
+select tests.periksa('Laporan semua tim: jumlah = anggota aktif sebenarnya (tiap dimensi)',
+  (select bool_and(n = (select teks::bigint from tests.nilai where nama = 'n_aktif_semua'))
+     from (select d, (select sum(jumlah) from public.laporan_demografi(d)) as n
+             from unnest(array['gender','rentang_usia','pendidikan','status_nikah','pekerjaan','provinsi','kota','kecamatan','kelurahan']) as d) x));
+select tests.periksa('Laporan termasuk anggota tidak aktif: jumlah = semua anggota',
+  (select sum(jumlah) from public.laporan_demografi('gender', 'semua', null, false))
+   = (select teks::bigint from tests.nilai where nama = 'n_semua'));
+select tests.periksa('Laporan satu tim: jumlah = anggota aktif Tim A, dan hanya kelompok Tim A',
+  (select sum(jumlah) from public.laporan_demografi('pekerjaan', 'tim', tests.id('tim_a')))
+   = (select teks::bigint from tests.nilai where nama = 'n_aktif_tim_a') and
+  not exists (select 1 from public.laporan_demografi('pekerjaan', 'tim', tests.id('tim_a')) where tim_nama <> 'Tim A Baru'));
+select tests.periksa('Laporan satu kelompok: hanya kelompok itu, jumlah benar',
+  (select count(distinct kelompok_id) = 1 and sum(jumlah) = (select teks::bigint from tests.nilai where nama = 'n_aktif_t1')
+     from public.laporan_demografi('status_nikah', 'kelompok', tests.id('kel_t1'))));
+select tests.periksa('Persen per kelompok berjumlah sekitar 100 (yang sudah mengisi)',
+  (select bool_and(abs(t - 100) <= 0.5) from (
+     select kelompok_id, sum(persen) as t from public.laporan_demografi('gender')
+      where kunci is not null group by kelompok_id) x));
+select tests.periksa('Baris "Belum diisi" tanpa persen',
+  (select bool_and(persen is null and label = 'Belum diisi') from public.laporan_demografi('pendidikan') where kunci is null));
+select tests.harus_gagal('Cakupan tim tanpa id ditolak',
+  $q$ select * from public.laporan_demografi('gender', 'tim', null) $q$);
+select tests.harus_berhasil('Admin: mencatat ekspor PDF',
+  $q$ select public.catat_ekspor_laporan('pdf', '{"dimensi":"gender"}') $q$);
+select tests.harus_gagal('Format ekspor tidak dikenal ditolak',
+  $q$ select public.catat_ekspor_laporan('docx') $q$);
+
+select tests.masuk_sebagai('ketua_a');
+select tests.harus_gagal('Ketua Tim A: tidak bisa membuka laporan demografi timnya',
+  $q$ select * from public.laporan_demografi('gender', 'tim', tests.id('tim_a')) $q$);
+select tests.harus_gagal('Ketua Tim A: tidak bisa mencatat ekspor laporan',
+  $q$ select public.catat_ekspor_laporan('xlsx') $q$);
+select tests.masuk_sebagai('budi');
+select tests.harus_gagal('Budi (pemimpin): tidak bisa membuka laporan kelompoknya',
+  $q$ select * from public.laporan_demografi('gender', 'kelompok', tests.id('kel_a1')) $q$);
+select tests.keluar();
+select tests.periksa('Ekspor PDF tercatat di log',
+  exists (select 1 from public.log_aktivitas where tindakan = 'ekspor_laporan' and detail ->> 'format' = 'pdf'));
+
+
+-- =====================================================================
 -- RINGKASAN
 -- =====================================================================
 select no, case when lulus then 'LULUS' else 'GAGAL' end as hasil, nama, info
