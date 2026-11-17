@@ -16,6 +16,7 @@ export function FormAksi({
   children,
   className = "",
   tanpaReset = false,
+  konfirmasi,
 }: {
   aksi: AksiForm;
   tombol: string;
@@ -27,21 +28,25 @@ export function FormAksi({
    * Bawaan React mengosongkan formulir setelah aksi selesai.
    */
   tanpaReset?: boolean;
+  /** Pertanyaan yang harus dijawab "OK" sebelum aksi dijalankan. */
+  konfirmasi?: string;
 }) {
   const [hasil, jalankan, sedangProses] = useActionState<HasilAksi, FormData>(aksi, {});
 
   return (
     <form
       action={tanpaReset ? undefined : jalankan}
-      onSubmit={
-        tanpaReset
-          ? (e) => {
-              e.preventDefault();
-              const data = new FormData(e.currentTarget);
-              startTransition(() => jalankan(data));
-            }
-          : undefined
-      }
+      onSubmit={(e) => {
+        if (konfirmasi && !confirm(konfirmasi)) {
+          e.preventDefault();
+          return;
+        }
+        if (tanpaReset) {
+          e.preventDefault();
+          const data = new FormData(e.currentTarget);
+          startTransition(() => jalankan(data));
+        }
+      }}
       className={className}
     >
       {children}

@@ -298,8 +298,8 @@ select tests.harus_gagal('Budi: tidak bisa menjalankan tugas otomatis',
 select tests.masuk_sebagai('sari');
 select tests.periksa('Sari (wakil): melihat anggota A1',
   (select count(*) from public.anggota where kelompok_id = tests.id('kel_a1')) > 0);
-select tests.harus_berhasil('Sari (wakil): bisa membuat pertemuan A1 besok',
-  $q$ insert into public.pertemuan (kelompok_id, tanggal) values (tests.id('kel_a1'), bantu.hari_ini_wib() + 1) $q$);
+select tests.harus_berhasil('Sari (wakil): bisa membuat pertemuan A1 kemarin',
+  $q$ insert into public.pertemuan (kelompok_id, tanggal) values (tests.id('kel_a1'), bantu.hari_ini_wib() - 1) $q$);
 select tests.harus_berhasil('Sari (wakil): bisa mengisi persembahan',
   $q$ update public.pertemuan set persembahan = 175000 where id = tests.id('rapat_a1') $q$);
 select tests.harus_berhasil('Sari (wakil): bisa menulis catatan untuk Ani',
@@ -691,6 +691,85 @@ select tests.periksa('Sari: persetujuan Oma Rut tercatat oleh pemimpin',
 select tests.harus_berhasil('Sari: mengunggah foto Oma Rut (kamera pemimpin)',
   $q$ insert into storage.objects (bucket_id, name)
       values ('foto-anggota', '44444444-0000-0000-0000-0000000000c1/1.jpg') $q$);
+select tests.keluar();
+
+
+-- =====================================================================
+-- UJI FASE 4 · MODE PERTEMUAN (tanggal, tutup absensi)
+-- =====================================================================
+
+-- Anggota A1 yang sudah lama tidak aktif (tidak boleh ikut ditandai tidak hadir).
+select tests.keluar();
+insert into public.anggota (id, kelompok_id, nama_lengkap, bergabung_pada, aktif, dinonaktifkan_pada)
+values ('44444444-0000-0000-0000-0000000000d1', tests.id('kel_a1'), 'Pasif', bantu.hari_ini_wib() - 400,
+        false, now() - interval '2 months');
+
+select tests.masuk_sebagai('budi');
+select tests.harus_gagal('Budi: pertemuan bertanggal besok ditolak',
+  $q$ insert into public.pertemuan (kelompok_id, tanggal) values (tests.id('kel_a1'), bantu.hari_ini_wib() + 1) $q$);
+select tests.harus_berhasil('Budi: mencatat pertemuan yang lalu (3 hari lalu)',
+  $q$ insert into public.pertemuan (id, kelompok_id, tanggal, dibuka_pada)
+      values ('55555555-0000-0000-0000-0000000000c1', tests.id('kel_a1'), bantu.hari_ini_wib() - 3, now()) $q$);
+select tests.harus_gagal('Budi: tanggal pertemuan tidak bisa diubah ke masa depan',
+  $q$ update public.pertemuan set tanggal = bantu.hari_ini_wib() + 2
+      where id = '55555555-0000-0000-0000-0000000000c1' $q$);
+select tests.harus_berhasil('Budi: menandai Andi hadir',
+  $q$ insert into public.kehadiran (pertemuan_id, anggota_id, hadir)
+      values ('55555555-0000-0000-0000-0000000000c1', tests.id('andi'), true) $q$);
+
+select tests.masuk_sebagai('dewi');
+select tests.harus_gagal('Dewi (pemimpin B1): tidak bisa menutup pertemuan A1',
+  $q$ select public.tutup_pertemuan('55555555-0000-0000-0000-0000000000c1') $q$);
+select tests.masuk_sebagai('ketua_a');
+select tests.harus_gagal('Ketua Tim A: tidak bisa menutup pertemuan A1',
+  $q$ select public.tutup_pertemuan('55555555-0000-0000-0000-0000000000c1') $q$);
+select tests.masuk_sebagai('u_andi');
+select tests.harus_gagal('Andi (anggota): tidak bisa menutup pertemuan',
+  $q$ select public.tutup_pertemuan('55555555-0000-0000-0000-0000000000c1') $q$);
+
+select tests.masuk_sebagai('budi');
+select tests.harus_berhasil('Budi: menutup absensi',
+  $q$ select tests.simpan('tutup_1', public.tutup_pertemuan('55555555-0000-0000-0000-0000000000c1')::text) $q$);
+select tests.periksa('Tutup: waktu tutup tercatat',
+  (select ditutup_pada is not null from public.pertemuan where id = '55555555-0000-0000-0000-0000000000c1'));
+select tests.periksa('Tutup: Andi tetap hadir',
+  (select hadir from public.kehadiran
+    where pertemuan_id = '55555555-0000-0000-0000-0000000000c1' and anggota_id = tests.id('andi')));
+select tests.periksa('Tutup: Jarang (aktif, bergabung 120 hari lalu, belum ditandai) tercatat tidak hadir',
+  (select not hadir and alasan is null from public.kehadiran
+    where pertemuan_id = '55555555-0000-0000-0000-0000000000c1' and anggota_id = tests.id('jarang')));
+select tests.periksa('Tutup: Ani (bergabung hari ini) tidak ikut ditandai untuk pertemuan 3 hari lalu',
+  not exists (select 1 from public.kehadiran where pertemuan_id = '55555555-0000-0000-0000-0000000000c1'
+              and anggota_id = tests.id('ani')));
+select tests.periksa('Tutup: anggota tidak aktif tidak ikut ditandai',
+  not exists (select 1 from public.kehadiran where pertemuan_id = '55555555-0000-0000-0000-0000000000c1'
+              and anggota_id = '44444444-0000-0000-0000-0000000000d1'));
+select tests.periksa('Tutup: anggota yang bergabung setelah tanggal pertemuan tidak ikut ditandai',
+  not exists (select 1 from public.kehadiran where pertemuan_id = '55555555-0000-0000-0000-0000000000c1'
+              and anggota_id = '44444444-0000-0000-0000-0000000000c1'));
+select tests.periksa('Tutup: hanya anggota kelompok A1 yang tercatat',
+  (select bool_and(kelompok_id = tests.id('kel_a1')) from public.kehadiran
+    where pertemuan_id = '55555555-0000-0000-0000-0000000000c1'));
+select tests.periksa('Tutup: jumlah yang ditandai = jumlah baris tidak hadir',
+  (select teks::int from tests.nilai where nama = 'tutup_1') =
+  (select count(*) from public.kehadiran
+    where pertemuan_id = '55555555-0000-0000-0000-0000000000c1' and not hadir));
+select tests.harus_berhasil('Budi: mengisi alasan tidak hadir Jarang',
+  $q$ update public.kehadiran set alasan = 'sakit', alasan_catatan = 'Demam'
+      where pertemuan_id = '55555555-0000-0000-0000-0000000000c1' and anggota_id = tests.id('jarang') $q$);
+select tests.harus_berhasil('Budi: membuka kembali absensi',
+  $q$ update public.pertemuan set ditutup_pada = null where id = '55555555-0000-0000-0000-0000000000c1' $q$);
+select tests.periksa('Tutup ulang: tidak ada data ganda, alasan Jarang tetap',
+  public.tutup_pertemuan('55555555-0000-0000-0000-0000000000c1') = 0 and
+  (select alasan = 'sakit' from public.kehadiran
+    where pertemuan_id = '55555555-0000-0000-0000-0000000000c1' and anggota_id = tests.id('jarang')));
+select tests.masuk_sebagai('ketua_a');
+select tests.periksa('Ketua Tim A: membaca alasan tidak hadir A1',
+  (select alasan = 'sakit' from public.kehadiran
+    where pertemuan_id = '55555555-0000-0000-0000-0000000000c1' and anggota_id = tests.id('jarang')));
+select tests.periksa('Ketua Tim A: tidak bisa mengubah kehadiran A1',
+  tests.baris_terkena($q$ update public.kehadiran set alasan = 'lainnya'
+    where pertemuan_id = '55555555-0000-0000-0000-0000000000c1' $q$) = 0);
 select tests.keluar();
 
 
