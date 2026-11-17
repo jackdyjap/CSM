@@ -47,3 +47,16 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
 - Tombol **Ambil foto** membuka kamera depan untuk anggota (foto diri) dan kamera belakang untuk pemimpin (memotret anggota).
 - **Ketua Tim dan Admin** melihat profil anggota dalam bentuk baca-saja.
 - Daftar wilayah diambil per tingkat (provinsi → kota → kecamatan → kelurahan) hanya saat dibutuhkan, supaya ringan di koneksi lambat.
+
+## Diputuskan saat Fase 4 (17 November 2026)
+
+10. **Menutup absensi** menandai otomatis **tidak hadir** setiap anggota aktif yang belum ditandai hadir. Alasan boleh diisi belakangan. Anggota tidak aktif, dan anggota yang bergabung setelah tanggal pertemuan, tidak ikut ditandai.
+11. **Tanggal pertemuan** boleh hari ini atau tanggal yang lalu (untuk mengejar catatan yang terlewat). Tanggal masa depan ditolak database.
+
+## Keputusan teknis (Fase 4)
+
+- Ketukan nama di mode pertemuan langsung tersimpan satu per satu, supaya tidak ada data hilang bila koneksi putus di tengah pertemuan.
+- Absensi yang sudah ditutup bisa **dibuka kembali**. Menutup ulang tidak menggandakan data, dan alasan yang sudah diisi tetap tersimpan.
+- Membatalkan tanda hadir saat absensi terbuka menghapus catatan kehadiran anggota itu; saat ditutup ia akan tercatat tidak hadir.
+- Catatan alasan tidak hadir hanya terlihat oleh pengurus (bukan oleh anggota), sesuai aturan Fase 1.
+- Halaman pertemuan saat ini khusus pemimpin/wakil. Tampilan untuk Ketua Tim menyusul di Fase 6.

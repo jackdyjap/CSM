@@ -15,7 +15,7 @@ Teknologi: **Next.js** (tampilan) + **Supabase** (login, database PostgreSQL, at
 | 1 | Tabel, peran, dan aturan akses (RLS) | ✅ Selesai: sudah berjalan di Supabase (data wilayah menyusul di Fase 3) |
 | 2 | Login, pengaturan peran, undangan | 🔧 Kode selesai, 149 uji database lulus; belum dicoba di Supabase |
 | 3 | Profil anggota (foto, wilayah), profil yang dibuat pemimpin | 🔧 Kode selesai, 164 uji database lulus; belum dicoba di Supabase |
-| 4 | Mode pertemuan: absensi manual, alasan tidak hadir, persembahan | ⏳ |
+| 4 | Mode pertemuan: absensi manual, alasan tidak hadir, persembahan | 🔧 Kode selesai, 185 uji database lulus; belum dicoba di Supabase |
 | 5 | Catatan khusus, proyek ketaatan, halaman tindak lanjut | ⏳ |
 | 6 | Dashboard Ketua Tim | ⏳ |
 | 7 | QR kartu anggota | ⏳ |

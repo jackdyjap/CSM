@@ -61,6 +61,12 @@ export default async function HalamanKelompok({ params, searchParams }: PageProp
         <TautanTombol href="/beranda">← Beranda</TautanTombol>
       </div>
 
+      <div className="mb-4">
+        <TautanTombol href={`/kelompok/${id}/pertemuan`} jenis="utama" className="w-full justify-center">
+          Pertemuan &amp; absensi
+        </TautanTombol>
+      </div>
+
       <Kotak judul="Undang anggota baru">
         <p className="mb-3 text-sm opacity-70">
           Buat tautan, lalu kirim lewat WhatsApp. Orang yang membuka tautan bisa membuat akun dan
