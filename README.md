@@ -13,10 +13,10 @@ Teknologi: **Next.js** (tampilan) + **Supabase** (login, database PostgreSQL, at
 | Fase | Isi | Status |
 |---|---|---|
 | 1 | Tabel, peran, dan aturan akses (RLS) | ✅ Selesai: sudah berjalan di Supabase (data wilayah menyusul di Fase 3) |
-| 2 | Login, pengaturan peran, undangan | 🔧 Kode selesai, 149 uji database lulus; belum dicoba di Supabase |
-| 3 | Profil anggota (foto, wilayah), profil yang dibuat pemimpin | 🔧 Kode selesai, 164 uji database lulus; belum dicoba di Supabase |
-| 4 | Mode pertemuan: absensi manual, alasan tidak hadir, persembahan | 🔧 Kode selesai, 185 uji database lulus; belum dicoba di Supabase |
-| 5 | Catatan khusus, proyek ketaatan, halaman tindak lanjut | ⏳ |
+| 2 | Login, pengaturan peran, undangan | ✅ Berjalan di aplikasi (teruji 17 Nov 2026) |
+| 3 | Profil anggota (foto, wilayah), profil yang dibuat pemimpin | ✅ Berjalan di aplikasi (teruji 17 Nov 2026) |
+| 4 | Mode pertemuan: absensi manual, alasan tidak hadir, persembahan (+ bukti transfer) | ✅ Berjalan di aplikasi (teruji 17 Nov 2026) |
+| 5 | Catatan khusus, proyek ketaatan, halaman tindak lanjut | 🔧 Kode selesai, 278 uji database lulus; belum dicoba di Supabase |
 | 6 | Dashboard Ketua Tim | ⏳ |
 | 7 | QR kartu anggota | ⏳ |
 | 8 | QR pertemuan yang berganti otomatis, akun mandiri anggota | ⏳ |
@@ -27,7 +27,7 @@ Teknologi: **Next.js** (tampilan) + **Supabase** (login, database PostgreSQL, at
 
 | Folder | Isi |
 |---|---|
-| `src/app/` | Halaman aplikasi (masuk, beranda, profil, admin, kelompok dan profil anggota, undangan, atur ulang) |
+| `src/app/` | Halaman aplikasi (masuk, beranda, profil, admin, kelompok: anggota, pertemuan, proyek, tindak lanjut; undangan, atur ulang) |
 | `src/lib/` | Sambungan ke Supabase, pengolah email/nomor HP, pemeriksa login, aksi dan pilihan profil |
 | `src/components/` | Komponen tampilan (tombol, isian, kotak, formulir profil, pilihan wilayah, unggah foto) |
 | `src/proxy.ts` | Mengarahkan pengunjung yang belum login ke halaman masuk |

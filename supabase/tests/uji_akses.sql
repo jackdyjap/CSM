@@ -995,6 +995,144 @@ select tests.periksa('Antrean foto anggota lama tetap bertanda folder foto-anggo
 
 
 -- =====================================================================
+-- UJI FASE 5 · PROYEK KETAATAN DAN TINDAK LANJUT (keputusan 17)
+-- Kelompok baru T1 (Tim A, pemimpin Budi) dengan riwayat yang pasti:
+--   4 pertemuan ditutup (28, 21, 14, 7 hari lalu) + 1 pertemuan belum ditutup.
+--   m1: tidak pernah hadir            -> absen 4 berturut-turut
+--   m2: hadir 28 hari lalu, lalu absen -> absen 3 berturut-turut
+--   m3: absen 14, hadir 7 hari lalu    -> tidak masuk daftar
+--   m4: TIDAK AKTIF, tidak pernah hadir-> tidak masuk daftar
+-- =====================================================================
+select tests.keluar();
+insert into tests.ids (nama, id) values
+  ('kel_t1', '66666666-0000-0000-0000-0000000000f1'),
+  ('m1', '66666666-0000-0000-0000-000000000001'), ('m2', '66666666-0000-0000-0000-000000000002'),
+  ('m3', '66666666-0000-0000-0000-000000000003'), ('m4', '66666666-0000-0000-0000-000000000004'),
+  ('t28', '66666666-0000-0000-0000-000000000028'), ('t21', '66666666-0000-0000-0000-000000000021'),
+  ('t14', '66666666-0000-0000-0000-000000000014'), ('t07', '66666666-0000-0000-0000-000000000007'),
+  ('t01', '66666666-0000-0000-0000-000000000099');
+insert into public.kelompok (id, tim_id, nama) values (tests.id('kel_t1'), tests.id('tim_a'), 'Kelompok T1');
+insert into public.penugasan_peran (akun_id, peran, kelompok_id, jabatan) values (tests.id('budi'), 'pemimpin', tests.id('kel_t1'), 'pemimpin');
+insert into public.anggota (id, kelompok_id, nama_lengkap, bergabung_pada) values
+  (tests.id('m1'), tests.id('kel_t1'), 'M Satu',  bantu.hari_ini_wib() - 60),
+  (tests.id('m2'), tests.id('kel_t1'), 'M Dua',   bantu.hari_ini_wib() - 60),
+  (tests.id('m3'), tests.id('kel_t1'), 'M Tiga',  bantu.hari_ini_wib() - 60),
+  (tests.id('m4'), tests.id('kel_t1'), 'M Empat', bantu.hari_ini_wib() - 60);
+update public.anggota set aktif = false where id = tests.id('m4');
+insert into public.pertemuan (id, kelompok_id, tanggal, dibuka_pada, ditutup_pada) values
+  (tests.id('t28'), tests.id('kel_t1'), bantu.hari_ini_wib() - 28, now(), now()),
+  (tests.id('t21'), tests.id('kel_t1'), bantu.hari_ini_wib() - 21, now(), now()),
+  (tests.id('t14'), tests.id('kel_t1'), bantu.hari_ini_wib() - 14, now(), now()),
+  (tests.id('t07'), tests.id('kel_t1'), bantu.hari_ini_wib() - 7,  now(), now()),
+  (tests.id('t01'), tests.id('kel_t1'), bantu.hari_ini_wib() - 1,  now(), null);
+insert into public.kehadiran (pertemuan_id, anggota_id, hadir, alasan)
+select p.id, m.id,
+       (m.id = tests.id('m2') and p.id = tests.id('t28')) or (m.id = tests.id('m3') and p.id = tests.id('t07')),
+       case when m.id = tests.id('m2') and p.id = tests.id('t07') then 'bekerja'::public.alasan_absen end
+from public.pertemuan p cross join public.anggota m
+where p.kelompok_id = tests.id('kel_t1') and p.ditutup_pada is not null and m.kelompok_id = tests.id('kel_t1');
+-- m1 juga tidak hadir di pertemuan yang belum ditutup (tidak boleh dihitung)
+insert into public.kehadiran (pertemuan_id, anggota_id, hadir) values (tests.id('t01'), tests.id('m1'), false);
+-- m4 diaktifkan oleh trigger bila hadir; pastikan tetap tidak aktif
+update public.anggota set aktif = false where id = tests.id('m4');
+
+-- Proyek ketaatan (dibuat Budi lewat aturan akses)
+select tests.masuk_sebagai('budi');
+select tests.harus_berhasil('Budi: membuat proyek ketaatan yang tenggatnya sudah lewat',
+  $q$ insert into public.proyek_ketaatan (id, kelompok_id, judul, diberikan_pada, tenggat)
+      values ('66666666-0000-0000-0000-0000000000a1', tests.id('kel_t1'), 'Baca Yohanes', bantu.hari_ini_wib() - 30, bantu.hari_ini_wib() - 3) $q$);
+select tests.harus_berhasil('Budi: membuat proyek yang tenggatnya belum lewat',
+  $q$ insert into public.proyek_ketaatan (id, kelompok_id, judul, diberikan_pada, tenggat)
+      values ('66666666-0000-0000-0000-0000000000a2', tests.id('kel_t1'), 'Doa pagi', bantu.hari_ini_wib() - 2, bantu.hari_ini_wib() + 7) $q$);
+select tests.harus_gagal('Budi: tenggat sebelum tanggal diberikan ditolak',
+  $q$ insert into public.proyek_ketaatan (kelompok_id, judul, diberikan_pada, tenggat)
+      values (tests.id('kel_t1'), 'Salah', bantu.hari_ini_wib(), bantu.hari_ini_wib() - 1) $q$);
+select tests.harus_berhasil('Budi: menandai status proyek anggotanya',
+  $q$ insert into public.status_proyek (proyek_id, anggota_id, status) values
+      ('66666666-0000-0000-0000-0000000000a1', tests.id('m1'), 'selesai'),
+      ('66666666-0000-0000-0000-0000000000a1', tests.id('m2'), 'sedang'),
+      ('66666666-0000-0000-0000-0000000000a2', tests.id('m1'), 'tidak_dikerjakan'),
+      ('66666666-0000-0000-0000-0000000000a2', tests.id('m2'), 'belum') $q$);
+select tests.periksa('Status proyek: kelompok terisi otomatis dari proyek',
+  (select bool_and(kelompok_id = tests.id('kel_t1')) from public.status_proyek
+    where proyek_id = '66666666-0000-0000-0000-0000000000a1'));
+select tests.harus_gagal('Budi: tidak bisa memberi status proyek T1 kepada anggota kelompok lain',
+  $q$ insert into public.status_proyek (proyek_id, anggota_id, status)
+      values ('66666666-0000-0000-0000-0000000000a1', tests.id('andi'), 'belum') $q$);
+select tests.periksa('Budi: mengubah status dan keterangan proyek',
+  tests.baris_terkena($q$ update public.status_proyek set status = 'sedang', keterangan = 'Sudah pasal 3'
+    where proyek_id = '66666666-0000-0000-0000-0000000000a1' and anggota_id = tests.id('m2') $q$) = 1);
+select tests.periksa('Budi: mengubah judul dan tenggat proyek',
+  tests.baris_terkena($q$ update public.proyek_ketaatan set judul = 'Baca Injil Yohanes'
+    where id = '66666666-0000-0000-0000-0000000000a1' $q$) = 1);
+
+select tests.masuk_sebagai('dewi');
+select tests.periksa('Dewi: tidak melihat proyek T1',
+  (select count(*) from public.proyek_ketaatan where kelompok_id = tests.id('kel_t1')) = 0);
+select tests.periksa('Dewi: tidak bisa mengubah status proyek T1',
+  tests.baris_terkena($q$ update public.status_proyek set status = 'selesai' where kelompok_id = tests.id('kel_t1') $q$) = 0);
+select tests.masuk_sebagai('ketua_a');
+select tests.periksa('Ketua Tim A: melihat proyek dan statusnya di T1',
+  (select count(*) from public.proyek_ketaatan where kelompok_id = tests.id('kel_t1')) = 2 and
+  (select count(*) from public.status_proyek where kelompok_id = tests.id('kel_t1')) = 4);
+select tests.harus_gagal('Ketua Tim A: tidak bisa membuat proyek',
+  $q$ insert into public.proyek_ketaatan (kelompok_id, judul) values (tests.id('kel_t1'), 'X') $q$);
+select tests.masuk_sebagai('admin');
+select tests.harus_berhasil('Admin: membuat dan menghapus proyek di T1',
+  $q$ with p as (insert into public.proyek_ketaatan (kelompok_id, judul) values (tests.id('kel_t1'), 'Sementara') returning id)
+      delete from public.proyek_ketaatan where id in (select id from p) $q$);
+
+-- Tindak lanjut
+select tests.masuk_sebagai('budi');
+select tests.periksa('Tindak lanjut: M Satu absen 4 berturut-turut, belum pernah hadir',
+  (select absen_beruntun = 4 and terakhir_hadir is null from public.tindak_lanjut(tests.id('kel_t1'))
+    where jenis = 'absen' and anggota_id = tests.id('m1')));
+select tests.periksa('Tindak lanjut: M Dua absen 3 berturut-turut, terakhir hadir 28 hari lalu, alasan terakhir bekerja',
+  (select absen_beruntun = 3 and terakhir_hadir = bantu.hari_ini_wib() - 28 and alasan_terakhir = 'bekerja'
+     from public.tindak_lanjut(tests.id('kel_t1')) where jenis = 'absen' and anggota_id = tests.id('m2')));
+select tests.periksa('Tindak lanjut: M Tiga (hadir terakhir) dan M Empat (tidak aktif) tidak masuk daftar absen',
+  (select count(*) from public.tindak_lanjut(tests.id('kel_t1'))
+    where jenis = 'absen' and anggota_id in (tests.id('m3'), tests.id('m4'))) = 0);
+select tests.periksa('Tindak lanjut: batas absen bisa diubah (batas 4 -> hanya M Satu)',
+  (select count(*) from public.tindak_lanjut(tests.id('kel_t1'), 4) where jenis = 'absen') = 1);
+select tests.periksa('Tindak lanjut proyek lewat tenggat: M Dua (sedang) dan M Tiga (belum diberi status), bukan M Satu (selesai)',
+  (select array_agg(nama_lengkap order by nama_lengkap) from public.tindak_lanjut(tests.id('kel_t1'))
+    where jenis = 'proyek' and proyek_id = '66666666-0000-0000-0000-0000000000a1') = array['M Dua', 'M Tiga']);
+select tests.periksa('Tindak lanjut proyek belum lewat tenggat: hanya yang "tidak dikerjakan" (M Satu)',
+  (select array_agg(nama_lengkap) from public.tindak_lanjut(tests.id('kel_t1'))
+    where jenis = 'proyek' and proyek_id = '66666666-0000-0000-0000-0000000000a2') = array['M Satu']);
+select tests.periksa('Tindak lanjut: total 5 baris (2 absen + 3 proyek)',
+  (select count(*) from public.tindak_lanjut(tests.id('kel_t1'))) = 5);
+
+select tests.masuk_sebagai('ketua_a');
+select tests.harus_berhasil('Ketua Tim A: melihat tindak lanjut T1 (untuk dashboard Fase 6)',
+  $q$ select * from public.tindak_lanjut(tests.id('kel_t1')) $q$);
+select tests.masuk_sebagai('admin');
+select tests.harus_berhasil('Admin: melihat tindak lanjut T1',
+  $q$ select * from public.tindak_lanjut(tests.id('kel_t1')) $q$);
+select tests.masuk_sebagai('dewi');
+select tests.harus_gagal('Dewi (pemimpin B1): tidak bisa melihat tindak lanjut T1',
+  $q$ select * from public.tindak_lanjut(tests.id('kel_t1')) $q$);
+select tests.masuk_sebagai('ketua_b');
+select tests.harus_gagal('Ketua Tim B: tidak bisa melihat tindak lanjut T1',
+  $q$ select * from public.tindak_lanjut(tests.id('kel_t1')) $q$);
+select tests.masuk_sebagai('u_andi');
+select tests.harus_gagal('Andi (anggota): tidak bisa melihat tindak lanjut',
+  $q$ select * from public.tindak_lanjut(tests.id('kel_a1')) $q$);
+select tests.masuk_sebagai_tamu();
+select tests.harus_gagal('Tamu: tidak bisa melihat tindak lanjut',
+  $q$ select * from public.tindak_lanjut(tests.id('kel_t1')) $q$);
+
+-- Menghapus proyek ikut menghapus statusnya
+select tests.masuk_sebagai('budi');
+select tests.periksa('Budi: menghapus proyek ikut menghapus status anggotanya',
+  tests.baris_terkena($q$ delete from public.proyek_ketaatan where id = '66666666-0000-0000-0000-0000000000a2' $q$) = 1);
+select tests.keluar();
+select tests.periksa('Status proyek yang dihapus ikut hilang',
+  (select count(*) from public.status_proyek where proyek_id = '66666666-0000-0000-0000-0000000000a2') = 0);
+
+
+-- =====================================================================
 -- RINGKASAN
 -- =====================================================================
 select no, case when lulus then 'LULUS' else 'GAGAL' end as hasil, nama, info

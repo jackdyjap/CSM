@@ -5,6 +5,7 @@ import { LabelKelengkapan } from "@/components/profil";
 import { Isian, Judul, Kotak, Lipatan, Pilihan, TautanTombol } from "@/components/ui";
 import { hapusKelompokTotal, ubahKelompok } from "@/app/admin/aksi";
 import { waktuWib } from "@/lib/format";
+import { BATAS_ABSEN } from "@/lib/pilihan-fase5";
 import { isianKosong, KOLOM_KELENGKAPAN, type Profil } from "@/lib/profil";
 import { kelompokKelolaan, wajibMasuk } from "@/lib/sesi";
 import { batalkanUndangan, buatTautanAturUlang, buatUndangan } from "./aksi";
@@ -48,6 +49,8 @@ export default async function HalamanKelompok({ params, searchParams }: PageProp
   ]);
 
   const undangan = (dataUndangan ?? []) as unknown as BarisUndangan[];
+  const { data: dataTindakLanjut } = await supabase.rpc("tindak_lanjut", { p_kelompok: id, p_batas_absen: BATAS_ABSEN });
+  const jumlahTindakLanjut = new Set(((dataTindakLanjut ?? []) as { anggota_id: string }[]).map((b) => b.anggota_id)).size;
   const adminDiSini = peran.admin;
   const [{ data: dataTim }, { data: dataKelompok }] = adminDiSini
     ? await Promise.all([
@@ -73,9 +76,15 @@ export default async function HalamanKelompok({ params, searchParams }: PageProp
         )}
       </div>
 
-      <div className="mb-4">
-        <TautanTombol href={`/kelompok/${id}/pertemuan`} jenis="utama" className="w-full justify-center">
+      <div className="mb-4 grid grid-cols-2 gap-2">
+        <TautanTombol href={`/kelompok/${id}/pertemuan`} jenis="utama" className="col-span-2 justify-center">
           Pertemuan &amp; absensi
+        </TautanTombol>
+        <TautanTombol href={`/kelompok/${id}/proyek`} className="justify-center">
+          Proyek ketaatan
+        </TautanTombol>
+        <TautanTombol href={`/kelompok/${id}/tindak-lanjut`} className="justify-center">
+          Tindak lanjut{jumlahTindakLanjut > 0 ? ` (${jumlahTindakLanjut})` : ""}
         </TautanTombol>
       </div>
 
