@@ -641,6 +641,60 @@ select tests.periksa('Log: pemakaian undangan dan tautan atur ulang tercatat',
 
 
 -- =====================================================================
+-- UJI FASE 3 · PROFIL ANGGOTA (perilaku yang diandalkan halaman profil)
+-- =====================================================================
+
+-- Cici (anggota, persetujuannya sudah tercatat di uji sebelumnya) mengisi profilnya sendiri.
+select tests.masuk_sebagai('u_cici');
+select tests.harus_berhasil('Cici: mengisi profil lengkap dengan wilayah bertingkat',
+  $q$ update public.anggota set nama_lengkap = 'Cici Lestari', gender = 'perempuan', tempat_lahir = 'Bogor',
+        tanggal_lahir = '1995-03-04', alamat = 'Jl. Kenanga 3', provinsi_kode = '32', kota_kode = '32.71',
+        kecamatan_kode = '32.71.01', kelurahan_kode = '32.71.01.1001', status_nikah = 'single',
+        pendidikan = 's1', pekerjaan = 'karyawan'
+      where id = tests.id('cici') $q$);
+select tests.harus_gagal('Cici: tidak bisa menghapus persetujuan yang sudah tercatat',
+  $q$ update public.anggota set persetujuan_pada = null where id = tests.id('cici') $q$);
+select tests.harus_gagal('Cici: wilayah yang tidak nyambung ditolak',
+  $q$ update public.anggota set kecamatan_kode = '31.71.01' where id = tests.id('cici') $q$);
+select tests.harus_berhasil('Cici: mengunggah foto ke foldernya sendiri',
+  $q$ insert into storage.objects (bucket_id, name) values ('foto-anggota', tests.id('cici') || '/1.jpg') $q$);
+select tests.harus_berhasil('Cici: memasang foto dari foldernya sendiri',
+  $q$ update public.anggota set foto_path = tests.id('cici') || '/1.jpg' where id = tests.id('cici') $q$);
+select tests.harus_gagal('Cici: tidak bisa memasang foto dari folder anggota lain',
+  $q$ update public.anggota set foto_path = tests.id('andi') || '/foto.jpg' where id = tests.id('cici') $q$);
+select tests.harus_berhasil('Cici: mengganti foto',
+  $q$ update public.anggota set foto_path = tests.id('cici') || '/2.jpg' where id = tests.id('cici') $q$);
+select tests.keluar();
+select tests.periksa('Foto lama Cici masuk antrean hapus',
+  exists (select 1 from internal.antrean_hapus_foto where foto_path = tests.id('cici') || '/1.jpg'));
+
+-- Ketua Tim dan Admin hanya membaca profil.
+select tests.masuk_sebagai('ketua_a');
+select tests.periksa('Ketua Tim A: membaca profil Cici',
+  (select count(*) from public.anggota where id = tests.id('cici')) = 1);
+select tests.periksa('Ketua Tim A: tidak bisa mengubah profil anggota A1',
+  tests.baris_terkena($q$ update public.anggota set alamat = 'x' where id = tests.id('cici') $q$) = 0);
+select tests.harus_gagal('Ketua Tim A: tidak bisa mengunggah foto anggota A1',
+  $q$ insert into storage.objects (bucket_id, name) values ('foto-anggota', tests.id('cici') || '/k.jpg') $q$);
+select tests.masuk_sebagai('admin');
+select tests.periksa('Admin: tidak bisa mengubah profil anggota',
+  tests.baris_terkena($q$ update public.anggota set alamat = 'x' where id = tests.id('cici') $q$) = 0);
+
+-- Pemimpin menambah anggota tanpa HP, sekaligus mencatat persetujuan.
+select tests.masuk_sebagai('sari');
+select tests.harus_berhasil('Sari (wakil): menambah anggota dengan persetujuan dan profil',
+  $q$ insert into public.anggota (id, kelompok_id, nama_lengkap, persetujuan_pada, gender, pekerjaan)
+      values ('44444444-0000-0000-0000-0000000000c1', tests.id('kel_a1'), 'Oma Rut', now(), 'perempuan', 'pensiunan') $q$);
+select tests.periksa('Sari: persetujuan Oma Rut tercatat oleh pemimpin',
+  (select persetujuan_dicatat_oleh = 'pemimpin' and persetujuan_dicatat_akun = tests.id('sari')
+     from public.anggota where id = '44444444-0000-0000-0000-0000000000c1'));
+select tests.harus_berhasil('Sari: mengunggah foto Oma Rut (kamera pemimpin)',
+  $q$ insert into storage.objects (bucket_id, name)
+      values ('foto-anggota', '44444444-0000-0000-0000-0000000000c1/1.jpg') $q$);
+select tests.keluar();
+
+
+-- =====================================================================
 -- RINGKASAN
 -- =====================================================================
 select no, case when lulus then 'LULUS' else 'GAGAL' end as hasil, nama, info

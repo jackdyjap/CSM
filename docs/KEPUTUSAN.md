@@ -35,3 +35,15 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
    - Verifikasi lewat SMS/WhatsApp (Cara A) bisa ditambahkan nanti.
    - Pemulihan mandiri lewat email belum diaktifkan, karena pengiriman email bawaan Supabase terbatas. Bila diperlukan, pasang layanan email sendiri (SMTP) terlebih dahulu.
 7. **Kata sandi minimal 8 karakter.**
+
+## Diputuskan saat Fase 3 (17 November 2026)
+
+8. **Profil dianggap lengkap** bila semua isian terisi **kecuali nomor HP** (opsional): nama, gender, foto, tempat dan tanggal lahir, alamat, wilayah **sampai kelurahan**, status pernikahan, pendidikan, dan pekerjaan.
+9. **Pemimpin bisa menambah anggota tanpa akun** (untuk yang tidak punya HP). Bila persetujuan belum dicatat saat itu, hanya nama yang disimpan; persetujuan bisa dicatat kemudian dari halaman profil anggota.
+
+## Keputusan teknis (Fase 3)
+
+- **Foto dikecilkan di HP** sebelum dikirim (sisi terpanjang 800 piksel, JPEG mutu 85%, biasanya 100–300 KB), lalu disimpan lewat server. Foto ditampilkan lewat tautan sementara yang berlaku 1 jam.
+- Tombol **Ambil foto** membuka kamera depan untuk anggota (foto diri) dan kamera belakang untuk pemimpin (memotret anggota).
+- **Ketua Tim dan Admin** melihat profil anggota dalam bentuk baca-saja.
+- Daftar wilayah diambil per tingkat (provinsi → kota → kecamatan → kelurahan) hanya saat dibutuhkan, supaya ringan di koneksi lambat.

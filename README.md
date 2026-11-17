@@ -14,7 +14,7 @@ Teknologi: **Next.js** (tampilan) + **Supabase** (login, database PostgreSQL, at
 |---|---|---|
 | 1 | Tabel, peran, dan aturan akses (RLS) | ✅ Selesai: sudah berjalan di Supabase (data wilayah menyusul di Fase 3) |
 | 2 | Login, pengaturan peran, undangan | 🔧 Kode selesai, 149 uji database lulus; belum dicoba di Supabase |
-| 3 | Profil anggota (foto, wilayah), profil yang dibuat pemimpin | ⏳ |
+| 3 | Profil anggota (foto, wilayah), profil yang dibuat pemimpin | 🔧 Kode selesai, 164 uji database lulus; belum dicoba di Supabase |
 | 4 | Mode pertemuan: absensi manual, alasan tidak hadir, persembahan | ⏳ |
 | 5 | Catatan khusus, proyek ketaatan, halaman tindak lanjut | ⏳ |
 | 6 | Dashboard Ketua Tim | ⏳ |
@@ -27,9 +27,9 @@ Teknologi: **Next.js** (tampilan) + **Supabase** (login, database PostgreSQL, at
 
 | Folder | Isi |
 |---|---|
-| `src/app/` | Halaman aplikasi (masuk, beranda, admin, kelompok, undangan, atur ulang) |
-| `src/lib/` | Sambungan ke Supabase, pengolah email/nomor HP, pemeriksa login |
-| `src/components/` | Komponen tampilan (tombol, isian, kotak) |
+| `src/app/` | Halaman aplikasi (masuk, beranda, profil, admin, kelompok dan profil anggota, undangan, atur ulang) |
+| `src/lib/` | Sambungan ke Supabase, pengolah email/nomor HP, pemeriksa login, aksi dan pilihan profil |
+| `src/components/` | Komponen tampilan (tombol, isian, kotak, formulir profil, pilihan wilayah, unggah foto) |
 | `src/proxy.ts` | Mengarahkan pengunjung yang belum login ke halaman masuk |
 | `supabase/` | Database: migrasi, data wilayah, dan uji akses |
 
