@@ -446,8 +446,8 @@ select tests.periksa('Admin: melihat anggota semua tim',
   (select count(*) from public.anggota where kelompok_id = tests.id('kel_a1')) >= 6);
 select tests.periksa('Admin: bisa membaca catatan Bima',
   (select count(*) from public.baca_catatan(tests.id('bima'))) = 1);
-select tests.periksa('Admin: hanya membaca, tidak bisa mengubah profil anggota (0 baris)',
-  tests.baris_terkena($q$ update public.anggota set alamat = 'x' where id = tests.id('bima') $q$) = 0);
+select tests.periksa('Admin: bisa mengubah profil anggota kelompok mana pun (keputusan 12)',
+  tests.baris_terkena($q$ update public.anggota set alamat = 'x' where id = tests.id('bima') $q$) = 1);
 select tests.harus_gagal('Admin: tidak bisa menulis catatan',
   $q$ select public.tulis_catatan(tests.id('bima'), 'umum', 'x') $q$);
 select tests.harus_berhasil('Admin: bisa membuat tim baru',
@@ -668,7 +668,7 @@ select tests.keluar();
 select tests.periksa('Foto lama Cici masuk antrean hapus',
   exists (select 1 from internal.antrean_hapus_foto where foto_path = tests.id('cici') || '/1.jpg'));
 
--- Ketua Tim dan Admin hanya membaca profil.
+-- Ketua Tim hanya membaca profil; Admin boleh mengubah (keputusan 12).
 select tests.masuk_sebagai('ketua_a');
 select tests.periksa('Ketua Tim A: membaca profil Cici',
   (select count(*) from public.anggota where id = tests.id('cici')) = 1);
@@ -677,8 +677,8 @@ select tests.periksa('Ketua Tim A: tidak bisa mengubah profil anggota A1',
 select tests.harus_gagal('Ketua Tim A: tidak bisa mengunggah foto anggota A1',
   $q$ insert into storage.objects (bucket_id, name) values ('foto-anggota', tests.id('cici') || '/k.jpg') $q$);
 select tests.masuk_sebagai('admin');
-select tests.periksa('Admin: tidak bisa mengubah profil anggota',
-  tests.baris_terkena($q$ update public.anggota set alamat = 'x' where id = tests.id('cici') $q$) = 0);
+select tests.periksa('Admin: bisa mengubah profil anggota A1 (keputusan 12)',
+  tests.baris_terkena($q$ update public.anggota set alamat = 'x' where id = tests.id('cici') $q$) = 1);
 
 -- Pemimpin menambah anggota tanpa HP, sekaligus mencatat persetujuan.
 select tests.masuk_sebagai('sari');
@@ -770,6 +770,67 @@ select tests.periksa('Ketua Tim A: membaca alasan tidak hadir A1',
 select tests.periksa('Ketua Tim A: tidak bisa mengubah kehadiran A1',
   tests.baris_terkena($q$ update public.kehadiran set alasan = 'lainnya'
     where pertemuan_id = '55555555-0000-0000-0000-0000000000c1' $q$) = 0);
+select tests.keluar();
+
+
+-- =====================================================================
+-- UJI · ADMIN MENGELOLA SEMUA KELOMPOK (keputusan 12)
+-- =====================================================================
+select tests.masuk_sebagai('admin');
+select tests.periksa('Admin: tidak otomatis tercatat sebagai pemimpin di peran_saya()',
+  jsonb_array_length((public.peran_saya())::jsonb -> 'pemimpin') = 0);
+select tests.harus_berhasil('Admin: menambah anggota di kelompok B1 (tanpa jadi pemimpin)',
+  $q$ insert into public.anggota (id, kelompok_id, nama_lengkap, persetujuan_pada, gender)
+      values ('44444444-0000-0000-0000-0000000000e1', tests.id('kel_b1'), 'Anggota Admin', now(), 'laki_laki') $q$);
+select tests.periksa('Admin: persetujuan tercatat oleh pengurus (bukan anggota sendiri)',
+  (select persetujuan_dicatat_oleh = 'pemimpin' from public.anggota
+    where id = '44444444-0000-0000-0000-0000000000e1'));
+select tests.harus_berhasil('Admin: mengunggah foto anggota B1',
+  $q$ insert into storage.objects (bucket_id, name)
+      values ('foto-anggota', '44444444-0000-0000-0000-0000000000e1/1.jpg') $q$);
+select tests.harus_berhasil('Admin: membuat pertemuan B1 (5 hari lalu)',
+  $q$ insert into public.pertemuan (id, kelompok_id, tanggal, dibuka_pada, persembahan)
+      values ('55555555-0000-0000-0000-0000000000e1', tests.id('kel_b1'), bantu.hari_ini_wib() - 5, now(), 50000) $q$);
+select tests.harus_berhasil('Admin: menandai Bima hadir',
+  $q$ insert into public.kehadiran (pertemuan_id, anggota_id, hadir)
+      values ('55555555-0000-0000-0000-0000000000e1', tests.id('bima'), true) $q$);
+select tests.harus_berhasil('Admin: menutup absensi B1',
+  $q$ select public.tutup_pertemuan('55555555-0000-0000-0000-0000000000e1') $q$);
+select tests.harus_berhasil('Admin: mencatat anggota B1 tidak hadir',
+  $q$ insert into public.kehadiran (pertemuan_id, anggota_id, hadir)
+      values ('55555555-0000-0000-0000-0000000000e1', '44444444-0000-0000-0000-0000000000e1', false) $q$);
+select tests.periksa('Admin: mengisi alasan tidak hadir di B1',
+  tests.baris_terkena($q$ update public.kehadiran set alasan = 'bekerja'
+      where pertemuan_id = '55555555-0000-0000-0000-0000000000e1' and not hadir $q$) >= 1);
+select tests.harus_berhasil('Admin: membuat tautan undangan untuk B1',
+  $q$ select * from public.buat_undangan(tests.id('kel_b1'), null) $q$);
+select tests.harus_berhasil('Admin: menampilkan QR pertemuan B1',
+  $q$ select * from public.token_qr_pertemuan(tests.id('rapat_b1')) $q$);
+select tests.harus_gagal('Admin: tetap TIDAK bisa menulis catatan khusus',
+  $q$ select public.tulis_catatan(tests.id('bima'), 'umum', 'x') $q$);
+select tests.harus_gagal('Admin: tetap TIDAK bisa mengubah catatan khusus',
+  $q$ select public.ubah_catatan((select id from public.catatan_khusus where anggota_id = tests.id('bima') limit 1), 'diubah') $q$);
+select tests.harus_gagal('Admin: tetap TIDAK bisa menghapus catatan khusus',
+  $q$ select public.hapus_catatan((select id from public.catatan_khusus where anggota_id = tests.id('bima') limit 1)) $q$);
+select tests.periksa('Admin: menghapus pertemuan B1 yang dibuatnya',
+  tests.baris_terkena($q$ delete from public.pertemuan where id = '55555555-0000-0000-0000-0000000000e1' $q$) = 1);
+
+-- Pemimpin tetap bisa menulis catatan; Ketua Tim tetap tidak bisa mengubah.
+select tests.masuk_sebagai('dewi');
+select tests.harus_berhasil('Dewi (pemimpin B1): tetap bisa menulis catatan',
+  $q$ select public.tulis_catatan(tests.id('bima'), 'umum', 'Catatan Dewi') $q$);
+select tests.periksa('Dewi: tetap tidak bisa mengubah anggota kelompok A1',
+  tests.baris_terkena($q$ update public.anggota set alamat = 'y' where id = tests.id('ani') $q$) = 0);
+select tests.masuk_sebagai('ketua_b');
+select tests.periksa('Ketua Tim B: tetap tidak bisa mengubah anggota B1',
+  tests.baris_terkena($q$ update public.anggota set alamat = 'y' where id = tests.id('bima') $q$) = 0);
+select tests.harus_gagal('Ketua Tim B: tetap tidak bisa membuat pertemuan B1',
+  $q$ insert into public.pertemuan (kelompok_id, tanggal) values (tests.id('kel_b1'), bantu.hari_ini_wib() - 6) $q$);
+select tests.harus_gagal('Ketua Tim B: tetap tidak bisa menulis catatan',
+  $q$ select public.tulis_catatan(tests.id('bima'), 'umum', 'x') $q$);
+select tests.masuk_sebagai('u_bima');
+select tests.harus_gagal('Bima (anggota): tidak bisa menulis catatan tentang dirinya',
+  $q$ select public.tulis_catatan(tests.id('bima'), 'umum', 'x') $q$);
 select tests.keluar();
 
 

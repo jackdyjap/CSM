@@ -5,7 +5,7 @@ import { FormAlasan } from "@/components/form-alasan";
 import { Isian, IsianPanjang, Judul, Kotak, TautanTombol } from "@/components/ui";
 import { waktuWib } from "@/lib/format";
 import { rupiah, tanggalPanjang, type Alasan } from "@/lib/pertemuan";
-import { wajibMasuk } from "@/lib/sesi";
+import { kelompokKelolaan, wajibMasuk } from "@/lib/sesi";
 import { bukaKembali, hapusPertemuan, simpanRingkasan, tutupAbsensi } from "../aksi";
 
 type Kehadiran = {
@@ -18,7 +18,7 @@ type Kehadiran = {
 export default async function HalamanPertemuan({ params }: PageProps<"/kelompok/[id]/pertemuan/[pertemuan]">) {
   const { id, pertemuan: pertemuanId } = await params;
   const { supabase, peran } = await wajibMasuk();
-  const kelompok = peran.pemimpin.find((k) => k.kelompok_id === id);
+  const kelompok = await kelompokKelolaan(supabase, peran, id);
   if (!kelompok) redirect("/beranda");
 
   const [{ data: pertemuan }, { data: dataAnggota }, { data: dataHadir }] = await Promise.all([

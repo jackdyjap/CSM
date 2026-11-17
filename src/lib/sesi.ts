@@ -45,3 +45,46 @@ export async function wajibAdmin() {
   if (!hasil.peran.admin) redirect("/beranda");
   return hasil;
 }
+
+/** Bolehkah saya mengelola kelompok ini? (pemimpin/wakilnya, atau Admin — keputusan 12) */
+export function bolehKelola(peran: PeranSaya, kelompokId: string) {
+  return peran.admin || peran.pemimpin.some((k) => k.kelompok_id === kelompokId);
+}
+
+export type KelompokKelolaan = {
+  kelompok_id: string;
+  nama: string;
+  tim_nama: string;
+  /** Label peran di kelompok ini: "Pemimpin", "Wakil", atau "Admin". */
+  sebagai: string;
+};
+
+/**
+ * Data kelompok yang saya kelola, atau null bila saya tidak berhak.
+ * Hak sebenarnya tetap diperiksa database (aturan akses).
+ */
+export async function kelompokKelolaan(
+  supabase: Awaited<ReturnType<typeof buatClientServer>>,
+  peran: PeranSaya,
+  kelompokId: string,
+): Promise<KelompokKelolaan | null> {
+  const dipimpin = peran.pemimpin.find((k) => k.kelompok_id === kelompokId);
+  if (dipimpin) {
+    return {
+      kelompok_id: dipimpin.kelompok_id,
+      nama: dipimpin.nama,
+      tim_nama: dipimpin.tim_nama,
+      sebagai: dipimpin.jabatan === "wakil" ? "Wakil" : "Pemimpin",
+    };
+  }
+  if (!peran.admin) return null;
+
+  const { data } = await supabase
+    .from("kelompok")
+    .select("id, nama, tim(nama)")
+    .eq("id", kelompokId)
+    .maybeSingle();
+  if (!data) return null;
+  const tim = data.tim as unknown as { nama: string } | null;
+  return { kelompok_id: data.id, nama: data.nama, tim_nama: tim?.nama ?? "", sebagai: "Admin" };
+}

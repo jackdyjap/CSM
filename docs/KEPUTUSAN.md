@@ -60,3 +60,10 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
 - Membatalkan tanda hadir saat absensi terbuka menghapus catatan kehadiran anggota itu; saat ditutup ia akan tercatat tidak hadir.
 - Catatan alasan tidak hadir hanya terlihat oleh pengurus (bukan oleh anggota), sesuai aturan Fase 1.
 - Halaman pertemuan saat ini khusus pemimpin/wakil. Tampilan untuk Ketua Tim menyusul di Fase 6.
+
+## Diputuskan 17 November 2026 (setelah uji coba pertama)
+
+12. **Admin mengelola semua kelompok.** Admin boleh melihat **dan mengubah** anggota, profil, foto, undangan, pertemuan, absensi, persembahan, dan proyek ketaatan di semua tim dan kelompok, tanpa harus diberi peran pemimpin. Ini mengubah tabel peran di spesifikasi bagian 2, yang sebelumnya hanya memberi Admin hak membuat tim, kelompok, akun, dan peran.
+    - **Catatan khusus tidak berubah:** hanya pemimpin/wakil kelompoknya yang menulis. Admin dan Ketua Tim membaca saja.
+    - **Ketua Tim tidak berubah:** hanya melihat kelompok di timnya.
+    - Teknis: `bantu.kelompok_dipimpin()` kini juga mengembalikan semua kelompok bila pengguna Admin (migrasi `…0800`). Fungsi catatan memakai pemeriksa terpisah `bantu.boleh_tulis_catatan()`.

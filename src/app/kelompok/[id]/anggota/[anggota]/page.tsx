@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { ProfilBaca, ProfilUbah } from "@/components/profil";
 import { Judul, TautanTombol } from "@/components/ui";
 import { bacaProfil } from "@/lib/profil-server";
-import { wajibMasuk } from "@/lib/sesi";
+import { kelompokKelolaan, wajibMasuk } from "@/lib/sesi";
 
 export default async function HalamanAnggota({ params }: PageProps<"/kelompok/[id]/anggota/[anggota]">) {
   const { id, anggota } = await params;
@@ -12,7 +12,7 @@ export default async function HalamanAnggota({ params }: PageProps<"/kelompok/[i
   const profil = await bacaProfil(supabase, anggota);
   if (!profil || profil.kelompok_id !== id) redirect("/beranda");
 
-  const kelompok = peran.pemimpin.find((k) => k.kelompok_id === id);
+  const kelompok = await kelompokKelolaan(supabase, peran, id);
   const bolehUbah = Boolean(kelompok);
 
   return (
