@@ -13,6 +13,7 @@ type BarisPertemuan = {
   persembahan: number | null;
   ditutup_pada: string | null;
   kehadiran: { hadir: boolean }[];
+  bukti_persembahan: { count: number }[];
 };
 
 export default async function HalamanDaftarPertemuan({ params }: PageProps<"/kelompok/[id]/pertemuan">) {
@@ -24,7 +25,7 @@ export default async function HalamanDaftarPertemuan({ params }: PageProps<"/kel
   const hariIni = hariIniWib();
   const { data } = await supabase
     .from("pertemuan")
-    .select("id, tanggal, persembahan, ditutup_pada, kehadiran(hadir)")
+    .select("id, tanggal, persembahan, ditutup_pada, kehadiran(hadir), bukti_persembahan(count)")
     .eq("kelompok_id", id)
     .order("tanggal", { ascending: false })
     .limit(26);
@@ -65,6 +66,11 @@ export default async function HalamanDaftarPertemuan({ params }: PageProps<"/kel
                     className="-mx-2 flex min-h-14 flex-wrap items-center gap-x-3 gap-y-1 rounded-lg px-2 py-2 hover:bg-black/5 dark:hover:bg-white/10"
                   >
                     <span className="font-semibold">{tanggalPanjang(p.tanggal)}</span>
+                    {Number(p.persembahan ?? 0) > 0 && (p.bukti_persembahan[0]?.count ?? 0) === 0 ? (
+                      <span className="rounded-md border border-black/20 px-2 py-0.5 text-xs font-semibold opacity-70 dark:border-white/20">
+                        Bukti belum ada
+                      </span>
+                    ) : null}
                     {!p.ditutup_pada ? (
                       <span className="rounded-md border border-amber-700/50 px-2 py-0.5 text-xs font-semibold text-amber-800 dark:text-amber-300">
                         Belum ditutup

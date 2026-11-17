@@ -212,3 +212,60 @@ export async function hapusPertemuan(kelompokId: string, pertemuanId: string): P
   segarkan(kelompokId);
   redirect(`/kelompok/${kelompokId}/pertemuan`);
 }
+
+// ---------------------------------------------------------------- Bukti transfer (keputusan 16)
+
+const JENIS_BUKTI = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+const UKURAN_BUKTI_MAKS = 5 * 1024 * 1024;
+
+/**
+ * Mencatat bukti yang SUDAH diunggah langsung dari peramban ke folder
+ * bukti-persembahan/<id pertemuan>/. Database memastikan berkasnya ada,
+ * jenis dan ukurannya sah, dan paling banyak 5 per pertemuan.
+ */
+export async function catatBukti(
+  kelompokId: string,
+  pertemuanId: string,
+  berkas: { lokasi: string; nama: string; jenis: string; ukuran: number },
+): Promise<HasilAksi> {
+  if (!berkas.lokasi.startsWith(`${pertemuanId}/`)) return { galat: "Lokasi berkas tidak sah." };
+  if (!JENIS_BUKTI.includes(berkas.jenis)) return { galat: "Bukti harus berupa foto atau PDF." };
+  if (!(berkas.ukuran > 0 && berkas.ukuran <= UKURAN_BUKTI_MAKS)) return { galat: "Ukuran berkas lebih dari 5 MB." };
+
+  const { supabase, pemimpin, pertemuan } = await ambilPertemuan(kelompokId, pertemuanId);
+  if (!pemimpin || !pertemuan) return { galat: "Anda tidak berhak menambah bukti untuk pertemuan ini." };
+
+  const { error } = await supabase.from("bukti_persembahan").insert({
+    pertemuan_id: pertemuanId,
+    kelompok_id: kelompokId,
+    lokasi: berkas.lokasi,
+    nama_berkas: berkas.nama.slice(0, 200) || "bukti",
+    jenis: berkas.jenis,
+    ukuran: berkas.ukuran,
+  });
+  if (error) {
+    await supabase.storage.from("bukti-persembahan").remove([berkas.lokasi]);
+    return { galat: pesanGalat(error) };
+  }
+  segarkan(kelompokId, pertemuanId);
+  return { sukses: "Bukti tersimpan." };
+}
+
+export async function hapusBukti(kelompokId: string, pertemuanId: string, buktiId: string): Promise<HasilAksi> {
+  const { supabase, pemimpin, pertemuan } = await ambilPertemuan(kelompokId, pertemuanId);
+  if (!pemimpin || !pertemuan) return { galat: "Anda tidak berhak menghapus bukti ini." };
+
+  const { data, error } = await supabase
+    .from("bukti_persembahan")
+    .delete()
+    .eq("id", buktiId)
+    .eq("pertemuan_id", pertemuanId)
+    .select("lokasi");
+  if (error) return { galat: pesanGalat(error) };
+  if (!data?.length) return { galat: "Bukti tidak ditemukan." };
+
+  // Hapus berkasnya sekarang juga; bila gagal, berkas tetap ada di antrean hapus.
+  await supabase.storage.from("bukti-persembahan").remove(data.map((d) => d.lokasi as string));
+  segarkan(kelompokId, pertemuanId);
+  return { sukses: "Bukti dihapus." };
+}
