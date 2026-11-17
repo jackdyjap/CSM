@@ -234,3 +234,45 @@ export async function hapusFoto(anggotaId: string): Promise<HasilAksi> {
   segarkan(anggotaId, kelompokId);
   return { sukses: "Foto dihapus." };
 }
+
+// ---------------------------------------------------------------- Koreksi anggota (keputusan 13)
+
+export async function ubahStatusAktif(anggotaId: string, aktif: boolean): Promise<HasilAksi> {
+  const { supabase, kelompokId } = await kelompokAnggota(anggotaId);
+  if (!kelompokId) return { galat: "Anggota tidak ditemukan." };
+  const { data, error } = await supabase.from("anggota").update({ aktif }).eq("id", anggotaId).select("id");
+  if (error) return { galat: pesanGalat(error) };
+  if (!data?.length) return { galat: "Anda tidak berhak mengubah status anggota ini." };
+  segarkan(anggotaId, kelompokId);
+  return { sukses: aktif ? "Anggota diaktifkan kembali." : "Anggota ditandai tidak aktif." };
+}
+
+export async function pindahKelompok(anggotaId: string, _: HasilAksi, fd: FormData): Promise<HasilAksi> {
+  const tujuan = teks(fd, "kelompok_id");
+  if (!tujuan) return { galat: "Pilih kelompok tujuan." };
+  const { supabase, kelompokId } = await kelompokAnggota(anggotaId);
+  if (!kelompokId) return { galat: "Anggota tidak ditemukan." };
+  if (tujuan === kelompokId) return { galat: "Anggota sudah berada di kelompok itu." };
+
+  const { data, error } = await supabase
+    .from("anggota")
+    .update({ kelompok_id: tujuan })
+    .eq("id", anggotaId)
+    .select("id");
+  if (error) return { galat: pesanGalat(error) };
+  if (!data?.length) return { galat: "Anda tidak berhak memindahkan anggota ini." };
+
+  segarkan(anggotaId, kelompokId);
+  revalidatePath(`/kelompok/${tujuan}`);
+  redirect(`/kelompok/${tujuan}/anggota/${anggotaId}`);
+}
+
+export async function hapusAnggota(anggotaId: string): Promise<HasilAksi> {
+  const { supabase, kelompokId } = await kelompokAnggota(anggotaId);
+  if (!kelompokId) return { galat: "Anggota tidak ditemukan." };
+  const { data, error } = await supabase.from("anggota").delete().eq("id", anggotaId).select("id");
+  if (error) return { galat: pesanGalat(error) };
+  if (!data?.length) return { galat: "Anda tidak berhak menghapus anggota ini." };
+  revalidatePath(`/kelompok/${kelompokId}`);
+  redirect(`/kelompok/${kelompokId}`);
+}

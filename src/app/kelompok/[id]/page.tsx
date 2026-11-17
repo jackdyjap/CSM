@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { FormAksi } from "@/components/form-aksi";
 import { LabelKelengkapan } from "@/components/profil";
-import { Judul, Kotak, TautanTombol } from "@/components/ui";
+import { Isian, Judul, Kotak, Lipatan, Pilihan, TautanTombol } from "@/components/ui";
+import { hapusKelompokTotal, ubahKelompok } from "@/app/admin/aksi";
 import { waktuWib } from "@/lib/format";
 import { isianKosong, KOLOM_KELENGKAPAN, type Profil } from "@/lib/profil";
 import { kelompokKelolaan, wajibMasuk } from "@/lib/sesi";
@@ -47,6 +48,13 @@ export default async function HalamanKelompok({ params, searchParams }: PageProp
   ]);
 
   const undangan = (dataUndangan ?? []) as unknown as BarisUndangan[];
+  const adminDiSini = peran.admin;
+  const [{ data: dataTim }, { data: dataKelompok }] = adminDiSini
+    ? await Promise.all([
+        supabase.from("tim").select("id, nama").order("nama"),
+        supabase.from("kelompok").select("tim_id").eq("id", id).maybeSingle(),
+      ])
+    : [{ data: null }, { data: null }];
   const semua = ((anggota ?? []) as unknown as BarisAnggota[]).map((a) => ({ ...a, kosong: isianKosong(a) }));
   const jumlahBelumLengkap = semua.filter((a) => a.kosong.length > 0).length;
   const tampil = hanyaBelumLengkap ? semua.filter((a) => a.kosong.length > 0) : semua;
@@ -155,6 +163,41 @@ export default async function HalamanKelompok({ params, searchParams }: PageProp
               </li>
             ))}
           </ul>
+        </Kotak>
+      ) : null}
+      {adminDiSini && dataKelompok ? (
+        <Kotak judul="Pengaturan kelompok (Admin)">
+          <Lipatan judul="Ubah nama / pindah tim">
+            <FormAksi aksi={ubahKelompok.bind(null, id)} tombol="Simpan" jenisTombol="biasa" tanpaReset>
+              <Isian label="Nama kelompok" name="nama" defaultValue={kelompok.nama} required />
+              <Pilihan label="Berada di bawah tim" name="tim_id" defaultValue={dataKelompok.tim_id} required>
+                {(dataTim ?? []).map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.nama}
+                  </option>
+                ))}
+              </Pilihan>
+            </FormAksi>
+          </Lipatan>
+          <Lipatan judul="Hapus kelompok beserta seluruh isinya">
+            <p className="text-sm">
+              Semua anggota, profil dan foto, pertemuan, absensi, persembahan, proyek, dan catatan
+              kelompok ini akan <strong>terhapus permanen</strong>. Akun login anggota tetap ada.
+            </p>
+            <FormAksi
+              aksi={hapusKelompokTotal.bind(null, id)}
+              tombol="Hapus kelompok ini"
+              jenisTombol="bahaya"
+              konfirmasi={`Yakin menghapus ${kelompok.nama} beserta seluruh isinya? Tindakan ini tidak bisa dibatalkan.`}
+            >
+              <Isian
+                label={`Ketik nama kelompok untuk konfirmasi: ${kelompok.nama}`}
+                name="konfirmasi"
+                autoComplete="off"
+                required
+              />
+            </FormAksi>
+          </Lipatan>
         </Kotak>
       ) : null}
     </main>

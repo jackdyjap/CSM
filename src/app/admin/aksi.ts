@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { alamatSitus } from "@/lib/alamat";
 import { pesanGalat } from "@/lib/galat";
 import type { HasilAksi } from "@/lib/hasil";
@@ -133,4 +134,65 @@ export async function buatTautanAturUlang(
     tautan,
     teksWa: `Halo ${nama}, ini tautan untuk membuat kata sandi baru di aplikasi absensi kelompok (berlaku 24 jam, sekali pakai): ${tautan}`,
   };
+}
+
+// ---------------------------------------------------------------- Koreksi data (keputusan 13–14)
+
+export async function ubahNamaTim(timId: string, _: HasilAksi, fd: FormData): Promise<HasilAksi> {
+  const { supabase } = await wajibAdmin();
+  const nama = teks(fd, "nama");
+  if (!nama) return { galat: "Nama tim belum diisi." };
+  const { error } = await supabase.from("tim").update({ nama }).eq("id", timId);
+  if (error) return { galat: pesanGalat(error) };
+  revalidatePath("/admin");
+  return { sukses: "Nama tim diubah." };
+}
+
+export async function hapusTim(timId: string): Promise<HasilAksi> {
+  const { supabase } = await wajibAdmin();
+  const { error } = await supabase.from("tim").delete().eq("id", timId);
+  if (error) {
+    return {
+      galat:
+        error.code === "23503"
+          ? "Tim ini masih punya kelompok. Pindahkan atau hapus kelompoknya terlebih dahulu."
+          : pesanGalat(error),
+    };
+  }
+  revalidatePath("/admin");
+  return { sukses: "Tim dihapus." };
+}
+
+export async function ubahKelompok(kelompokId: string, _: HasilAksi, fd: FormData): Promise<HasilAksi> {
+  const { supabase } = await wajibAdmin();
+  const nama = teks(fd, "nama");
+  const timId = teks(fd, "tim_id");
+  if (!nama || !timId) return { galat: "Nama kelompok dan tim wajib diisi." };
+  const { error } = await supabase.from("kelompok").update({ nama, tim_id: timId }).eq("id", kelompokId);
+  if (error) return { galat: pesanGalat(error) };
+  revalidatePath("/admin");
+  revalidatePath(`/kelompok/${kelompokId}`);
+  return { sukses: "Kelompok diperbarui." };
+}
+
+export async function hapusKelompokTotal(kelompokId: string, _: HasilAksi, fd: FormData): Promise<HasilAksi> {
+  const { supabase } = await wajibAdmin();
+  const { error } = await supabase.rpc("hapus_kelompok_total", {
+    p_kelompok: kelompokId,
+    p_konfirmasi: teks(fd, "konfirmasi"),
+  });
+  if (error) return { galat: pesanGalat(error) };
+  revalidatePath("/admin");
+  redirect("/admin");
+}
+
+export async function ubahNamaAkun(akunId: string, _: HasilAksi, fd: FormData): Promise<HasilAksi> {
+  const { supabase } = await wajibAdmin();
+  const nama = teks(fd, "nama");
+  if (!nama) return { galat: "Nama belum diisi." };
+  const { data, error } = await supabase.from("akun").update({ nama_tampilan: nama }).eq("id", akunId).select("id");
+  if (error) return { galat: pesanGalat(error) };
+  if (!data?.length) return { galat: "Akun tidak ditemukan." };
+  revalidatePath("/admin/akun");
+  return { sukses: "Nama akun diubah." };
 }

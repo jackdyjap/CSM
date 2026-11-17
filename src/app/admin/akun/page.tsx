@@ -1,8 +1,8 @@
 import { FormAksi } from "@/components/form-aksi";
-import { Isian, Judul, Kotak, Pilihan, TautanTombol } from "@/components/ui";
+import { Isian, Judul, Kotak, Lipatan, Pilihan, TautanTombol } from "@/components/ui";
 import { PANJANG_SANDI_MINIMAL } from "@/lib/identitas";
 import { wajibAdmin } from "@/lib/sesi";
-import { beriPeran, buatAkun, buatTautanAturUlang, hapusPeran } from "../aksi";
+import { beriPeran, buatAkun, buatTautanAturUlang, hapusPeran, ubahNamaAkun } from "../aksi";
 
 const NAMA_PERAN = { admin: "Admin", ketua_tim: "Ketua Tim", pemimpin: "Pemimpin" } as const;
 
@@ -143,6 +143,11 @@ export default async function HalamanAkun() {
                   jenisTombol="biasa"
                 />
               </div>
+              <Lipatan judul="Ubah nama akun">
+                <FormAksi aksi={ubahNamaAkun.bind(null, a.id)} tombol="Simpan nama" jenisTombol="biasa" tanpaReset>
+                  <Isian label="Nama tampilan" name="nama" defaultValue={a.nama_tampilan} required />
+                </FormAksi>
+              </Lipatan>
             </li>
           ))}
         </ul>

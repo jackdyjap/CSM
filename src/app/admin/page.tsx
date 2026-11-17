@@ -1,7 +1,7 @@
 import { FormAksi } from "@/components/form-aksi";
-import { Isian, Judul, Kotak, Pilihan, TautanTombol } from "@/components/ui";
+import { Isian, Judul, Kotak, Lipatan, Pilihan, TautanTombol } from "@/components/ui";
 import { wajibAdmin } from "@/lib/sesi";
-import { tambahKelompok, tambahTim } from "./aksi";
+import { hapusTim, tambahKelompok, tambahTim, ubahNamaTim } from "./aksi";
 
 export default async function HalamanAdmin() {
   const { supabase } = await wajibAdmin();
@@ -43,6 +43,17 @@ export default async function HalamanAdmin() {
                       ))}
                   </ul>
                 )}
+                <Lipatan judul={`Ubah / hapus tim ${t.nama}`}>
+                  <FormAksi aksi={ubahNamaTim.bind(null, t.id)} tombol="Simpan nama" jenisTombol="biasa" tanpaReset>
+                    <Isian label="Nama tim" name="nama" defaultValue={t.nama} required />
+                  </FormAksi>
+                  <FormAksi
+                    aksi={hapusTim.bind(null, t.id)}
+                    tombol="Hapus tim"
+                    jenisTombol="bahaya"
+                    konfirmasi={`Hapus tim ${t.nama}? Tim hanya bisa dihapus bila tidak punya kelompok.`}
+                  />
+                </Lipatan>
               </li>
             ))}
           </ul>

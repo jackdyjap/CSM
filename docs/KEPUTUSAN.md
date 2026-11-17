@@ -67,3 +67,8 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - **Catatan khusus tidak berubah:** hanya pemimpin/wakil kelompoknya yang menulis. Admin dan Ketua Tim membaca saja.
     - **Ketua Tim tidak berubah:** hanya melihat kelompok di timnya.
     - Teknis: `bantu.kelompok_dipimpin()` kini juga mengembalikan semua kelompok bila pengguna Admin (migrasi `…0800`). Fungsi catatan memakai pemeriksa terpisah `bantu.boleh_tulis_catatan()`.
+13. **Setiap salah input bisa dikoreksi** oleh Admin dan pemimpin/wakil (Ketua Tim tetap hanya melihat):
+    - Admin: ubah nama/hapus **tim** (hapus hanya bila tidak punya kelompok); ubah nama/**pindah tim**/hapus **kelompok**; ubah **nama akun**; **pindah anggota** ke kelompok mana pun.
+    - Admin dan pemimpin: **hapus anggota**, tandai **aktif/tidak aktif** secara manual, **ubah tanggal** dan hapus pertemuan.
+14. **Hapus kelompok beserta isinya** (anggota, pertemuan, absensi, persembahan, proyek, catatan) hanya oleh Admin, setelah **mengetik nama kelompok persis**. Akun login anggota tidak ikut terhapus. Tercatat di log (`hapus_kelompok_total`).
+15. **Catatan khusus yang salah tulis** boleh diubah/dihapus oleh pemimpin kelompoknya **dan Admin**. Menulis catatan baru tetap hanya pemimpin/wakil.
