@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { KotakKartu } from "@/components/kotak-kartu";
 import { ProfilUbah } from "@/components/profil";
+import { RiwayatKehadiran } from "@/components/riwayat-kehadiran";
 import { Judul, TautanTombol } from "@/components/ui";
 import { bacaProfil } from "@/lib/profil-server";
 import { wajibMasuk } from "@/lib/sesi";
@@ -15,8 +16,11 @@ export default async function HalamanProfilSaya() {
   return (
     <main>
       <Judul kecil={`Anggota ${peran.anggota.kelompok_nama}`}>Profil saya</Judul>
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap gap-2">
         <TautanTombol href="/beranda">← Beranda</TautanTombol>
+        <TautanTombol href="/hadir" jenis="utama">
+          Check-in pertemuan
+        </TautanTombol>
       </div>
       <KotakKartu
         supabase={supabase}
@@ -25,6 +29,7 @@ export default async function HalamanProfilSaya() {
         kelompokId={profil.kelompok_id}
         mode="diri"
       />
+      <RiwayatKehadiran supabase={supabase} />
       <ProfilUbah supabase={supabase} profil={profil} olehPemimpin={false} />
     </main>
   );

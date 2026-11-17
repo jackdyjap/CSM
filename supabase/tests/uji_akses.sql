@@ -1272,6 +1272,62 @@ select tests.periksa('Pembuatan ulang kartu tercatat di log',
 
 
 -- =====================================================================
+-- UJI FASE 8 · CHECK-IN MANDIRI DENGAN QR PERTEMUAN (keputusan 23)
+-- Pertemuan A1 HARI INI yang baru (rapat lama A1 sudah dihapus di uji bukti).
+-- =====================================================================
+select tests.keluar();
+insert into tests.ids (nama, id) values ('rapat_ci', '88888888-0000-0000-0000-0000000000a1');
+insert into public.pertemuan (id, kelompok_id, tanggal, dibuka_pada) values (tests.id('rapat_ci'), tests.id('kel_a1'), bantu.hari_ini_wib(), now());
+-- Kode jendela sebelumnya (masih diterima) dan dua jendela lalu (harus ditolak: QR difoto lalu dipakai belakangan).
+select tests.simpan('kode_ci_sebelum',
+  internal.kode_qr_pertemuan(tests.id('rapat_ci'), (select rahasia from internal.pertemuan_rahasia where pertemuan_id = tests.id('rapat_ci')), internal.jendela_qr() - 1));
+select tests.simpan('kode_ci_foto_lama',
+  internal.kode_qr_pertemuan(tests.id('rapat_ci'), (select rahasia from internal.pertemuan_rahasia where pertemuan_id = tests.id('rapat_ci')), internal.jendela_qr() - 2));
+-- Kode yang SAH untuk pertemuan A1 KEMARIN (dibuat Sari di Uji 2; tidak boleh diterima).
+select tests.simpan('kode_kemarin',
+  (select internal.kode_qr_pertemuan(p.id, s.rahasia, internal.jendela_qr())
+     from public.pertemuan p join internal.pertemuan_rahasia s on s.pertemuan_id = p.id
+    where p.kelompok_id = tests.id('kel_a1') and p.tanggal = bantu.hari_ini_wib() - 1));
+update public.kehadiran set hadir = false, cara = null
+ where anggota_id in (tests.id('andi'), tests.id('cici')) and pertemuan_id = tests.id('rapat_ci');
+
+select tests.masuk_sebagai('budi');
+select tests.harus_berhasil('Budi: menampilkan QR pertemuan A1 hari ini',
+  $q$ select tests.simpan('kode_ci', (select kode from public.token_qr_pertemuan(tests.id('rapat_ci')))) $q$);
+select tests.periksa('QR pertemuan: kode 20 karakter dan sisa waktu 1–45 detik',
+  (select length(kode) = 20 and sisa_detik between 1 and 45 from public.token_qr_pertemuan(tests.id('rapat_ci'))));
+select tests.harus_gagal('Budi: QR untuk pertemuan kemarin tidak bisa ditampilkan',
+  $q$ select * from public.token_qr_pertemuan((select id from public.pertemuan
+        where kelompok_id = tests.id('kel_a1') and tanggal = bantu.hari_ini_wib() - 1)) $q$);
+
+select tests.masuk_sebagai('u_cici');
+select tests.harus_gagal('Cici: QR yang difoto dan dipakai lebih dari 2 jendela kemudian ditolak',
+  $q$ select * from public.check_in((select teks from tests.nilai where nama = 'kode_ci_foto_lama')) $q$);
+select tests.harus_gagal('Cici: kode sah untuk pertemuan KEMARIN ditolak',
+  $q$ select * from public.check_in((select teks from tests.nilai where nama = 'kode_kemarin')) $q$);
+select tests.periksa('Cici: kode jendela sebelumnya masih diterima (jeda koneksi lambat)',
+  (select kelompok_nama is not null from public.check_in(upper((select teks from tests.nilai where nama = 'kode_ci_sebelum')))));
+select tests.keluar();
+select tests.periksa('Kehadiran Cici tercatat "scan sendiri" oleh akunnya sendiri',
+  (select hadir and cara = 'scan_sendiri' and dicatat_oleh = tests.id('u_cici') from public.kehadiran
+    where pertemuan_id = tests.id('rapat_ci') and anggota_id = tests.id('cici')));
+
+select tests.masuk_sebagai('budi');
+select tests.harus_berhasil('Budi: menutup absensi pertemuan hari ini',
+  $q$ select public.tutup_pertemuan(tests.id('rapat_ci')) $q$);
+select tests.masuk_sebagai('u_andi');
+select tests.harus_gagal('Andi: check-in setelah absensi ditutup ditolak',
+  $q$ select * from public.check_in((select teks from tests.nilai where nama = 'kode_ci')) $q$);
+select tests.masuk_sebagai('budi');
+select tests.harus_gagal('Budi: QR tidak bisa ditampilkan setelah absensi ditutup',
+  $q$ select * from public.token_qr_pertemuan(tests.id('rapat_ci')) $q$);
+select tests.masuk_sebagai('sari');
+select tests.harus_gagal('Sari (wakil, bukan anggota): tidak bisa check-in',
+  $q$ select * from public.check_in((select teks from tests.nilai where nama = 'kode_ci')) $q$);
+select tests.keluar();
+
+
+-- =====================================================================
 -- RINGKASAN
 -- =====================================================================
 select no, case when lulus then 'LULUS' else 'GAGAL' end as hasil, nama, info

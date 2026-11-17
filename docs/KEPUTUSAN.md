@@ -101,3 +101,12 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - Pemimpin/wakil dan Admin men-scan di mode pertemuan (**Scan kartu QR**). Kartu kelompok lain ditolak; pertemuan yang absensinya sudah ditutup ditolak (migrasi `…1400`).
     - **Kartu hilang**: pemimpin/wakil atau Admin membuat ulang kode (`buat_ulang_kode_kartu`, tercatat di log); kartu lama langsung tidak berlaku.
     - Pustaka: `qrcode` 1.5.4 (membuat QR, di server) dan `qr-scanner` 1.4.2 (membaca dari kamera, di peramban), keduanya MIT.
+
+## Diputuskan saat Fase 8 (17 November 2026)
+
+23. **QR pertemuan dan check-in mandiri**:
+    - Pemimpin/wakil atau Admin menampilkan **QR pertemuan** (layar penuh) dari mode pertemuan **hari ini**. QR berganti tiap 45 detik (aturan Fase 1), dengan hitung mundur dan penghitung "Hadir X dari Y" yang diperbarui tiap 5 detik. Layar dijaga tetap menyala bila peramban mendukung.
+    - QR berisi **alamat** `…/hadir?k=<kode>`, sehingga anggota cukup memindainya dengan **kamera HP biasa / Google Lens**. Tombol "Scan QR pertemuan" juga tersedia di aplikasi.
+    - Pencatatan dijalankan dari HP **setelah halaman terbuka** (bukan saat alamat dimuat), supaya pratinjau tautan tidak ikut mencatat kehadiran.
+    - Pengguna yang belum login diarahkan ke halaman masuk lalu **kembali ke halaman tujuan** (`?lanjut=`). Hanya jalur di dalam aplikasi yang diterima (pencegahan *open redirect*).
+    - **Riwayat kehadiran** (12 pertemuan terakhir) tampil di Profil saya: hadir/tidak, cara, dan kategori alasan. Catatan pemimpin tidak ditampilkan.

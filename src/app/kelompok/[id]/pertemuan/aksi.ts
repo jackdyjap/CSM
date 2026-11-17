@@ -2,7 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { alamatSitus } from "@/lib/alamat";
 import { pesanGalat } from "@/lib/galat";
+import { alamatCheckIn } from "@/lib/kartu";
+import { svgQr } from "@/lib/qr-server";
 import type { HasilAksi } from "@/lib/hasil";
 import { bacaRupiah, PILIHAN_ALASAN } from "@/lib/pertemuan";
 import { hariIniWib } from "@/lib/profil";
@@ -286,4 +289,29 @@ export async function scanKartu(kelompokId: string, pertemuanId: string, kode: s
   if (error || !baris) return { galat: pesanGalat(error, "Kartu tidak bisa dibaca. Coba lagi.") };
   if (!baris.sudah_tercatat) segarkan(kelompokId, pertemuanId);
   return { nama: baris.nama_lengkap as string, sudah: Boolean(baris.sudah_tercatat) };
+}
+
+// ---------------------------------------------------------------- QR pertemuan (keputusan 23)
+
+export type HasilTokenQr = { galat?: string; svg?: string; sisaDetik?: number };
+
+/** QR pertemuan yang sedang berlaku (berganti tiap 45 detik), sebagai SVG berisi alamat check-in. */
+export async function tokenQr(kelompokId: string, pertemuanId: string): Promise<HasilTokenQr> {
+  const { supabase, pemimpin } = await ambilPertemuan(kelompokId, pertemuanId);
+  if (!pemimpin) return { galat: "Anda tidak berhak menampilkan QR pertemuan ini." };
+  const { data, error } = await supabase.rpc("token_qr_pertemuan", { p_pertemuan: pertemuanId });
+  const baris = Array.isArray(data) ? data[0] : null;
+  if (error || !baris) return { galat: pesanGalat(error, "QR belum bisa ditampilkan. Coba lagi.") };
+  const svg = await svgQr(alamatCheckIn(await alamatSitus(), baris.kode as string));
+  return { svg, sisaDetik: Number(baris.sisa_detik) };
+}
+
+/** Jumlah yang sudah hadir dan jumlah anggota aktif, untuk penghitung di layar QR. */
+export async function hitungHadir(kelompokId: string, pertemuanId: string): Promise<{ hadir: number; total: number }> {
+  const { supabase } = await wajibMasuk();
+  const [{ count: hadir }, { count: total }] = await Promise.all([
+    supabase.from("kehadiran").select("anggota_id", { count: "exact", head: true }).eq("pertemuan_id", pertemuanId).eq("hadir", true),
+    supabase.from("anggota").select("id", { count: "exact", head: true }).eq("kelompok_id", kelompokId).eq("aktif", true),
+  ]);
+  return { hadir: hadir ?? 0, total: total ?? 0 };
 }

@@ -5,11 +5,12 @@ import { useActionState } from "react";
 import { Isian, Pesan, Tombol } from "@/components/ui";
 import { masuk, type HasilMasuk } from "./aksi";
 
-export function FormMasuk() {
+export function FormMasuk({ lanjut }: { lanjut?: string }) {
   const [hasil, aksi, sedangProses] = useActionState<HasilMasuk, FormData>(masuk, {});
 
   return (
     <form action={aksi}>
+      {lanjut ? <input type="hidden" name="lanjut" value={lanjut} /> : null}
       {hasil.galat ? <Pesan jenis="galat">{hasil.galat}</Pesan> : null}
       <Isian
         label="Email atau nomor HP"

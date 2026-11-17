@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { BuktiPersembahan, type BarisBukti } from "@/components/bukti-persembahan";
 import { DaftarHadir, type BarisHadir } from "@/components/daftar-hadir";
+import { LayarQrPertemuan } from "@/components/layar-qr-pertemuan";
 import { PemindaiKartu } from "@/components/pemindai-kartu";
 import { FormAksi } from "@/components/form-aksi";
 import { FormAlasan } from "@/components/form-alasan";
@@ -9,7 +10,7 @@ import { waktuWib } from "@/lib/format";
 import { PILIHAN_ALASAN, rupiah, tanggalPanjang, type Alasan } from "@/lib/pertemuan";
 import { hariIniWib } from "@/lib/profil";
 import { aksesKelompok, wajibMasuk } from "@/lib/sesi";
-import { bukaKembali, hapusPertemuan, scanKartu, simpanRingkasan, tutupAbsensi, ubahTanggal } from "../aksi";
+import { bukaKembali, hapusPertemuan, hitungHadir, scanKartu, simpanRingkasan, tokenQr, tutupAbsensi, ubahTanggal } from "../aksi";
 
 type Kehadiran = {
   anggota_id: string;
@@ -135,6 +136,12 @@ export default async function HalamanPertemuan({ params }: PageProps<"/kelompok/
         />
       ) : (
         <Kotak>
+          {pertemuan.tanggal === hariIniWib() ? (
+            <LayarQrPertemuan
+              ambilToken={tokenQr.bind(null, id, pertemuanId)}
+              ambilJumlah={hitungHadir.bind(null, id, pertemuanId)}
+            />
+          ) : null}
           <PemindaiKartu aksi={scanKartu.bind(null, id, pertemuanId)} />
           <DaftarHadir
             // dipasang ulang saat data hadir dari server berubah (mis. setelah scan kartu)

@@ -43,7 +43,8 @@ export async function proxy(request: NextRequest) {
   if (!sudahMasuk && !publik) {
     const url = request.nextUrl.clone();
     url.pathname = "/masuk";
-    url.search = "";
+    // Kembali ke halaman tujuan setelah login (mis. tautan check-in QR).
+    url.search = jalur === "/" || jalur === "/beranda" ? "" : `?lanjut=${encodeURIComponent(jalur + request.nextUrl.search)}`;
     return NextResponse.redirect(url);
   }
 

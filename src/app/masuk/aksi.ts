@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { bacaIdentitas, PESAN_IDENTITAS_SALAH } from "@/lib/identitas";
+import { tujuanAman } from "@/lib/tujuan";
 import { buatClientServer } from "@/lib/supabase/server";
 
 export type HasilMasuk = { galat?: string; identitas?: string };
@@ -26,5 +27,5 @@ export async function masuk(_sebelumnya: HasilMasuk, formData: FormData): Promis
       identitas: isian,
     };
   }
-  redirect("/beranda");
+  redirect(tujuanAman(formData.get("lanjut")));
 }
