@@ -28,3 +28,24 @@ body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-text-size-adjust: 100%;
 }
+
+/* Cetak kartu anggota (Fase 7): hanya kartu yang tercetak. */
+@page {
+  size: A4;
+  margin: 10mm;
+}
+@media print {
+  body {
+    background: #fff;
+  }
+  body > div {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+  .jangan-cetak {
+    display: none !important;
+  }
+  .kartu {
+    break-inside: avoid;
+  }
+}

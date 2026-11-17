@@ -1219,6 +1219,59 @@ select tests.keluar();
 
 
 -- =====================================================================
+-- UJI FASE 7 · QR KARTU ANGGOTA (keputusan 22)
+-- Memakai Kelompok T1 (pemimpin Budi): t01 = pertemuan kemarin yang BELUM
+-- ditutup, t07 = pertemuan 7 hari lalu yang sudah ditutup.
+-- =====================================================================
+select tests.keluar();
+select tests.simpan('kartu_m3_lama', (select kode_qr from public.anggota where id = tests.id('m3')));
+
+select tests.masuk_sebagai('budi');
+select tests.periksa('Budi: scan kartu M Tiga di pertemuan yang masih terbuka -> hadir',
+  (select not sudah_tercatat and nama_lengkap = 'M Tiga'
+     from public.scan_kartu_anggota(tests.id('t01'), (select teks from tests.nilai where nama = 'kartu_m3_lama'))));
+select tests.periksa('Kehadiran M Tiga tercatat dengan cara scan pemimpin',
+  (select hadir and cara = 'scan_pemimpin' from public.kehadiran
+    where pertemuan_id = tests.id('t01') and anggota_id = tests.id('m3')));
+select tests.periksa('Budi: scan kartu yang sama lagi -> sudah tercatat (tidak ganda)',
+  (select sudah_tercatat from public.scan_kartu_anggota(tests.id('t01'),
+     upper(' ' || (select teks from tests.nilai where nama = 'kartu_m3_lama') || ' '))));
+select tests.harus_gagal('Budi: scan kartu di pertemuan yang absensinya sudah ditutup ditolak',
+  $q$ select * from public.scan_kartu_anggota(tests.id('t07'), (select teks from tests.nilai where nama = 'kartu_m3_lama')) $q$);
+
+-- Buat ulang kode kartu
+select tests.masuk_sebagai('dewi');
+select tests.harus_gagal('Dewi (pemimpin B1): tidak bisa membuat ulang kartu anggota T1',
+  $q$ select public.buat_ulang_kode_kartu(tests.id('m3')) $q$);
+select tests.masuk_sebagai('ketua_a');
+select tests.harus_gagal('Ketua Tim A: tidak bisa membuat ulang kartu',
+  $q$ select public.buat_ulang_kode_kartu(tests.id('m3')) $q$);
+select tests.masuk_sebagai('u_andi');
+select tests.harus_gagal('Andi (anggota): tidak bisa membuat ulang kartunya sendiri',
+  $q$ select public.buat_ulang_kode_kartu(tests.id('andi')) $q$);
+select tests.masuk_sebagai('budi');
+select tests.harus_berhasil('Budi: membuat ulang kartu M Tiga (kartu hilang)',
+  $q$ select public.buat_ulang_kode_kartu(tests.id('m3')) $q$);
+select tests.keluar();
+select tests.periksa('Kode kartu M Tiga berganti',
+  (select kode_qr <> (select teks from tests.nilai where nama = 'kartu_m3_lama') and length(kode_qr) = 32
+     from public.anggota where id = tests.id('m3')));
+update public.kehadiran set hadir = false, cara = null where pertemuan_id = tests.id('t01') and anggota_id = tests.id('m3');
+select tests.masuk_sebagai('budi');
+select tests.harus_gagal('Kartu lama M Tiga ditolak setelah dibuat ulang',
+  $q$ select * from public.scan_kartu_anggota(tests.id('t01'), (select teks from tests.nilai where nama = 'kartu_m3_lama')) $q$);
+select tests.periksa('Kartu baru M Tiga diterima',
+  (select not sudah_tercatat from public.scan_kartu_anggota(tests.id('t01'),
+     (select kode_qr from public.anggota where id = tests.id('m3')))));
+select tests.masuk_sebagai('admin');
+select tests.harus_berhasil('Admin: membuat ulang kartu anggota kelompok mana pun',
+  $q$ select public.buat_ulang_kode_kartu(tests.id('bima')) $q$);
+select tests.keluar();
+select tests.periksa('Pembuatan ulang kartu tercatat di log',
+  (select count(*) from public.log_aktivitas where tindakan = 'buat_ulang_kode_kartu') = 2);
+
+
+-- =====================================================================
 -- RINGKASAN
 -- =====================================================================
 select no, case when lulus then 'LULUS' else 'GAGAL' end as hasil, nama, info

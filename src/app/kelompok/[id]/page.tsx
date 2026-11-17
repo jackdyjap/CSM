@@ -105,9 +105,12 @@ export default async function HalamanKelompok({ params, searchParams }: PageProp
       <Kotak judul={`Anggota (${semua.length})`}>
         <div className="mb-3 flex flex-wrap gap-2">
           {kelompok.bolehUbah ? (
-            <TautanTombol href={`/kelompok/${id}/anggota/baru`} jenis="utama">
-              + Tambah anggota
-            </TautanTombol>
+            <>
+              <TautanTombol href={`/kelompok/${id}/anggota/baru`} jenis="utama">
+                + Tambah anggota
+              </TautanTombol>
+              <TautanTombol href={`/kelompok/${id}/kartu`}>Cetak kartu QR</TautanTombol>
+            </>
           ) : null}
           {jumlahBelumLengkap > 0 || hanyaBelumLengkap ? (
             <TautanTombol href={hanyaBelumLengkap ? `/kelompok/${id}` : `/kelompok/${id}?belum=1`}>

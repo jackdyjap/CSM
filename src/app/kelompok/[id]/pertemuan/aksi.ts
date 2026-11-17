@@ -269,3 +269,21 @@ export async function hapusBukti(kelompokId: string, pertemuanId: string, buktiI
   segarkan(kelompokId, pertemuanId);
   return { sukses: "Bukti dihapus." };
 }
+
+// ---------------------------------------------------------------- Scan kartu QR (keputusan 22)
+
+export type HasilScan = { galat?: string; nama?: string; sudah?: boolean };
+
+/**
+ * Menandai hadir dari kode kartu yang dipindai. Database memastikan kartu
+ * milik anggota kelompok ini, pertemuan masih terbuka, dan tidak ganda.
+ */
+export async function scanKartu(kelompokId: string, pertemuanId: string, kode: string): Promise<HasilScan> {
+  if (!/^[0-9a-f]{32}$/.test(kode)) return { galat: "Ini bukan kartu anggota." };
+  const { supabase } = await wajibMasuk();
+  const { data, error } = await supabase.rpc("scan_kartu_anggota", { p_pertemuan: pertemuanId, p_kode_kartu: kode });
+  const baris = Array.isArray(data) ? data[0] : null;
+  if (error || !baris) return { galat: pesanGalat(error, "Kartu tidak bisa dibaca. Coba lagi.") };
+  if (!baris.sudah_tercatat) segarkan(kelompokId, pertemuanId);
+  return { nama: baris.nama_lengkap as string, sudah: Boolean(baris.sudah_tercatat) };
+}

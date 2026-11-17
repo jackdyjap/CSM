@@ -276,3 +276,14 @@ export async function hapusAnggota(anggotaId: string): Promise<HasilAksi> {
   revalidatePath(`/kelompok/${kelompokId}`);
   redirect(`/kelompok/${kelompokId}`);
 }
+
+// ---------------------------------------------------------------- Kartu QR (keputusan 22)
+
+export async function buatUlangKartu(anggotaId: string): Promise<HasilAksi> {
+  const { supabase, kelompokId } = await kelompokAnggota(anggotaId);
+  if (!kelompokId) return { galat: "Anggota tidak ditemukan." };
+  const { error } = await supabase.rpc("buat_ulang_kode_kartu", { p_anggota: anggotaId });
+  if (error) return { galat: pesanGalat(error) };
+  segarkan(anggotaId, kelompokId);
+  return { sukses: "Kode kartu baru dibuat. Kartu lama tidak berlaku lagi; cetak kartu baru." };
+}

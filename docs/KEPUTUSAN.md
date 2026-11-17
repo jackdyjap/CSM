@@ -91,3 +91,13 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - **Persembahan bulan ini** = bulan kalender WIB.
     - Dibuka oleh Ketua Tim dari tim itu dan Admin.
 21. **Ketua Tim membuka detail kelompok di timnya dalam mode baca saja**: anggota dan profil (termasuk catatan dan status proyek), pertemuan (hadir, tidak hadir dan alasannya, persembahan, bukti transfer), proyek, dan tindak lanjut. Semua tombol ubah disembunyikan; database tetap menolak perubahan dari Ketua Tim.
+
+## Diputuskan saat Fase 7 (17 November 2026)
+
+22. **QR kartu anggota**:
+    - Kartu **seukuran KTP** (85,6 × 54 mm), **8 per lembar A4**, berisi nama, kelompok, dan QR. Dicetak dari `/kelompok/[id]/kartu` (semua anggota aktif) atau dari profil anggota (satu kartu).
+    - Isi QR = `CSM-K:` + kode acak 32 karakter (tanpa data pribadi). Awalan membedakannya dari QR pertemuan (Fase 8).
+    - Anggota yang punya akun melihat **Kartu saya** di Profil saya, untuk ditunjukkan dari HP.
+    - Pemimpin/wakil dan Admin men-scan di mode pertemuan (**Scan kartu QR**). Kartu kelompok lain ditolak; pertemuan yang absensinya sudah ditutup ditolak (migrasi `…1400`).
+    - **Kartu hilang**: pemimpin/wakil atau Admin membuat ulang kode (`buat_ulang_kode_kartu`, tercatat di log); kartu lama langsung tidak berlaku.
+    - Pustaka: `qrcode` 1.5.4 (membuat QR, di server) dan `qr-scanner` 1.4.2 (membaca dari kamera, di peramban), keduanya MIT.
