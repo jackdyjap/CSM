@@ -99,5 +99,6 @@ export async function setelStatus(
   const { error } = await supabase.from("status_proyek").upsert(baris, { onConflict: "proyek_id,anggota_id" });
   if (error) return { galat: pesanGalat(error) };
   segarkan(kelompokId, proyekId);
+  revalidatePath(`/kelompok/${kelompokId}/anggota/${anggotaId}`);
   return keterangan !== undefined ? { sukses: "Tersimpan." } : {};
 }

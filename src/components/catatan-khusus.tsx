@@ -46,7 +46,7 @@ export async function CatatanKhusus({
   kelompokId: string;
   anggotaId: string;
   nama: string;
-  /** Pemimpin/wakil kelompok ini. */
+  /** Pemimpin/wakil kelompok ini atau Admin (keputusan 18). */
   bolehTulis: boolean;
   /** Pemimpin/wakil kelompok ini atau Admin (keputusan 15). */
   bolehKoreksi: boolean;
@@ -112,7 +112,7 @@ export async function CatatanKhusus({
             </FormAksi>
           </Lipatan>
         ) : (
-          <p className="text-xs opacity-70">Catatan baru ditulis oleh pemimpin/wakil kelompok.</p>
+          <p className="text-xs opacity-70">Catatan baru ditulis oleh pemimpin/wakil kelompok atau Admin.</p>
         )}
       </Kotak>
     </section>

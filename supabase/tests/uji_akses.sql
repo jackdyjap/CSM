@@ -450,7 +450,7 @@ select tests.periksa('Admin: bisa membaca catatan Bima',
   (select count(*) from public.baca_catatan(tests.id('bima'))) = 1);
 select tests.periksa('Admin: bisa mengubah profil anggota kelompok mana pun (keputusan 12)',
   tests.baris_terkena($q$ update public.anggota set alamat = 'x' where id = tests.id('bima') $q$) = 1);
-select tests.harus_gagal('Admin: tidak bisa menulis catatan',
+select tests.harus_berhasil('Admin: bisa menulis catatan (keputusan 18)',
   $q$ select public.tulis_catatan(tests.id('bima'), 'umum', 'x') $q$);
 select tests.harus_berhasil('Admin: bisa membuat tim baru',
   $q$ insert into public.tim (nama) values ('Tim C') $q$);
@@ -808,7 +808,7 @@ select tests.harus_berhasil('Admin: membuat tautan undangan untuk B1',
   $q$ select * from public.buat_undangan(tests.id('kel_b1'), null) $q$);
 select tests.harus_berhasil('Admin: menampilkan QR pertemuan B1',
   $q$ select * from public.token_qr_pertemuan(tests.id('rapat_b1')) $q$);
-select tests.harus_gagal('Admin: tetap TIDAK bisa menulis catatan khusus',
+select tests.harus_berhasil('Admin: bisa menulis catatan khusus di kelompok mana pun (keputusan 18)',
   $q$ select public.tulis_catatan(tests.id('bima'), 'umum', 'x') $q$);
 select tests.harus_berhasil('Admin: bisa mengoreksi (mengubah) catatan khusus (keputusan 15)',
   $q$ select public.ubah_catatan((select teks::uuid from tests.nilai where nama = 'catatan_bima'), 'diubah') $q$);

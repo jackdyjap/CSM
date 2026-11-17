@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { CatatanKhusus } from "@/components/catatan-khusus";
+import { ProyekAnggota } from "@/components/proyek-anggota";
 import { ProfilBaca, ProfilUbah } from "@/components/profil";
 import { FormAksi } from "@/components/form-aksi";
 import { Judul, Kotak, Lipatan, Pilihan, TautanTombol } from "@/components/ui";
@@ -52,12 +53,13 @@ export default async function HalamanAnggota({ params }: PageProps<"/kelompok/[i
       ) : (
         <ProfilBaca supabase={supabase} profil={profil} />
       )}
+      <ProyekAnggota supabase={supabase} kelompokId={id} anggotaId={profil.id} bolehUbah={bolehUbah} />
       <CatatanKhusus
         supabase={supabase}
         kelompokId={id}
         anggotaId={profil.id}
         nama={profil.nama_lengkap}
-        bolehTulis={peran.pemimpin.some((k) => k.kelompok_id === id)}
+        bolehTulis={peran.admin || peran.pemimpin.some((k) => k.kelompok_id === id)}
         bolehKoreksi={peran.admin || peran.pemimpin.some((k) => k.kelompok_id === id)}
       />
     </main>
