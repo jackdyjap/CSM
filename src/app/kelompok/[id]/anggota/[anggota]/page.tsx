@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { CatatanKhusus } from "@/components/catatan-khusus";
+import { KotakKartu } from "@/components/kotak-kartu";
 import { ProyekAnggota } from "@/components/proyek-anggota";
 import { ProfilBaca, ProfilUbah } from "@/components/profil";
 import { FormAksi } from "@/components/form-aksi";
@@ -45,6 +46,7 @@ export default async function HalamanAnggota({ params }: PageProps<"/kelompok/[i
       {bolehUbah ? (
         <>
           <ProfilUbah supabase={supabase} profil={profil} olehPemimpin />
+          <KotakKartu supabase={supabase} anggotaId={profil.id} nama={profil.nama_lengkap} kelompokId={id} mode="kelola" />
           <KelolaAnggota
             anggotaId={profil.id}
             nama={profil.nama_lengkap}

@@ -18,7 +18,7 @@ Teknologi: **Next.js** (tampilan) + **Supabase** (login, database PostgreSQL, at
 | 4 | Mode pertemuan: absensi manual, alasan tidak hadir, persembahan (+ bukti transfer) | ✅ Berjalan di aplikasi (teruji 17 Nov 2026) |
 | 5 | Catatan khusus, proyek ketaatan, halaman tindak lanjut | ✅ Berjalan di aplikasi (teruji 17 Nov 2026) |
 | 6 | Dashboard Ketua Tim | 🔧 Kode selesai, 291 uji database lulus; belum dicoba di Supabase |
-| 7 | QR kartu anggota | ⏳ |
+| 7 | QR kartu anggota | 🔧 Kode selesai, 304 uji database lulus; belum dicoba di Supabase |
 | 8 | QR pertemuan yang berganti otomatis, akun mandiri anggota | ⏳ |
 | 9 | Laporan demografi dan ekspor | ⏳ |
 | 10 | Uji akses dengan akun tiap peran, lalu pilot | ⏳ |

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { BuktiPersembahan, type BarisBukti } from "@/components/bukti-persembahan";
 import { DaftarHadir, type BarisHadir } from "@/components/daftar-hadir";
+import { PemindaiKartu } from "@/components/pemindai-kartu";
 import { FormAksi } from "@/components/form-aksi";
 import { FormAlasan } from "@/components/form-alasan";
 import { Isian, IsianPanjang, Judul, Kotak, Lipatan, TautanTombol } from "@/components/ui";
@@ -8,7 +9,7 @@ import { waktuWib } from "@/lib/format";
 import { PILIHAN_ALASAN, rupiah, tanggalPanjang, type Alasan } from "@/lib/pertemuan";
 import { hariIniWib } from "@/lib/profil";
 import { aksesKelompok, wajibMasuk } from "@/lib/sesi";
-import { bukaKembali, hapusPertemuan, simpanRingkasan, tutupAbsensi, ubahTanggal } from "../aksi";
+import { bukaKembali, hapusPertemuan, scanKartu, simpanRingkasan, tutupAbsensi, ubahTanggal } from "../aksi";
 
 type Kehadiran = {
   anggota_id: string;
@@ -134,7 +135,10 @@ export default async function HalamanPertemuan({ params }: PageProps<"/kelompok/
         />
       ) : (
         <Kotak>
+          <PemindaiKartu aksi={scanKartu.bind(null, id, pertemuanId)} />
           <DaftarHadir
+            // dipasang ulang saat data hadir dari server berubah (mis. setelah scan kartu)
+            key={[...kehadiran.values()].filter((k) => k.hadir).map((k) => k.anggota_id).sort().join(",")}
             kelompokId={id}
             pertemuanId={pertemuanId}
             anggota={anggota.map(
