@@ -4,7 +4,7 @@ import { FormAksi } from "@/components/form-aksi";
 import { Isian, Judul, Kotak, TautanTombol } from "@/components/ui";
 import { rupiah, tanggalPanjang } from "@/lib/pertemuan";
 import { hariIniWib } from "@/lib/profil";
-import { wajibMasuk } from "@/lib/sesi";
+import { kelompokKelolaan, wajibMasuk } from "@/lib/sesi";
 import { mulaiPertemuan } from "./aksi";
 
 type BarisPertemuan = {
@@ -18,7 +18,7 @@ type BarisPertemuan = {
 export default async function HalamanDaftarPertemuan({ params }: PageProps<"/kelompok/[id]/pertemuan">) {
   const { id } = await params;
   const { supabase, peran } = await wajibMasuk();
-  const kelompok = peran.pemimpin.find((k) => k.kelompok_id === id);
+  const kelompok = await kelompokKelolaan(supabase, peran, id);
   if (!kelompok) redirect("/beranda");
 
   const hariIni = hariIniWib();

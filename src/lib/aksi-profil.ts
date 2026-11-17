@@ -12,7 +12,7 @@ import {
   PILIHAN_PENDIDIKAN,
   USIA_DEWASA,
 } from "@/lib/profil";
-import { wajibMasuk } from "@/lib/sesi";
+import { bolehKelola, wajibMasuk } from "@/lib/sesi";
 
 // Hak akses SELALU diperiksa database (aturan akses + penjaga jaga_anggota).
 // Pemeriksaan di sini hanya untuk pesan yang lebih jelas.
@@ -159,8 +159,8 @@ export async function simpanProfil(anggotaId: string, _: HasilAksi, fd: FormData
 
 export async function tambahAnggota(kelompokId: string, _: HasilAksi, fd: FormData): Promise<HasilAksi> {
   const { supabase, peran } = await wajibMasuk();
-  if (!peran.pemimpin.some((k) => k.kelompok_id === kelompokId)) {
-    return { galat: "Anda bukan pemimpin kelompok ini." };
+  if (!bolehKelola(peran, kelompokId)) {
+    return { galat: "Anda tidak berhak mengelola kelompok ini." };
   }
   const nama = teks(fd, "nama_lengkap");
   if (!nama) return { galat: "Nama lengkap wajib diisi." };

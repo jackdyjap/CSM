@@ -6,7 +6,7 @@ import { pesanGalat } from "@/lib/galat";
 import type { HasilAksi } from "@/lib/hasil";
 import { bacaRupiah, PILIHAN_ALASAN } from "@/lib/pertemuan";
 import { hariIniWib } from "@/lib/profil";
-import { wajibMasuk } from "@/lib/sesi";
+import { bolehKelola, wajibMasuk } from "@/lib/sesi";
 
 // Hak akses SELALU diperiksa database (aturan akses + tutup_pertemuan).
 // Pemeriksaan di sini hanya untuk pesan yang lebih jelas.
@@ -21,7 +21,7 @@ function segarkan(kelompokId: string, pertemuanId?: string) {
 /** Pertemuan milik kelompok ini (sekaligus memastikan bisa dibaca). */
 async function ambilPertemuan(kelompokId: string, pertemuanId: string) {
   const { supabase, peran } = await wajibMasuk();
-  const pemimpin = peran.pemimpin.some((k) => k.kelompok_id === kelompokId);
+  const pemimpin = bolehKelola(peran, kelompokId);
   const { data } = await supabase
     .from("pertemuan")
     .select("id, ditutup_pada")
@@ -35,8 +35,8 @@ async function ambilPertemuan(kelompokId: string, pertemuanId: string) {
 
 export async function mulaiPertemuan(kelompokId: string, _: HasilAksi, fd: FormData): Promise<HasilAksi> {
   const { supabase, peran } = await wajibMasuk();
-  if (!peran.pemimpin.some((k) => k.kelompok_id === kelompokId)) {
-    return { galat: "Anda bukan pemimpin kelompok ini." };
+  if (!bolehKelola(peran, kelompokId)) {
+    return { galat: "Anda tidak berhak mengelola kelompok ini." };
   }
   const tanggal = teks(fd, "tanggal") || hariIniWib();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(tanggal)) return { galat: "Tanggal tidak sah." };

@@ -3,12 +3,12 @@ import { FormAksi } from "@/components/form-aksi";
 import { PenjelasanData } from "@/components/profil";
 import { Isian, Judul, Kotak, TautanTombol } from "@/components/ui";
 import { tambahAnggota } from "@/lib/aksi-profil";
-import { wajibMasuk } from "@/lib/sesi";
+import { kelompokKelolaan, wajibMasuk } from "@/lib/sesi";
 
 export default async function HalamanTambahAnggota({ params }: PageProps<"/kelompok/[id]/anggota/baru">) {
   const { id } = await params;
-  const { peran } = await wajibMasuk();
-  const kelompok = peran.pemimpin.find((k) => k.kelompok_id === id);
+  const { supabase, peran } = await wajibMasuk();
+  const kelompok = await kelompokKelolaan(supabase, peran, id);
   if (!kelompok) redirect("/beranda");
 
   return (

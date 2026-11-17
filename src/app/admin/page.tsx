@@ -30,11 +30,16 @@ export default async function HalamanAdmin() {
                 {t.kelompok.length === 0 ? (
                   <p className="text-sm opacity-70">Belum ada kelompok.</p>
                 ) : (
-                  <ul className="list-disc pl-5 text-sm">
+                  <ul className="mt-1 space-y-1">
                     {[...t.kelompok]
-                      .sort((a, b) => a.nama.localeCompare(b.nama))
+                      .sort((a, b) => a.nama.localeCompare(b.nama, "id"))
                       .map((k) => (
-                        <li key={k.id}>{k.nama}</li>
+                        <li key={k.id}>
+                          <TautanTombol href={`/kelompok/${k.id}`} className="w-full justify-between">
+                            <span>{k.nama}</span>
+                            <span className="text-sm opacity-70">Buka →</span>
+                          </TautanTombol>
+                        </li>
                       ))}
                   </ul>
                 )}

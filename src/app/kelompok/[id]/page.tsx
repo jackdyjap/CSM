@@ -5,7 +5,7 @@ import { LabelKelengkapan } from "@/components/profil";
 import { Judul, Kotak, TautanTombol } from "@/components/ui";
 import { waktuWib } from "@/lib/format";
 import { isianKosong, KOLOM_KELENGKAPAN, type Profil } from "@/lib/profil";
-import { wajibMasuk } from "@/lib/sesi";
+import { kelompokKelolaan, wajibMasuk } from "@/lib/sesi";
 import { batalkanUndangan, buatTautanAturUlang, buatUndangan } from "./aksi";
 
 type BarisUndangan = {
@@ -27,7 +27,7 @@ export default async function HalamanKelompok({ params, searchParams }: PageProp
   const hanyaBelumLengkap = (await searchParams).belum === "1";
   const { supabase, peran } = await wajibMasuk();
 
-  const kelompok = peran.pemimpin.find((k) => k.kelompok_id === id);
+  const kelompok = await kelompokKelolaan(supabase, peran, id);
   if (!kelompok) redirect("/beranda");
 
   const [{ data: anggota }, { data: status }, { data: dataUndangan }] = await Promise.all([
@@ -54,11 +54,15 @@ export default async function HalamanKelompok({ params, searchParams }: PageProp
 
   return (
     <main>
-      <Judul kecil={`${kelompok.jabatan === "wakil" ? "Wakil" : "Pemimpin"} · ${kelompok.tim_nama}`}>
+      <Judul kecil={`${kelompok.sebagai} · ${kelompok.tim_nama}`}>
         {kelompok.nama}
       </Judul>
       <div className="mb-4">
-        <TautanTombol href="/beranda">← Beranda</TautanTombol>
+        {kelompok.sebagai === "Admin" ? (
+          <TautanTombol href="/admin">← Tim &amp; kelompok</TautanTombol>
+        ) : (
+          <TautanTombol href="/beranda">← Beranda</TautanTombol>
+        )}
       </div>
 
       <div className="mb-4">
