@@ -4,7 +4,7 @@ import { FormAksi } from "@/components/form-aksi";
 import { Isian, IsianPanjang, Judul, Kotak, Lipatan, TautanTombol } from "@/components/ui";
 import { tanggalPanjang } from "@/lib/pertemuan";
 import { hariIniWib } from "@/lib/profil";
-import { kelompokKelolaan, wajibMasuk } from "@/lib/sesi";
+import { aksesKelompok, wajibMasuk } from "@/lib/sesi";
 import { buatProyek } from "./aksi";
 
 type BarisProyek = {
@@ -18,7 +18,7 @@ type BarisProyek = {
 export default async function HalamanProyek({ params }: PageProps<"/kelompok/[id]/proyek">) {
   const { id } = await params;
   const { supabase, peran } = await wajibMasuk();
-  const kelompok = await kelompokKelolaan(supabase, peran, id);
+  const kelompok = await aksesKelompok(supabase, peran, id);
   if (!kelompok) redirect("/beranda");
 
   const [{ data }, { count: jumlahAktif }] = await Promise.all([
@@ -71,6 +71,7 @@ export default async function HalamanProyek({ params }: PageProps<"/kelompok/[id
         )}
       </Kotak>
 
+      {kelompok.bolehUbah ? (
       <Kotak>
         <Lipatan judul="+ Buat proyek baru">
           <FormAksi aksi={buatProyek.bind(null, id)} tombol="Buat proyek">
@@ -86,6 +87,7 @@ export default async function HalamanProyek({ params }: PageProps<"/kelompok/[id
           </FormAksi>
         </Lipatan>
       </Kotak>
+      ) : null}
     </main>
   );
 }

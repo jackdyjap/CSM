@@ -16,8 +16,8 @@ Teknologi: **Next.js** (tampilan) + **Supabase** (login, database PostgreSQL, at
 | 2 | Login, pengaturan peran, undangan | ✅ Berjalan di aplikasi (teruji 17 Nov 2026) |
 | 3 | Profil anggota (foto, wilayah), profil yang dibuat pemimpin | ✅ Berjalan di aplikasi (teruji 17 Nov 2026) |
 | 4 | Mode pertemuan: absensi manual, alasan tidak hadir, persembahan (+ bukti transfer) | ✅ Berjalan di aplikasi (teruji 17 Nov 2026) |
-| 5 | Catatan khusus, proyek ketaatan, halaman tindak lanjut | 🔧 Kode selesai, 278 uji database lulus; belum dicoba di Supabase |
-| 6 | Dashboard Ketua Tim | ⏳ |
+| 5 | Catatan khusus, proyek ketaatan, halaman tindak lanjut | ✅ Berjalan di aplikasi (teruji 17 Nov 2026) |
+| 6 | Dashboard Ketua Tim | 🔧 Kode selesai, 291 uji database lulus; belum dicoba di Supabase |
 | 7 | QR kartu anggota | ⏳ |
 | 8 | QR pertemuan yang berganti otomatis, akun mandiri anggota | ⏳ |
 | 9 | Laporan demografi dan ekspor | ⏳ |
@@ -27,7 +27,7 @@ Teknologi: **Next.js** (tampilan) + **Supabase** (login, database PostgreSQL, at
 
 | Folder | Isi |
 |---|---|
-| `src/app/` | Halaman aplikasi (masuk, beranda, profil, admin, kelompok: anggota, pertemuan, proyek, tindak lanjut; undangan, atur ulang) |
+| `src/app/` | Halaman aplikasi (masuk, beranda, profil, admin, dashboard tim, kelompok: anggota, pertemuan, proyek, tindak lanjut; undangan, atur ulang) |
 | `src/lib/` | Sambungan ke Supabase, pengolah email/nomor HP, pemeriksa login, aksi dan pilihan profil |
 | `src/components/` | Komponen tampilan (tombol, isian, kotak, formulir profil, pilihan wilayah, unggah foto) |
 | `src/proxy.ts` | Mengarahkan pengunjung yang belum login ke halaman masuk |

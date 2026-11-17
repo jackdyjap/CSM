@@ -1133,6 +1133,92 @@ select tests.periksa('Status proyek yang dihapus ikut hilang',
 
 
 -- =====================================================================
+-- UJI FASE 6 · RINGKASAN TIM (dashboard Ketua Tim, keputusan 20)
+-- Empat kelompok baru di Tim A dengan tanggal relatif terhadap Senin pekan ini:
+--   R1: pertemuan Senin ini DITUTUP (1 hadir, 1 tidak) + pertemuan 40 hari lalu -> sudah, 50%
+--   R2: pertemuan Senin ini BELUM ditutup                                     -> berlangsung
+--   R3: 3 pertemuan pekan-pekan lalu, satu anggota selalu absen               -> belum, tindak lanjut 1
+--   R4: persembahan hari ini 100.000 dan bulan lalu 50.000                    -> bulan ini 100.000
+-- =====================================================================
+select tests.keluar();
+create temporary table tgl as select
+  date_trunc('week', bantu.hari_ini_wib())::date as senin,
+  date_trunc('month', bantu.hari_ini_wib())::date as awal_bulan;
+grant select on tgl to authenticated;
+insert into tests.ids (nama, id) values
+  ('kel_r1', '77777777-0000-0000-0000-0000000000a1'), ('kel_r2', '77777777-0000-0000-0000-0000000000a2'),
+  ('kel_r3', '77777777-0000-0000-0000-0000000000a3'), ('kel_r4', '77777777-0000-0000-0000-0000000000a4'),
+  ('r1a', '77777777-0000-0000-0000-0000000000b1'), ('r1b', '77777777-0000-0000-0000-0000000000b2'),
+  ('r3a', '77777777-0000-0000-0000-0000000000b3');
+insert into public.kelompok (id, tim_id, nama) values
+  (tests.id('kel_r1'), tests.id('tim_a'), 'R1'), (tests.id('kel_r2'), tests.id('tim_a'), 'R2'),
+  (tests.id('kel_r3'), tests.id('tim_a'), 'R3'), (tests.id('kel_r4'), tests.id('tim_a'), 'R4');
+insert into public.anggota (id, kelompok_id, nama_lengkap, bergabung_pada) values
+  (tests.id('r1a'), tests.id('kel_r1'), 'R1 A', bantu.hari_ini_wib() - 100),
+  (tests.id('r1b'), tests.id('kel_r1'), 'R1 B', bantu.hari_ini_wib() - 100),
+  (tests.id('r3a'), tests.id('kel_r3'), 'R3 A', bantu.hari_ini_wib() - 100);
+-- R1
+insert into public.pertemuan (id, kelompok_id, tanggal, dibuka_pada, ditutup_pada) values
+  ('77777777-0000-0000-0000-0000000000c1', tests.id('kel_r1'), (select senin from tgl), now(), now()),
+  ('77777777-0000-0000-0000-0000000000c2', tests.id('kel_r1'), (select senin from tgl) - 40, now(), now());
+insert into public.kehadiran (pertemuan_id, anggota_id, hadir) values
+  ('77777777-0000-0000-0000-0000000000c1', tests.id('r1a'), true),
+  ('77777777-0000-0000-0000-0000000000c1', tests.id('r1b'), false),
+  ('77777777-0000-0000-0000-0000000000c2', tests.id('r1a'), true),
+  ('77777777-0000-0000-0000-0000000000c2', tests.id('r1b'), true);
+-- R2
+insert into public.pertemuan (kelompok_id, tanggal, dibuka_pada) values (tests.id('kel_r2'), (select senin from tgl), now());
+-- R3
+insert into public.pertemuan (id, kelompok_id, tanggal, dibuka_pada, ditutup_pada) values
+  ('77777777-0000-0000-0000-0000000000d1', tests.id('kel_r3'), (select senin from tgl) - 1,  now(), now()),
+  ('77777777-0000-0000-0000-0000000000d2', tests.id('kel_r3'), (select senin from tgl) - 8,  now(), now()),
+  ('77777777-0000-0000-0000-0000000000d3', tests.id('kel_r3'), (select senin from tgl) - 15, now(), now());
+insert into public.kehadiran (pertemuan_id, anggota_id, hadir)
+select id, tests.id('r3a'), false from public.pertemuan where kelompok_id = tests.id('kel_r3');
+-- R4
+insert into public.pertemuan (kelompok_id, tanggal, dibuka_pada, ditutup_pada, persembahan) values
+  (tests.id('kel_r4'), bantu.hari_ini_wib(), now(), now(), 100000),
+  (tests.id('kel_r4'), (select awal_bulan from tgl) - 1, now(), now(), 50000);
+
+select tests.masuk_sebagai('ketua_a');
+select tests.harus_berhasil('Ketua Tim A: membuka ringkasan Tim A',
+  $q$ create temporary table rk as select * from public.ringkasan_tim(tests.id('tim_a')) $q$);
+select tests.periksa('Ringkasan: hanya kelompok Tim A',
+  (select count(*) from rk where kelompok_id in (tests.id('kel_r1'), tests.id('kel_r2'), tests.id('kel_r3'), tests.id('kel_r4'))) = 4 and
+  (select count(*) from rk where kelompok_id = tests.id('kel_b1')) = 0);
+select tests.periksa('R1: sudah lapor, 2 anggota aktif, pertemuan terakhir Senin ini',
+  (select status_lapor = 'sudah' and anggota_aktif = 2 and pertemuan_terakhir = (select senin from tgl)
+     from rk where kelompok_id = tests.id('kel_r1')));
+select tests.periksa('R1: kehadiran 4 pekan 50% (pertemuan 40 hari lalu tidak dihitung)',
+  (select hadir_4_pekan = 50 from rk where kelompok_id = tests.id('kel_r1')));
+select tests.periksa('R2: pertemuan pekan ini belum ditutup -> sedang berlangsung, tanpa angka kehadiran',
+  (select status_lapor = 'berlangsung' and hadir_4_pekan is null from rk where kelompok_id = tests.id('kel_r2')));
+select tests.periksa('R3: belum lapor pekan ini, kehadiran 0%, 1 anggota perlu ditindaklanjuti',
+  (select status_lapor = 'belum' and hadir_4_pekan = 0 and tindak_lanjut = 1 from rk where kelompok_id = tests.id('kel_r3')));
+select tests.periksa('R4: persembahan bulan ini 100.000 (bulan lalu tidak dihitung)',
+  (select persembahan_bulan_ini = 100000 from rk where kelompok_id = tests.id('kel_r4')));
+select tests.periksa('R2: kelompok tanpa persembahan bernilai 0, bukan kosong',
+  (select persembahan_bulan_ini = 0 from rk where kelompok_id = tests.id('kel_r2')));
+
+select tests.harus_gagal('Ketua Tim A: tidak bisa membuka ringkasan Tim B',
+  $q$ select * from public.ringkasan_tim(tests.id('tim_b')) $q$);
+select tests.masuk_sebagai('admin');
+select tests.periksa('Admin: membuka ringkasan Tim A dan Tim B',
+  (select count(*) from public.ringkasan_tim(tests.id('tim_a'))) >= 4 and
+  (select count(*) from public.ringkasan_tim(tests.id('tim_b'))) >= 1);
+select tests.masuk_sebagai('budi');
+select tests.harus_gagal('Budi (pemimpin A1): tidak bisa membuka ringkasan Tim A',
+  $q$ select * from public.ringkasan_tim(tests.id('tim_a')) $q$);
+select tests.masuk_sebagai('u_andi');
+select tests.harus_gagal('Andi (anggota): tidak bisa membuka ringkasan tim',
+  $q$ select * from public.ringkasan_tim(tests.id('tim_a')) $q$);
+select tests.masuk_sebagai_tamu();
+select tests.harus_gagal('Tamu: tidak bisa membuka ringkasan tim',
+  $q$ select * from public.ringkasan_tim(tests.id('tim_a')) $q$);
+select tests.keluar();
+
+
+-- =====================================================================
 -- RINGKASAN
 -- =====================================================================
 select no, case when lulus then 'LULUS' else 'GAGAL' end as hasil, nama, info

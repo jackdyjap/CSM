@@ -88,3 +88,32 @@ export async function kelompokKelolaan(
   const tim = data.tim as unknown as { nama: string } | null;
   return { kelompok_id: data.id, nama: data.nama, tim_nama: tim?.nama ?? "", sebagai: "Admin" };
 }
+
+export type AksesKelompok = KelompokKelolaan & {
+  /** true = pemimpin/wakil/Admin (boleh mengubah); false = Ketua Tim (baca saja). */
+  bolehUbah: boolean;
+};
+
+/**
+ * Akses ke halaman kelompok: pengelola (pemimpin/wakil/Admin) atau Ketua Tim
+ * dari tim kelompok itu (baca saja, Fase 6). Null bila tidak berhak.
+ * Hak sebenarnya tetap diperiksa database (aturan akses).
+ */
+export async function aksesKelompok(
+  supabase: Awaited<ReturnType<typeof buatClientServer>>,
+  peran: PeranSaya,
+  kelompokId: string,
+): Promise<AksesKelompok | null> {
+  const kelola = await kelompokKelolaan(supabase, peran, kelompokId);
+  if (kelola) return { ...kelola, bolehUbah: true };
+  if (peran.ketua_tim.length === 0) return null;
+
+  const { data } = await supabase
+    .from("kelompok")
+    .select("id, nama, tim_id, tim(nama)")
+    .eq("id", kelompokId)
+    .maybeSingle();
+  if (!data || !peran.ketua_tim.some((t) => t.tim_id === data.tim_id)) return null;
+  const tim = data.tim as unknown as { nama: string } | null;
+  return { kelompok_id: data.id, nama: data.nama, tim_nama: tim?.nama ?? "", sebagai: "Ketua Tim", bolehUbah: false };
+}

@@ -4,7 +4,7 @@ import { FormAksi } from "@/components/form-aksi";
 import { Isian, Judul, Kotak, TautanTombol } from "@/components/ui";
 import { rupiah, tanggalPanjang } from "@/lib/pertemuan";
 import { hariIniWib } from "@/lib/profil";
-import { kelompokKelolaan, wajibMasuk } from "@/lib/sesi";
+import { aksesKelompok, wajibMasuk } from "@/lib/sesi";
 import { mulaiPertemuan } from "./aksi";
 
 type BarisPertemuan = {
@@ -19,7 +19,7 @@ type BarisPertemuan = {
 export default async function HalamanDaftarPertemuan({ params }: PageProps<"/kelompok/[id]/pertemuan">) {
   const { id } = await params;
   const { supabase, peran } = await wajibMasuk();
-  const kelompok = await kelompokKelolaan(supabase, peran, id);
+  const kelompok = await aksesKelompok(supabase, peran, id);
   if (!kelompok) redirect("/beranda");
 
   const hariIni = hariIniWib();
@@ -39,6 +39,8 @@ export default async function HalamanDaftarPertemuan({ params }: PageProps<"/kel
         <TautanTombol href={`/kelompok/${id}`}>← Kelompok</TautanTombol>
       </div>
 
+      {kelompok.bolehUbah ? (
+        <>
       <Kotak judul="Pertemuan hari ini">
         {hariIniAda ? (
           <TautanTombol href={`/kelompok/${id}/pertemuan/${hariIniAda.id}`} jenis="utama" className="w-full justify-center">
@@ -51,6 +53,9 @@ export default async function HalamanDaftarPertemuan({ params }: PageProps<"/kel
           </FormAksi>
         )}
       </Kotak>
+
+        </>
+      ) : null}
 
       <Kotak judul="Riwayat pertemuan">
         {daftar.length === 0 ? (
@@ -89,6 +94,7 @@ export default async function HalamanDaftarPertemuan({ params }: PageProps<"/kel
         )}
       </Kotak>
 
+      {kelompok.bolehUbah ? (
       <Kotak judul="Catat pertemuan yang terlewat">
         <FormAksi aksi={mulaiPertemuan.bind(null, id)} tombol="Buka pertemuan tanggal ini" jenisTombol="biasa">
           <Isian
@@ -101,6 +107,7 @@ export default async function HalamanDaftarPertemuan({ params }: PageProps<"/kel
           />
         </FormAksi>
       </Kotak>
+      ) : null}
     </main>
   );
 }
