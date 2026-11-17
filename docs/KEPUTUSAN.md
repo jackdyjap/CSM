@@ -110,3 +110,12 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - Pencatatan dijalankan dari HP **setelah halaman terbuka** (bukan saat alamat dimuat), supaya pratinjau tautan tidak ikut mencatat kehadiran.
     - Pengguna yang belum login diarahkan ke halaman masuk lalu **kembali ke halaman tujuan** (`?lanjut=`). Hanya jalur di dalam aplikasi yang diterima (pencegahan *open redirect*).
     - **Riwayat kehadiran** (12 pertemuan terakhir) tampil di Profil saya: hadir/tidak, cara, dan kategori alasan. Catatan pemimpin tidak ditampilkan.
+
+## Diputuskan saat Fase 9 (17 November 2026)
+
+24. **Laporan demografi** (`/admin/laporan`, khusus Admin):
+    - Dimensi: gender, rentang usia, pendidikan, status pernikahan, pekerjaan, provinsi, kota, kecamatan, kelurahan. Cakupan: semua tim, satu tim, atau satu kelompok. Anggota aktif saja atau semua. Tampilan jumlah atau persen.
+    - Angka dihitung di database (`laporan_demografi`, per kelompok); aplikasi hanya menjumlahkan. "Belum diisi" dipisah; persen dihitung dari yang sudah mengisi.
+    - Tampilan: grafik batang horizontal satu warna (biru `#2a78d6`, gelap `#3987e5`, divalidasi kontras ≥ 3:1) dengan nilai di ujung batang dan tooltip; tabel silang kategori × kelompok dengan gradasi satu warna.
+    - Ekspor **Excel (.xlsx)**: lembar Ringkasan, Tabel silang (jumlah), Tabel silang (persen). Dipilih .xlsx, bukan CSV, karena Excel berbahasa Indonesia sering salah membaca pemisah CSV. **PDF** lewat Cetak / Simpan PDF. Setiap pembuatan dan ekspor tercatat di log.
+    - Pustaka `exceljs` 4.4.0 (MIT). Ketergantungannya `uuid` dipaksa ke 11.1.1 (`overrides` di package.json) untuk menutup GHSA-w5hq-g745-h8pq; exceljs hanya memakai `uuid.v4`, dan pembuatan/pembacaan xlsx sudah diuji dengan versi itu.

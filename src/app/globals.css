@@ -4,6 +4,9 @@
   --latar: #f6f7f9;
   --teks: #1b1f24;
   --utama: #1d5fbf;
+  /* Warna grafik (divalidasi alat dataviz: kontras >= 3:1 terhadap latar kartu). */
+  --seri: #2a78d6;
+  --seri-rgb: 42 120 214;
   color-scheme: light;
 }
 
@@ -12,6 +15,8 @@
     --latar: #111418;
     --teks: #e7eaee;
     --utama: #6ea8ff;
+    --seri: #3987e5;
+    --seri-rgb: 57 135 229;
     color-scheme: dark;
   }
 }
@@ -20,6 +25,7 @@
   --color-latar: var(--latar);
   --color-teks: var(--teks);
   --color-utama: var(--utama);
+  --color-seri: var(--seri);
 }
 
 body {
@@ -47,5 +53,17 @@ body {
   }
   .kartu {
     break-inside: avoid;
+  }
+  /* Laporan: tabel silang tidak terpotong, warna sel ikut tercetak. */
+  .laporan table {
+    font-size: 9pt;
+  }
+  .laporan * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .laporan section {
+    break-inside: avoid;
+    box-shadow: none !important;
   }
 }

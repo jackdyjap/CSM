@@ -22,6 +22,7 @@ export default async function HalamanBeranda() {
           <div className="flex flex-wrap gap-2">
             <TautanTombol href="/admin">Tim &amp; kelompok</TautanTombol>
             <TautanTombol href="/admin/akun">Akun &amp; peran</TautanTombol>
+            <TautanTombol href="/admin/laporan">Laporan demografi</TautanTombol>
           </div>
         </Kotak>
       ) : null}
