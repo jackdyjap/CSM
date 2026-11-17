@@ -914,6 +914,87 @@ select tests.keluar();
 
 
 -- =====================================================================
+-- UJI · BUKTI TRANSFER PERSEMBAHAN (keputusan 16)
+-- =====================================================================
+select tests.masuk_sebagai('budi');
+select tests.harus_berhasil('Budi: mengunggah berkas bukti ke folder pertemuan A1',
+  $q$ insert into storage.objects (bucket_id, name) values ('bukti-persembahan', tests.id('rapat_a1') || '/b1.jpg') $q$);
+select tests.harus_berhasil('Budi: mencatat bukti pertemuan A1',
+  $q$ insert into public.bukti_persembahan (pertemuan_id, lokasi, nama_berkas, jenis, ukuran)
+      values (tests.id('rapat_a1'), tests.id('rapat_a1') || '/b1.jpg', 'struk.jpg', 'image/jpeg', 120000) $q$);
+select tests.periksa('Bukti: kelompok terisi otomatis dari pertemuan',
+  (select kelompok_id = tests.id('kel_a1') from public.bukti_persembahan where lokasi = tests.id('rapat_a1') || '/b1.jpg'));
+select tests.harus_gagal('Budi: tidak bisa mencatat bukti yang berkasnya belum terunggah',
+  $q$ insert into public.bukti_persembahan (pertemuan_id, lokasi, nama_berkas, jenis, ukuran)
+      values (tests.id('rapat_a1'), tests.id('rapat_a1') || '/tidak-ada.jpg', 'x.jpg', 'image/jpeg', 100) $q$);
+select tests.harus_gagal('Budi: tidak bisa mengunggah ke folder pertemuan B1',
+  $q$ insert into storage.objects (bucket_id, name) values ('bukti-persembahan', tests.id('rapat_b1') || '/b.jpg') $q$);
+select tests.harus_gagal('Budi: lokasi berkas harus di folder pertemuannya sendiri',
+  $q$ insert into public.bukti_persembahan (pertemuan_id, lokasi, nama_berkas, jenis, ukuran)
+      values (tests.id('rapat_a1'), tests.id('rapat_b1') || '/b.jpg', 'x.jpg', 'image/jpeg', 100) $q$);
+select tests.harus_gagal('Budi: jenis berkas selain foto/PDF ditolak',
+  $q$ insert into public.bukti_persembahan (pertemuan_id, lokasi, nama_berkas, jenis, ukuran)
+      values (tests.id('rapat_a1'), tests.id('rapat_a1') || '/b1.jpg', 'x.exe', 'application/x-msdownload', 100) $q$);
+select tests.harus_gagal('Budi: berkas di atas 5 MB ditolak',
+  $q$ insert into public.bukti_persembahan (pertemuan_id, lokasi, nama_berkas, jenis, ukuran)
+      values (tests.id('rapat_a1'), tests.id('rapat_a1') || '/b1.jpg', 'besar.pdf', 'application/pdf', 6000000) $q$);
+select tests.harus_gagal('Budi: bukti tidak bisa diubah (hanya tambah/hapus)',
+  $q$ update public.bukti_persembahan set nama_berkas = 'x' where pertemuan_id = tests.id('rapat_a1') $q$);
+
+-- Batas 5 berkas per pertemuan
+select tests.harus_berhasil('Budi: mengunggah 4 bukti lagi (total 5)',
+  $q$ do $d$ begin
+        for i in 2..5 loop
+          insert into storage.objects (bucket_id, name) values ('bukti-persembahan', tests.id('rapat_a1') || '/b' || i || '.pdf');
+          insert into public.bukti_persembahan (pertemuan_id, lokasi, nama_berkas, jenis, ukuran)
+            values (tests.id('rapat_a1'), tests.id('rapat_a1') || '/b' || i || '.pdf', 'bukti.pdf', 'application/pdf', 300000);
+        end loop;
+      end $d$ $q$);
+select tests.harus_gagal('Budi: bukti ke-6 ditolak',
+  $q$ do $d$ begin
+        insert into storage.objects (bucket_id, name) values ('bukti-persembahan', tests.id('rapat_a1') || '/b6.jpg');
+        insert into public.bukti_persembahan (pertemuan_id, lokasi, nama_berkas, jenis, ukuran)
+          values (tests.id('rapat_a1'), tests.id('rapat_a1') || '/b6.jpg', 'b6.jpg', 'image/jpeg', 100);
+      end $d$ $q$);
+
+-- Siapa yang melihat
+select tests.masuk_sebagai('ketua_a');
+select tests.periksa('Ketua Tim A: melihat 5 bukti pertemuan A1 beserta berkasnya',
+  (select count(*) from public.bukti_persembahan where pertemuan_id = tests.id('rapat_a1')) = 5 and
+  (select count(*) from storage.objects where bucket_id = 'bukti-persembahan' and name like tests.id('rapat_a1') || '/%') = 5);
+select tests.periksa('Ketua Tim A: tidak bisa menghapus bukti',
+  tests.baris_terkena($q$ delete from public.bukti_persembahan where pertemuan_id = tests.id('rapat_a1') $q$) = 0);
+select tests.harus_gagal('Ketua Tim A: tidak bisa mengunggah bukti',
+  $q$ insert into storage.objects (bucket_id, name) values ('bukti-persembahan', tests.id('rapat_a1') || '/k.jpg') $q$);
+select tests.masuk_sebagai('dewi');
+select tests.periksa('Dewi (pemimpin B1): tidak melihat bukti A1',
+  (select count(*) from public.bukti_persembahan where pertemuan_id = tests.id('rapat_a1')) = 0 and
+  (select count(*) from storage.objects where bucket_id = 'bukti-persembahan' and name like tests.id('rapat_a1') || '/%') = 0);
+select tests.masuk_sebagai('u_andi');
+select tests.periksa('Andi (anggota): tidak melihat bukti persembahan',
+  (select count(*) from public.bukti_persembahan) = 0 and
+  (select count(*) from storage.objects where bucket_id = 'bukti-persembahan') = 0);
+
+-- Admin menghapus, dan ikut terhapus bersama pertemuan
+select tests.masuk_sebagai('admin');
+select tests.periksa('Admin: menghapus satu bukti A1',
+  tests.baris_terkena($q$ delete from public.bukti_persembahan where lokasi = tests.id('rapat_a1') || '/b1.jpg' $q$) = 1);
+select tests.harus_berhasil('Admin: menghapus pertemuan A1',
+  $q$ select tests.simpan('hapus_rapat_a1', tests.baris_terkena('delete from public.pertemuan where id = ''' || tests.id('rapat_a1') || '''')::text) $q$);
+select tests.periksa('Admin: pertemuan A1 terhapus (1 baris)',
+  (select teks from tests.nilai where nama = 'hapus_rapat_a1') = '1',
+  'baris terhapus: ' || coalesce((select teks from tests.nilai where nama = 'hapus_rapat_a1'), 'null'));
+select tests.periksa('Admin: bukti A1 lainnya ikut terhapus',
+  (select count(*) from public.bukti_persembahan where pertemuan_id = tests.id('rapat_a1')) = 0);
+select tests.keluar();
+select tests.periksa('Bukti yang terhapus masuk antrean hapus berkas (folder bukti-persembahan)',
+  (select count(*) from internal.antrean_hapus_foto
+    where bucket = 'bukti-persembahan' and foto_path like tests.id('rapat_a1') || '/%') = 5);
+select tests.periksa('Antrean foto anggota lama tetap bertanda folder foto-anggota',
+  (select bool_and(bucket = 'foto-anggota') from internal.antrean_hapus_foto where foto_path not like tests.id('rapat_a1') || '/%'));
+
+
+-- =====================================================================
 -- RINGKASAN
 -- =====================================================================
 select no, case when lulus then 'LULUS' else 'GAGAL' end as hasil, nama, info

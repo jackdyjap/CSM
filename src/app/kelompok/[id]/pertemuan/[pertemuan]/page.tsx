@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { BuktiPersembahan, type BarisBukti } from "@/components/bukti-persembahan";
 import { DaftarHadir, type BarisHadir } from "@/components/daftar-hadir";
 import { FormAksi } from "@/components/form-aksi";
 import { FormAlasan } from "@/components/form-alasan";
@@ -22,7 +23,7 @@ export default async function HalamanPertemuan({ params }: PageProps<"/kelompok/
   const kelompok = await kelompokKelolaan(supabase, peran, id);
   if (!kelompok) redirect("/beranda");
 
-  const [{ data: pertemuan }, { data: dataAnggota }, { data: dataHadir }] = await Promise.all([
+  const [{ data: pertemuan }, { data: dataAnggota }, { data: dataHadir }, { data: dataBukti }] = await Promise.all([
     supabase
       .from("pertemuan")
       .select("id, tanggal, persembahan, catatan, ditutup_pada")
@@ -34,6 +35,11 @@ export default async function HalamanPertemuan({ params }: PageProps<"/kelompok/
       .from("kehadiran")
       .select("anggota_id, hadir, alasan, alasan_catatan")
       .eq("pertemuan_id", pertemuanId),
+    supabase
+      .from("bukti_persembahan")
+      .select("id, lokasi, nama_berkas, jenis, ukuran")
+      .eq("pertemuan_id", pertemuanId)
+      .order("dibuat_pada"),
   ]);
   if (!pertemuan) redirect(`/kelompok/${id}/pertemuan`);
 
@@ -41,6 +47,20 @@ export default async function HalamanPertemuan({ params }: PageProps<"/kelompok/
   const nama = new Map(anggota.map((a) => [a.id, a.nama_lengkap as string]));
   const kehadiran = new Map(((dataHadir ?? []) as Kehadiran[]).map((k) => [k.anggota_id, k]));
   const tertutup = Boolean(pertemuan.ditutup_pada);
+
+  // Tautan sementara (1 jam) untuk membuka bukti di folder privat.
+  const barisBukti = dataBukti ?? [];
+  const { data: tautanBukti } = barisBukti.length
+    ? await supabase.storage.from("bukti-persembahan").createSignedUrls(barisBukti.map((b) => b.lokasi), 3600)
+    : { data: [] };
+  const petaTautan = new Map((tautanBukti ?? []).map((t) => [t.path, t.signedUrl]));
+  const bukti: BarisBukti[] = barisBukti.map((b) => ({
+    id: b.id,
+    nama_berkas: b.nama_berkas,
+    jenis: b.jenis,
+    ukuran: b.ukuran,
+    tautan: petaTautan.get(b.lokasi) ?? null,
+  }));
   const judul = tanggalPanjang(pertemuan.tanggal);
 
   return (
@@ -107,6 +127,9 @@ export default async function HalamanPertemuan({ params }: PageProps<"/kelompok/
             placeholder="Contoh: bahan yang dibahas"
           />
         </FormAksi>
+        <div className="mt-4 border-t border-black/10 pt-3 dark:border-white/10">
+          <BuktiPersembahan kelompokId={id} pertemuanId={pertemuanId} daftar={bukti} bolehUbah />
+        </div>
       </Kotak>
 
       <Lipatan judul="Ubah tanggal / hapus pertemuan">

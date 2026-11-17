@@ -2,39 +2,11 @@
 
 import { useRef, useState, useTransition } from "react";
 import { hapusFoto, unggahFoto } from "@/lib/aksi-profil";
+import { kecilkanFoto } from "@/lib/gambar";
 import type { HasilAksi } from "@/lib/hasil";
 import { Pesan, Tombol } from "./ui";
 
 const SISI_MAKS = 800; // piksel
-const MUTU_JPEG = 0.85;
-
-/** Mengecilkan foto di HP sebelum dikirim, supaya hemat kuota dan cepat. */
-// Memakai elemen <img> (bukan createImageBitmap) supaya jalan juga di HP lama;
-// peramban modern otomatis memutar foto sesuai posisi kamera (EXIF).
-async function kecilkan(berkas: File): Promise<Blob> {
-  const alamat = URL.createObjectURL(berkas);
-  const kanvas = document.createElement("canvas");
-  try {
-    const gambar = new Image();
-    gambar.src = alamat;
-    await gambar.decode();
-    const lebar = gambar.naturalWidth;
-    const tinggi = gambar.naturalHeight;
-    if (!lebar || !tinggi) throw new Error("bukan gambar");
-    const skala = Math.min(1, SISI_MAKS / Math.max(lebar, tinggi));
-    kanvas.width = Math.round(lebar * skala);
-    kanvas.height = Math.round(tinggi * skala);
-    const kuas = kanvas.getContext("2d")!;
-    kuas.fillStyle = "#fff"; // latar putih untuk PNG transparan
-    kuas.fillRect(0, 0, kanvas.width, kanvas.height);
-    kuas.drawImage(gambar, 0, 0, kanvas.width, kanvas.height);
-  } finally {
-    URL.revokeObjectURL(alamat);
-  }
-  return new Promise((selesai, gagal) =>
-    kanvas.toBlob((b) => (b ? selesai(b) : gagal(new Error("gagal"))), "image/jpeg", MUTU_JPEG),
-  );
-}
 
 export function UnggahFoto({
   anggotaId,
@@ -61,7 +33,7 @@ export function UnggahFoto({
     mulai(async () => {
       let kecil: Blob;
       try {
-        kecil = await kecilkan(berkas);
+        kecil = await kecilkanFoto(berkas, SISI_MAKS);
       } catch {
         setHasil({ galat: "Berkas ini tidak bisa dibaca sebagai foto. Coba foto lain." });
         return;
