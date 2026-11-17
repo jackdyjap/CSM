@@ -63,12 +63,17 @@ export default async function HalamanBeranda() {
           <p>
             Anggota <strong>{peran.anggota.kelompok_nama}</strong>
           </p>
-          <div className="mt-3">
-            <TautanTombol href="/profil" jenis="utama">
-              Profil saya
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <TautanTombol href="/hadir" jenis="utama" className="justify-center">
+              Check-in pertemuan
+            </TautanTombol>
+            <TautanTombol href="/profil" className="justify-center">
+              Profil &amp; kartu saya
             </TautanTombol>
           </div>
-          <p className="mt-2 text-sm opacity-70">Riwayat kehadiran akan tersedia di fase berikutnya.</p>
+          <p className="mt-2 text-sm opacity-70">
+            Saat pertemuan, scan QR di layar pemimpin dengan kamera HP. Riwayat kehadiran ada di Profil saya.
+          </p>
         </Kotak>
       ) : null}
 

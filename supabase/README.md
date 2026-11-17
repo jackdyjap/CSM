@@ -19,7 +19,7 @@ Isi folder ini:
 | `migrations/…1300_ringkasan_tim.sql` | Fase 6: fungsi `ringkasan_tim` untuk dashboard Ketua Tim |
 | `migrations/…1400_kartu_qr.sql` | Fase 7: buat ulang kode kartu; scan kartu menolak pertemuan yang sudah ditutup |
 | `data/wilayah_01..04.sql` | Data wilayah Indonesia (Kepmendagri 2025) |
-| `tests/uji_akses.sql` | 304 uji akses untuk semua peran (data uji dibatalkan otomatis di akhir) |
+| `tests/uji_akses.sql` | 315 uji akses untuk semua peran (data uji dibatalkan otomatis di akhir) |
 | `tests/lokal/` | Alat untuk menjalankan uji di komputer tanpa Supabase |
 
 ## Menjalankan di proyek Supabase

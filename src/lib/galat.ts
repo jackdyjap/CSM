@@ -5,7 +5,8 @@ export function pesanGalat(galat: GalatDb, cadangan = "Terjadi kesalahan. Coba l
   if (!galat) return cadangan;
   switch (galat.code) {
     case "23505":
-      return "Data yang sama sudah ada.";
+      // Pesan dari fungsi database kita (mis. check-in dua kali) sudah berbahasa Indonesia.
+      return galat.message && !galat.message.startsWith("duplicate key") ? galat.message : "Data yang sama sudah ada.";
     case "23503":
       return "Data ini masih dipakai data lain, jadi tidak bisa dihapus/diubah.";
     case "42501":
