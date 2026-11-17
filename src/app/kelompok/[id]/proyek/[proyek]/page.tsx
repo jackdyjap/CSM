@@ -3,8 +3,8 @@ import { FormAksi } from "@/components/form-aksi";
 import { StatusProyekAnggota } from "@/components/status-proyek";
 import { Isian, IsianPanjang, Judul, Kotak, Lipatan, TautanTombol } from "@/components/ui";
 import { tanggalPanjang } from "@/lib/pertemuan";
-import type { StatusProyek } from "@/lib/pilihan-fase5";
-import { kelompokKelolaan, wajibMasuk } from "@/lib/sesi";
+import { PILIHAN_STATUS_PROYEK, type StatusProyek } from "@/lib/pilihan-fase5";
+import { aksesKelompok, wajibMasuk } from "@/lib/sesi";
 import { hapusProyek, ubahProyek } from "../aksi";
 
 type Status = { anggota_id: string; status: StatusProyek; keterangan: string | null };
@@ -12,7 +12,7 @@ type Status = { anggota_id: string; status: StatusProyek; keterangan: string | n
 export default async function HalamanDetailProyek({ params }: PageProps<"/kelompok/[id]/proyek/[proyek]">) {
   const { id, proyek: proyekId } = await params;
   const { supabase, peran } = await wajibMasuk();
-  const kelompok = await kelompokKelolaan(supabase, peran, id);
+  const kelompok = await aksesKelompok(supabase, peran, id);
   if (!kelompok) redirect("/beranda");
 
   const [{ data: proyek }, { data: dataAnggota }, { data: dataStatus }] = await Promise.all([
@@ -51,12 +51,21 @@ export default async function HalamanDetailProyek({ params }: PageProps<"/kelomp
       </Kotak>
 
       <Kotak judul="Status anggota">
-        <p className="mb-1 text-sm opacity-70">Ketuk status; langsung tersimpan.</p>
+        {kelompok.bolehUbah ? <p className="mb-1 text-sm opacity-70">Ketuk status; langsung tersimpan.</p> : null}
         {anggota.length === 0 ? (
           <p className="opacity-70">Belum ada anggota aktif.</p>
         ) : (
           <div className="divide-y divide-black/10 dark:divide-white/10">
-            {anggota.map((a) => (
+            {anggota.map((a) =>
+              !kelompok.bolehUbah ? (
+                <div key={a.id} className="py-3">
+                  <p className="font-semibold">{a.nama_lengkap}</p>
+                  <p className="text-sm">
+                    Status: <strong>{PILIHAN_STATUS_PROYEK[status.get(a.id)?.status ?? "belum"]}</strong>
+                    {status.get(a.id)?.keterangan ? ` · ${status.get(a.id)?.keterangan}` : ""}
+                  </p>
+                </div>
+              ) : (
               <StatusProyekAnggota
                 key={a.id}
                 kelompokId={id}
@@ -66,11 +75,13 @@ export default async function HalamanDetailProyek({ params }: PageProps<"/kelomp
                 statusAwal={status.get(a.id)?.status ?? "belum"}
                 keteranganAwal={status.get(a.id)?.keterangan ?? null}
               />
-            ))}
+              ),
+            )}
           </div>
         )}
       </Kotak>
 
+      {kelompok.bolehUbah ? (
       <Lipatan judul="Ubah / hapus proyek">
         <FormAksi aksi={ubahProyek.bind(null, id, proyekId)} tombol="Simpan perubahan" jenisTombol="biasa" tanpaReset>
           <Isian label="Judul" name="judul" defaultValue={proyek.judul} required />
@@ -85,6 +96,7 @@ export default async function HalamanDetailProyek({ params }: PageProps<"/kelomp
           konfirmasi={`Hapus proyek "${proyek.judul}" beserta status semua anggota?`}
         />
       </Lipatan>
+      ) : null}
     </main>
   );
 }

@@ -82,3 +82,12 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - Dilihat oleh pemimpin/wakil, Ketua Tim terkait, dan Admin (dipakai juga untuk dashboard Fase 6).
 18. **Admin boleh menulis catatan khusus** di semua kelompok, tidak hanya membaca dan mengoreksi (mengubah keputusan 12 dan 15). Ketua Tim tetap hanya membaca; tidak seorang pun bisa menulis atau membaca catatan tentang dirinya sendiri. (Migrasi `…1200`.)
 19. **Profil anggota menampilkan status semua proyek ketaatan** anggota itu, dan pengelola (pemimpin/wakil/Admin) bisa langsung mengubahnya di sana. Ketua Tim membaca saja. Tampilan per proyek tetap ada.
+
+## Diputuskan saat Fase 6 (17 November 2026)
+
+20. **Dashboard Ketua Tim** (`/tim/[id]`, fungsi `ringkasan_tim`, migrasi `…1300`): per kelompok ditampilkan anggota aktif, status lapor pekan ini, pertemuan terakhir, rata-rata kehadiran 4 pekan, persembahan bulan ini, dan jumlah tindak lanjut.
+    - **"Sudah lapor"** = ada pertemuan pekan ini (Senin–Minggu WIB) yang absensinya **sudah ditutup**; pertemuan yang masih terbuka = "Sedang berlangsung".
+    - **Kehadiran 4 pekan** = jumlah hadir ÷ jumlah tercatat, dari pertemuan yang ditutup dalam 28 hari terakhir.
+    - **Persembahan bulan ini** = bulan kalender WIB.
+    - Dibuka oleh Ketua Tim dari tim itu dan Admin.
+21. **Ketua Tim membuka detail kelompok di timnya dalam mode baca saja**: anggota dan profil (termasuk catatan dan status proyek), pertemuan (hadir, tidak hadir dan alasannya, persembahan, bukti transfer), proyek, dan tindak lanjut. Semua tombol ubah disembunyikan; database tetap menolak perubahan dari Ketua Tim.

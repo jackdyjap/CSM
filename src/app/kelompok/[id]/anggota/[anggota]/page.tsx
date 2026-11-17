@@ -6,7 +6,7 @@ import { FormAksi } from "@/components/form-aksi";
 import { Judul, Kotak, Lipatan, Pilihan, TautanTombol } from "@/components/ui";
 import { hapusAnggota, pindahKelompok, ubahStatusAktif } from "@/lib/aksi-profil";
 import { bacaProfil } from "@/lib/profil-server";
-import { kelompokKelolaan, wajibMasuk } from "@/lib/sesi";
+import { aksesKelompok, kelompokKelolaan, wajibMasuk } from "@/lib/sesi";
 
 export default async function HalamanAnggota({ params }: PageProps<"/kelompok/[id]/anggota/[anggota]">) {
   const { id, anggota } = await params;
@@ -38,7 +38,9 @@ export default async function HalamanAnggota({ params }: PageProps<"/kelompok/[i
         {profil.nama_lengkap}
       </Judul>
       <div className="mb-4">
-        <TautanTombol href={bolehUbah ? `/kelompok/${id}` : "/beranda"}>← Kembali</TautanTombol>
+        <TautanTombol href={bolehUbah || (await aksesKelompok(supabase, peran, id)) ? `/kelompok/${id}` : "/beranda"}>
+          ← Kembali
+        </TautanTombol>
       </div>
       {bolehUbah ? (
         <>

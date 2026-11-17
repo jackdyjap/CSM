@@ -16,8 +16,9 @@ Isi folder ini:
 | `migrations/…1000_bukti_persembahan.sql` | Bukti transfer persembahan: folder privat, tabel, aturan akses |
 | `migrations/…1100_tindak_lanjut.sql` | Fase 5: fungsi `tindak_lanjut` (absen berturut-turut, proyek lewat tenggat) |
 | `migrations/…1200_admin_tulis_catatan.sql` | Admin boleh menulis catatan khusus (keputusan 18) |
+| `migrations/…1300_ringkasan_tim.sql` | Fase 6: fungsi `ringkasan_tim` untuk dashboard Ketua Tim |
 | `data/wilayah_01..04.sql` | Data wilayah Indonesia (Kepmendagri 2025) |
-| `tests/uji_akses.sql` | 278 uji akses untuk semua peran (data uji dibatalkan otomatis di akhir) |
+| `tests/uji_akses.sql` | 291 uji akses untuk semua peran (data uji dibatalkan otomatis di akhir) |
 | `tests/lokal/` | Alat untuk menjalankan uji di komputer tanpa Supabase |
 
 ## Menjalankan di proyek Supabase
@@ -27,7 +28,7 @@ Isi folder ini:
 3. Fase 2: jalankan `migrations/…0600_login_undangan.sql` dengan cara yang sama.
 4. Fase 3: jalankan `data/wilayah_01.sql` sampai `wilayah_04.sql` **berurutan**, satu per satu (masing-masing ±1,3 MB). Tidak ada migrasi baru di Fase 3.
 5. Fase 4: jalankan `migrations/…0700_mode_pertemuan.sql`.
-6. Jalankan `migrations/…0800_admin_kelola_semua.sql` (keputusan 12), lalu `…0900_koreksi_data.sql` (keputusan 13–15), lalu `…1000_bukti_persembahan.sql` (keputusan 16), lalu `…1100_tindak_lanjut.sql` (Fase 5), lalu `…1200_admin_tulis_catatan.sql` (keputusan 18).
+6. Jalankan `migrations/…0800_admin_kelola_semua.sql` (keputusan 12), lalu `…0900_koreksi_data.sql` (keputusan 13–15), lalu `…1000_bukti_persembahan.sql` (keputusan 16), lalu `…1100_tindak_lanjut.sql` (Fase 5), lalu `…1200_admin_tulis_catatan.sql` (keputusan 18), lalu `…1300_ringkasan_tim.sql` (Fase 6).
 7. Jangan jalankan file di `tests/lokal/`. Isinya hanya tiruan Supabase untuk pengujian.
 
 ## Menjalankan uji di komputer (PostgreSQL 16)

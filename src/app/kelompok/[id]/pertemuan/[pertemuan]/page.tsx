@@ -5,9 +5,9 @@ import { FormAksi } from "@/components/form-aksi";
 import { FormAlasan } from "@/components/form-alasan";
 import { Isian, IsianPanjang, Judul, Kotak, Lipatan, TautanTombol } from "@/components/ui";
 import { waktuWib } from "@/lib/format";
-import { rupiah, tanggalPanjang, type Alasan } from "@/lib/pertemuan";
+import { PILIHAN_ALASAN, rupiah, tanggalPanjang, type Alasan } from "@/lib/pertemuan";
 import { hariIniWib } from "@/lib/profil";
-import { kelompokKelolaan, wajibMasuk } from "@/lib/sesi";
+import { aksesKelompok, wajibMasuk } from "@/lib/sesi";
 import { bukaKembali, hapusPertemuan, simpanRingkasan, tutupAbsensi, ubahTanggal } from "../aksi";
 
 type Kehadiran = {
@@ -20,7 +20,7 @@ type Kehadiran = {
 export default async function HalamanPertemuan({ params }: PageProps<"/kelompok/[id]/pertemuan/[pertemuan]">) {
   const { id, pertemuan: pertemuanId } = await params;
   const { supabase, peran } = await wajibMasuk();
-  const kelompok = await kelompokKelolaan(supabase, peran, id);
+  const kelompok = await aksesKelompok(supabase, peran, id);
   if (!kelompok) redirect("/beranda");
 
   const [{ data: pertemuan }, { data: dataAnggota }, { data: dataHadir }, { data: dataBukti }] = await Promise.all([
@@ -62,6 +62,57 @@ export default async function HalamanPertemuan({ params }: PageProps<"/kelompok/
     tautan: petaTautan.get(b.lokasi) ?? null,
   }));
   const judul = tanggalPanjang(pertemuan.tanggal);
+
+  if (!kelompok.bolehUbah) {
+    const hadirNama = [...kehadiran.values()]
+      .filter((k) => k.hadir)
+      .map((k) => nama.get(k.anggota_id) ?? "?")
+      .sort((a, b) => a.localeCompare(b, "id"));
+    const tidakHadir = [...kehadiran.values()]
+      .filter((k) => !k.hadir)
+      .map((k) => ({ ...k, nama: nama.get(k.anggota_id) ?? "?" }))
+      .sort((a, b) => a.nama.localeCompare(b.nama, "id"));
+    return (
+      <main>
+        <Judul kecil={`${kelompok.nama} · baca saja`}>{judul}</Judul>
+        <div className="mb-4">
+          <TautanTombol href={`/kelompok/${id}/pertemuan`}>← Daftar pertemuan</TautanTombol>
+        </div>
+        <Kotak judul={tertutup ? `Hadir ${hadirNama.length} dari ${kehadiran.size}` : `Hadir ${hadirNama.length} (absensi belum ditutup)`}>
+          {tertutup ? (
+            <p className="mb-3 text-sm opacity-70">Absensi ditutup {waktuWib(pertemuan.ditutup_pada as string)}.</p>
+          ) : null}
+          <p>{hadirNama.length ? hadirNama.join(", ") : <span className="opacity-70">Belum ada yang ditandai hadir.</span>}</p>
+          {tidakHadir.length > 0 ? (
+            <>
+              <h3 className="mt-4 mb-1 font-semibold">Tidak hadir ({tidakHadir.length})</h3>
+              <ul className="divide-y divide-black/10 dark:divide-white/10">
+                {tidakHadir.map((k) => (
+                  <li key={k.anggota_id} className="py-2">
+                    <span className="font-medium">{k.nama}</span>
+                    <span className="text-sm opacity-80">
+                      {" · "}
+                      {k.alasan ? PILIHAN_ALASAN[k.alasan] : "alasan belum diisi"}
+                      {k.alasan_catatan ? ` · ${k.alasan_catatan}` : ""}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+        </Kotak>
+        <Kotak judul="Persembahan & catatan">
+          <p className="text-lg font-semibold">
+            {pertemuan.persembahan === null ? <span className="font-normal opacity-70">Persembahan belum diisi</span> : rupiah(pertemuan.persembahan)}
+          </p>
+          {pertemuan.catatan ? <p className="mt-2 whitespace-pre-wrap">{pertemuan.catatan}</p> : null}
+          <div className="mt-4 border-t border-black/10 pt-3 dark:border-white/10">
+            <BuktiPersembahan kelompokId={id} pertemuanId={pertemuanId} daftar={bukti} bolehUbah={false} />
+          </div>
+        </Kotak>
+      </main>
+    );
+  }
 
   return (
     <main>

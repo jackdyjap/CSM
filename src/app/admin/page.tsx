@@ -26,7 +26,12 @@ export default async function HalamanAdmin() {
           <ul className="space-y-3">
             {tim.map((t) => (
               <li key={t.id}>
-                <p className="font-semibold">{t.nama}</p>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-semibold">{t.nama}</p>
+                  <TautanTombol href={`/tim/${t.id}`} className="min-h-9 py-1 text-sm">
+                    Dashboard →
+                  </TautanTombol>
+                </div>
                 {t.kelompok.length === 0 ? (
                   <p className="text-sm opacity-70">Belum ada kelompok.</p>
                 ) : (

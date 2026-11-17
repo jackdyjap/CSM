@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Judul, Kotak, TautanTombol } from "@/components/ui";
 import { PILIHAN_ALASAN, tanggalPanjang, type Alasan } from "@/lib/pertemuan";
 import { BATAS_ABSEN, PILIHAN_STATUS_PROYEK, type StatusProyek } from "@/lib/pilihan-fase5";
-import { kelompokKelolaan, wajibMasuk } from "@/lib/sesi";
+import { aksesKelompok, wajibMasuk } from "@/lib/sesi";
 
 type Baris = {
   anggota_id: string;
@@ -21,7 +21,7 @@ type Baris = {
 export default async function HalamanTindakLanjut({ params }: PageProps<"/kelompok/[id]/tindak-lanjut">) {
   const { id } = await params;
   const { supabase, peran } = await wajibMasuk();
-  const kelompok = await kelompokKelolaan(supabase, peran, id);
+  const kelompok = await aksesKelompok(supabase, peran, id);
   if (!kelompok) redirect("/beranda");
 
   const { data, error } = await supabase.rpc("tindak_lanjut", { p_kelompok: id, p_batas_absen: BATAS_ABSEN });

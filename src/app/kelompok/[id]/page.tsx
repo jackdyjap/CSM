@@ -7,7 +7,7 @@ import { hapusKelompokTotal, ubahKelompok } from "@/app/admin/aksi";
 import { waktuWib } from "@/lib/format";
 import { BATAS_ABSEN } from "@/lib/pilihan-fase5";
 import { isianKosong, KOLOM_KELENGKAPAN, type Profil } from "@/lib/profil";
-import { kelompokKelolaan, wajibMasuk } from "@/lib/sesi";
+import { aksesKelompok, wajibMasuk } from "@/lib/sesi";
 import { batalkanUndangan, buatTautanAturUlang, buatUndangan } from "./aksi";
 
 type BarisUndangan = {
@@ -29,7 +29,7 @@ export default async function HalamanKelompok({ params, searchParams }: PageProp
   const hanyaBelumLengkap = (await searchParams).belum === "1";
   const { supabase, peran } = await wajibMasuk();
 
-  const kelompok = await kelompokKelolaan(supabase, peran, id);
+  const kelompok = await aksesKelompok(supabase, peran, id);
   if (!kelompok) redirect("/beranda");
 
   const [{ data: anggota }, { data: status }, { data: dataUndangan }] = await Promise.all([
@@ -38,7 +38,7 @@ export default async function HalamanKelompok({ params, searchParams }: PageProp
       .select(`id, aktif, persetujuan_pada, ${KOLOM_KELENGKAPAN}`)
       .eq("kelompok_id", id)
       .order("nama_lengkap"),
-    supabase.rpc("status_akun_anggota", { p_kelompok: id }),
+    kelompok.bolehUbah ? supabase.rpc("status_akun_anggota", { p_kelompok: id }) : Promise.resolve({ data: [] }),
     supabase
       .from("undangan")
       .select("id, anggota_id, kedaluwarsa_pada, anggota(nama_lengkap)")
@@ -88,19 +88,27 @@ export default async function HalamanKelompok({ params, searchParams }: PageProp
         </TautanTombol>
       </div>
 
-      <Kotak judul="Undang anggota baru">
-        <p className="mb-3 text-sm opacity-70">
-          Buat tautan, lalu kirim lewat WhatsApp. Orang yang membuka tautan bisa membuat akun dan
-          otomatis masuk ke kelompok ini. Tautan berlaku 7 hari dan hanya bisa dipakai satu kali.
+      {kelompok.bolehUbah ? (
+        <Kotak judul="Undang anggota baru">
+          <p className="mb-3 text-sm opacity-70">
+            Buat tautan, lalu kirim lewat WhatsApp. Orang yang membuka tautan bisa membuat akun dan
+            otomatis masuk ke kelompok ini. Tautan berlaku 7 hari dan hanya bisa dipakai satu kali.
+          </p>
+          <FormAksi aksi={buatUndangan.bind(null, id, null, null)} tombol="Buat tautan undangan" />
+        </Kotak>
+      ) : (
+        <p className="mb-4 rounded-lg border border-black/10 px-3 py-2 text-sm opacity-80 dark:border-white/10">
+          Tampilan baca saja (Ketua Tim). Perubahan dilakukan oleh pemimpin kelompok atau Admin.
         </p>
-        <FormAksi aksi={buatUndangan.bind(null, id, null, null)} tombol="Buat tautan undangan" />
-      </Kotak>
+      )}
 
       <Kotak judul={`Anggota (${semua.length})`}>
         <div className="mb-3 flex flex-wrap gap-2">
-          <TautanTombol href={`/kelompok/${id}/anggota/baru`} jenis="utama">
-            + Tambah anggota
-          </TautanTombol>
+          {kelompok.bolehUbah ? (
+            <TautanTombol href={`/kelompok/${id}/anggota/baru`} jenis="utama">
+              + Tambah anggota
+            </TautanTombol>
+          ) : null}
           {jumlahBelumLengkap > 0 || hanyaBelumLengkap ? (
             <TautanTombol href={hanyaBelumLengkap ? `/kelompok/${id}` : `/kelompok/${id}?belum=1`}>
               {hanyaBelumLengkap ? "Tampilkan semua" : `Belum lengkap saja (${jumlahBelumLengkap})`}
@@ -133,7 +141,7 @@ export default async function HalamanKelompok({ params, searchParams }: PageProp
                       {a.persetujuan_pada ? `Belum diisi: ${a.kosong.join(", ")}` : "Persetujuan data belum dicatat"}
                     </p>
                   ) : null}
-                  {s?.punya_akun && s.akun_id ? (
+                  {!kelompok.bolehUbah ? null : s?.punya_akun && s.akun_id ? (
                     <>
                       <p className="mb-2 text-sm opacity-70">Punya akun: {s.login ?? "-"}</p>
                       <FormAksi
@@ -159,7 +167,7 @@ export default async function HalamanKelompok({ params, searchParams }: PageProp
         )}
       </Kotak>
 
-      {undangan.length > 0 ? (
+      {kelompok.bolehUbah && undangan.length > 0 ? (
         <Kotak judul="Undangan yang belum dipakai">
           <ul className="divide-y divide-black/10 dark:divide-white/10">
             {undangan.map((u) => (

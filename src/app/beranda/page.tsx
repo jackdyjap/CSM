@@ -45,12 +45,16 @@ export default async function HalamanBeranda() {
 
       {peran.ketua_tim.length > 0 ? (
         <Kotak judul="Tim yang saya ketuai">
-          <ul className="list-disc pl-5">
+          <ul className="space-y-2">
             {peran.ketua_tim.map((t) => (
-              <li key={t.tim_id}>{t.nama}</li>
+              <li key={t.tim_id}>
+                <TautanTombol href={`/tim/${t.tim_id}`} className="w-full justify-between">
+                  <span>{t.nama}</span>
+                  <span className="text-sm opacity-70">Dashboard →</span>
+                </TautanTombol>
+              </li>
             ))}
           </ul>
-          <p className="mt-2 text-sm opacity-70">Dashboard tim akan tersedia di Fase 6.</p>
         </Kotak>
       ) : null}
 
