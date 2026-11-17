@@ -1,7 +1,10 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { FormAksi } from "@/components/form-aksi";
+import { LabelKelengkapan } from "@/components/profil";
 import { Judul, Kotak, TautanTombol } from "@/components/ui";
 import { waktuWib } from "@/lib/format";
+import { isianKosong, KOLOM_KELENGKAPAN, type Profil } from "@/lib/profil";
 import { wajibMasuk } from "@/lib/sesi";
 import { batalkanUndangan, buatTautanAturUlang, buatUndangan } from "./aksi";
 
@@ -13,8 +16,15 @@ type BarisUndangan = {
 };
 type StatusAkun = { anggota_id: string; punya_akun: boolean; akun_id: string | null; login: string | null };
 
-export default async function HalamanKelompok({ params }: PageProps<"/kelompok/[id]">) {
+type BarisAnggota = Pick<
+  Profil,
+  | "id" | "nama_lengkap" | "aktif" | "persetujuan_pada" | "gender" | "foto_path" | "tempat_lahir"
+  | "tanggal_lahir" | "alamat" | "kelurahan_kode" | "status_nikah" | "pendidikan" | "pekerjaan"
+>;
+
+export default async function HalamanKelompok({ params, searchParams }: PageProps<"/kelompok/[id]">) {
   const { id } = await params;
+  const hanyaBelumLengkap = (await searchParams).belum === "1";
   const { supabase, peran } = await wajibMasuk();
 
   const kelompok = peran.pemimpin.find((k) => k.kelompok_id === id);
@@ -23,7 +33,7 @@ export default async function HalamanKelompok({ params }: PageProps<"/kelompok/[
   const [{ data: anggota }, { data: status }, { data: dataUndangan }] = await Promise.all([
     supabase
       .from("anggota")
-      .select("id, nama_lengkap, aktif")
+      .select(`id, aktif, persetujuan_pada, ${KOLOM_KELENGKAPAN}`)
       .eq("kelompok_id", id)
       .order("nama_lengkap"),
     supabase.rpc("status_akun_anggota", { p_kelompok: id }),
@@ -37,6 +47,9 @@ export default async function HalamanKelompok({ params }: PageProps<"/kelompok/[
   ]);
 
   const undangan = (dataUndangan ?? []) as unknown as BarisUndangan[];
+  const semua = ((anggota ?? []) as unknown as BarisAnggota[]).map((a) => ({ ...a, kosong: isianKosong(a) }));
+  const jumlahBelumLengkap = semua.filter((a) => a.kosong.length > 0).length;
+  const tampil = hanyaBelumLengkap ? semua.filter((a) => a.kosong.length > 0) : semua;
   const statusPer = new Map(((status ?? []) as StatusAkun[]).map((s) => [s.anggota_id, s]));
 
   return (
@@ -56,19 +69,43 @@ export default async function HalamanKelompok({ params }: PageProps<"/kelompok/[
         <FormAksi aksi={buatUndangan.bind(null, id, null, null)} tombol="Buat tautan undangan" />
       </Kotak>
 
-      <Kotak judul={`Anggota (${anggota?.length ?? 0})`}>
-        {!anggota || anggota.length === 0 ? (
-          <p className="opacity-70">Belum ada anggota.</p>
+      <Kotak judul={`Anggota (${semua.length})`}>
+        <div className="mb-3 flex flex-wrap gap-2">
+          <TautanTombol href={`/kelompok/${id}/anggota/baru`} jenis="utama">
+            + Tambah anggota
+          </TautanTombol>
+          {jumlahBelumLengkap > 0 || hanyaBelumLengkap ? (
+            <TautanTombol href={hanyaBelumLengkap ? `/kelompok/${id}` : `/kelompok/${id}?belum=1`}>
+              {hanyaBelumLengkap ? "Tampilkan semua" : `Belum lengkap saja (${jumlahBelumLengkap})`}
+            </TautanTombol>
+          ) : null}
+        </div>
+        {tampil.length === 0 ? (
+          <p className="opacity-70">
+            {hanyaBelumLengkap ? "Semua profil anggota sudah lengkap." : "Belum ada anggota."}
+          </p>
         ) : (
           <ul className="divide-y divide-black/10 dark:divide-white/10">
-            {anggota.map((a) => {
+            {tampil.map((a) => {
               const s = statusPer.get(a.id);
               return (
                 <li key={a.id} className="py-3">
-                  <p className="font-semibold">
-                    {a.nama_lengkap}
-                    {!a.aktif ? <span className="ml-2 text-xs font-normal opacity-70">(tidak aktif)</span> : null}
-                  </p>
+                  <Link
+                    href={`/kelompok/${id}/anggota/${a.id}`}
+                    className="-mx-2 mb-1 flex min-h-11 flex-wrap items-center gap-2 rounded-lg px-2 hover:bg-black/5 dark:hover:bg-white/10"
+                  >
+                    <span className="font-semibold underline-offset-2 hover:underline">{a.nama_lengkap}</span>
+                    {!a.aktif ? <span className="text-xs opacity-70">(tidak aktif)</span> : null}
+                    <LabelKelengkapan kosong={a.kosong} />
+                    <span className="ml-auto text-sm opacity-60" aria-hidden>
+                      Profil →
+                    </span>
+                  </Link>
+                  {a.kosong.length > 0 ? (
+                    <p className="mb-2 text-xs opacity-70">
+                      {a.persetujuan_pada ? `Belum diisi: ${a.kosong.join(", ")}` : "Persetujuan data belum dicatat"}
+                    </p>
+                  ) : null}
                   {s?.punya_akun && s.akun_id ? (
                     <>
                       <p className="mb-2 text-sm opacity-70">Punya akun: {s.login ?? "-"}</p>

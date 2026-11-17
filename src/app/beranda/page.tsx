@@ -59,9 +59,12 @@ export default async function HalamanBeranda() {
           <p>
             Anggota <strong>{peran.anggota.kelompok_nama}</strong>
           </p>
-          <p className="mt-2 text-sm opacity-70">
-            Profil dan riwayat kehadiran akan tersedia di fase berikutnya.
-          </p>
+          <div className="mt-3">
+            <TautanTombol href="/profil" jenis="utama">
+              Profil saya
+            </TautanTombol>
+          </div>
+          <p className="mt-2 text-sm opacity-70">Riwayat kehadiran akan tersedia di fase berikutnya.</p>
         </Kotak>
       ) : null}
 
