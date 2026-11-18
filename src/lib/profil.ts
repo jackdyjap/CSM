@@ -18,10 +18,29 @@ export const PILIHAN_PENDIDIKAN = {
   sd: "SD",
   smp: "SMP",
   sma_smk: "SMA/SMK",
-  d3: "D3",
+  d3: "Diploma",
   s1: "S1",
   s2_ke_atas: "S2 ke atas",
 } as const;
+
+/** Baptis (keputusan 29). Disimpan sebagai true/false; "" = belum diisi. */
+export const PILIHAN_BAPTIS = {
+  sudah: "Sudah",
+  belum: "Belum",
+} as const;
+
+/** Status jemaat (keputusan 30). Diatur pemimpin, Ketua Tim, atau Admin. */
+export const PILIHAN_STATUS_JEMAAT = {
+  tamu: "Tamu",
+  member: "Member",
+  pelayan: "Pelayan",
+  leader: "Leader",
+} as const;
+
+/** true/false/null -> "sudah"/"belum"/null */
+export function kunciBaptis(baptis: boolean | null | undefined): keyof typeof PILIHAN_BAPTIS | null {
+  return baptis === true ? "sudah" : baptis === false ? "belum" : null;
+}
 
 export const PILIHAN_PEKERJAAN = {
   tidak_bekerja: "Tidak bekerja",
@@ -36,7 +55,7 @@ export const PILIHAN_PEKERJAAN = {
 /** Kolom profil yang dibaca halaman (urutannya sama dengan tabel anggota). */
 export const KOLOM_PROFIL =
   "id, kelompok_id, nama_lengkap, gender, foto_path, tempat_lahir, tanggal_lahir, alamat, " +
-  "provinsi_kode, kota_kode, kecamatan_kode, kelurahan_kode, status_nikah, pendidikan, pekerjaan, " +
+  "provinsi_kode, kota_kode, kecamatan_kode, kelurahan_kode, status_nikah, pendidikan, pekerjaan, baptis, status_jemaat, " +
   "no_hp, wali_nama, wali_hubungan, persetujuan_pada, persetujuan_dicatat_oleh, aktif";
 
 export type Profil = {
@@ -55,6 +74,8 @@ export type Profil = {
   status_nikah: keyof typeof PILIHAN_NIKAH | null;
   pendidikan: keyof typeof PILIHAN_PENDIDIKAN | null;
   pekerjaan: keyof typeof PILIHAN_PEKERJAAN | null;
+  baptis: boolean | null;
+  status_jemaat: keyof typeof PILIHAN_STATUS_JEMAAT | null;
   no_hp: string | null;
   wali_nama: string | null;
   wali_hubungan: string | null;
@@ -66,7 +87,7 @@ export type Profil = {
 type KolomKelengkapan = Pick<
   Profil,
   | "nama_lengkap" | "gender" | "foto_path" | "tempat_lahir" | "tanggal_lahir" | "alamat"
-  | "kelurahan_kode" | "status_nikah" | "pendidikan" | "pekerjaan"
+  | "kelurahan_kode" | "status_nikah" | "pendidikan" | "pekerjaan" | "baptis"
 >;
 
 // Profil lengkap = semua isian terisi, kecuali nomor HP (opsional).
@@ -82,6 +103,7 @@ const SYARAT_LENGKAP: [keyof KolomKelengkapan, string][] = [
   ["status_nikah", "Status pernikahan"],
   ["pendidikan", "Pendidikan"],
   ["pekerjaan", "Pekerjaan"],
+  ["baptis", "Baptis"],
 ];
 
 /** Kolom yang perlu dibaca untuk menghitung kelengkapan. */
@@ -89,7 +111,8 @@ export const KOLOM_KELENGKAPAN = SYARAT_LENGKAP.map(([k]) => k).join(", ");
 
 /** Daftar isian yang masih kosong. Array kosong = profil lengkap. */
 export function isianKosong(p: KolomKelengkapan): string[] {
-  return SYARAT_LENGKAP.filter(([k]) => !p[k]).map(([, label]) => label);
+  // Baptis "Belum" (false) dihitung sudah diisi; yang kosong hanya null/"".
+  return SYARAT_LENGKAP.filter(([k]) => p[k] === null || p[k] === undefined || p[k] === "").map(([, label]) => label);
 }
 
 /** Usia (tahun) menurut tanggal hari ini di WIB. */

@@ -147,3 +147,12 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - Penerima memberi **status** (Baru, Sedang ditangani, Selesai) dan **balasan** yang dibaca pengirim. Pemimpin/wakil menerima masukan untuk kelompoknya, ketua tim untuk timnya. **Admin membaca dan menanggapi semua masukan.**
     - Tabel `masukan` tidak bisa dibaca langsung; semua lewat loket database, supaya pengirim anonim tidak bocor. Pengiriman dan tanggapan tercatat di log (tanpa isi).
     - Beranda: kotak **Masukan**, dengan jumlah masukan baru untuk penerima.
+29. **Isian Baptis (Sudah/Belum)** di profil anggota dan profil staf, tanpa tanggal atau tempat (migrasi `…1800`).
+    - Termasuk data pribadi: diisi setelah persetujuan. **Wajib** untuk label "Lengkap"; pilihan "Belum" dihitung sudah diisi.
+    - Menjadi dimensi **Laporan demografi** (Sudah, Belum, Belum diisi).
+    - Label pendidikan **D3 diganti "Diploma"** (nilai tersimpan tetap `d3`, jadi data lama tidak berubah). Pilihan status pernikahan tetap: Single, Menikah, Duda, Janda.
+30. **Status jemaat dan data jemaat oleh Ketua Tim** (mengubah keputusan 21).
+    - Isian baru **Status jemaat**: Tamu, Member, Pelayan, Leader. Juga menjadi dimensi Laporan demografi.
+    - Kotak **Data jemaat** di profil anggota berisi **Status jemaat, Gender, dan Aktif/Tidak aktif**. Bisa diubah oleh **Pemimpin/Wakil** kelompok itu, **Ketua Tim** dari tim itu, dan **Admin** (loket `ubah_data_jemaat`, tercatat di log). Tombol "Tandai tidak aktif" yang lama dipindah ke kotak ini.
+    - Ketua Tim tetap **hanya membaca** isian profil yang lain.
+    - Anggota **tidak bisa** mengubah status jemaatnya sendiri. Gender tetap baru bisa diisi setelah persetujuan data.

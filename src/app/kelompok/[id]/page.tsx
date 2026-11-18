@@ -21,7 +21,7 @@ type StatusAkun = { anggota_id: string; punya_akun: boolean; akun_id: string | n
 type BarisAnggota = Pick<
   Profil,
   | "id" | "nama_lengkap" | "aktif" | "persetujuan_pada" | "gender" | "foto_path" | "tempat_lahir"
-  | "tanggal_lahir" | "alamat" | "kelurahan_kode" | "status_nikah" | "pendidikan" | "pekerjaan"
+  | "tanggal_lahir" | "alamat" | "kelurahan_kode" | "status_nikah" | "pendidikan" | "pekerjaan" | "baptis"
 >;
 
 export default async function HalamanKelompok({ params, searchParams }: PageProps<"/kelompok/[id]">) {

@@ -1733,6 +1733,80 @@ select tests.periksa('Pengiriman dan tanggapan masukan tercatat di log',
 
 
 -- =====================================================================
+-- UJI BAPTIS, STATUS JEMAAT, DATA JEMAAT OLEH KETUA TIM (keputusan 29, 30)
+-- Andi = anggota A1 (Tim A), Ani = anggota A1, Bima = anggota B1 (Tim B).
+-- =====================================================================
+select tests.keluar();
+insert into tests.ids values ('tanpa_setuju', '44444444-0000-0000-0000-00000000aa03');
+insert into public.anggota (id, kelompok_id, nama_lengkap)
+values (tests.id('tanpa_setuju'), tests.id('kel_a1'), 'Belum Setuju');
+
+select tests.masuk_sebagai('u_andi');
+select tests.periksa('Andi: mengisi Baptis di profilnya sendiri (1 baris)',
+  tests.baris_terkena($q$ update public.anggota set baptis = true where id = tests.id('andi') $q$) = 1);
+select tests.harus_gagal('Andi: tidak bisa mengubah status jemaatnya sendiri',
+  $q$ update public.anggota set status_jemaat = 'leader' where id = tests.id('andi') $q$);
+select tests.harus_gagal('Andi: tidak bisa memakai loket data jemaat',
+  $q$ select public.ubah_data_jemaat(tests.id('andi'), 'laki_laki', true, 'leader') $q$);
+
+select tests.masuk_sebagai('ketua_a');
+select tests.harus_berhasil('Ketua Tim A: mengatur gender, aktif, dan status jemaat Andi (A1)',
+  $q$ select public.ubah_data_jemaat(tests.id('andi'), 'laki_laki', true, 'pelayan') $q$);
+select tests.harus_berhasil('Ketua Tim A: menandai Ani tidak aktif',
+  $q$ select public.ubah_data_jemaat(tests.id('ani'), null, false, 'tamu') $q$);
+select tests.harus_gagal('Ketua Tim A: tidak bisa mengatur anggota Tim B (Bima)',
+  $q$ select public.ubah_data_jemaat(tests.id('bima'), 'laki_laki', true, 'member') $q$);
+select tests.harus_gagal('Ketua Tim A: gender anggota tanpa persetujuan ditolak',
+  $q$ select public.ubah_data_jemaat(tests.id('tanpa_setuju'), 'perempuan', true, 'tamu') $q$);
+select tests.harus_berhasil('Ketua Tim A: status jemaat boleh diatur walau persetujuan belum ada',
+  $q$ select public.ubah_data_jemaat(tests.id('tanpa_setuju'), null, true, 'tamu') $q$);
+select tests.periksa('Ketua Tim A: tetap tidak bisa mengubah isian lain profil Andi (0 baris)',
+  tests.baris_terkena($q$ update public.anggota set alamat = 'x' where id = tests.id('andi') $q$) = 0);
+
+select tests.masuk_sebagai('ketua_b');
+select tests.harus_gagal('Ketua Tim B: tidak bisa mengatur anggota Tim A',
+  $q$ select public.ubah_data_jemaat(tests.id('andi'), 'laki_laki', true, 'member') $q$);
+
+select tests.masuk_sebagai('budi');
+select tests.harus_berhasil('Budi (pemimpin A1): mengatur status jemaat dan mengaktifkan Ani',
+  $q$ select public.ubah_data_jemaat(tests.id('ani'), null, true, 'member') $q$);
+select tests.periksa('Budi: mengubah status jemaat langsung di profil Andi (1 baris)',
+  tests.baris_terkena($q$ update public.anggota set status_jemaat = 'leader' where id = tests.id('andi') $q$) = 1);
+select tests.harus_berhasil('Budi: menambah anggota baru dengan status jemaat Tamu',
+  $q$ insert into public.anggota (kelompok_id, nama_lengkap, status_jemaat) values (tests.id('kel_a1'), 'Tamu Baru', 'tamu') $q$);
+select tests.harus_gagal('Budi: Baptis anggota tanpa persetujuan ditolak',
+  $q$ update public.anggota set baptis = false where id = tests.id('tanpa_setuju') $q$);
+
+select tests.masuk_sebagai('dewi');
+select tests.harus_gagal('Dewi (pemimpin B1): tidak bisa mengatur anggota A1',
+  $q$ select public.ubah_data_jemaat(tests.id('andi'), 'laki_laki', true, 'member') $q$);
+
+select tests.masuk_sebagai('admin');
+select tests.harus_berhasil('Admin: mengatur data jemaat Bima',
+  $q$ select public.ubah_data_jemaat(tests.id('bima'), 'laki_laki', true, 'member') $q$);
+select tests.periksa('Laporan Baptis: jumlah = anggota aktif, kategori sudah/belum',
+  (select sum(jumlah) from public.laporan_demografi('baptis'))
+    = (select count(*) from public.anggota where aktif)
+  and not exists (select 1 from public.laporan_demografi('baptis') where kunci not in ('sudah','belum')));
+select tests.periksa('Laporan Status jemaat: jumlah = anggota aktif, Andi tercatat leader',
+  (select sum(jumlah) from public.laporan_demografi('status_jemaat'))
+    = (select count(*) from public.anggota where aktif)
+  and exists (select 1 from public.laporan_demografi('status_jemaat') where kunci = 'leader'));
+select tests.harus_gagal('Laporan: dimensi tidak dikenal tetap ditolak',
+  $q$ select * from public.laporan_demografi('agama') $q$);
+
+select tests.masuk_sebagai('budi');
+select tests.periksa('Budi (staf): mengisi Baptis di profil stafnya (1 baris)',
+  tests.baris_terkena($q$ update public.profil_staf set baptis = true where akun_id = tests.id('budi') $q$) = 1);
+
+select tests.keluar();
+select tests.periksa('Data Andi: pelayan lalu leader, laki-laki, baptis',
+  (select status_jemaat = 'leader' and gender = 'laki_laki' and baptis from public.anggota where id = tests.id('andi')));
+select tests.periksa('Perubahan data jemaat tercatat di log',
+  exists (select 1 from public.log_aktivitas where tindakan = 'ubah_data_jemaat' and akun_id = tests.id('ketua_a')));
+
+
+-- =====================================================================
 -- RINGKASAN
 -- =====================================================================
 select no, case when lulus then 'LULUS' else 'GAGAL' end as hasil, nama, info

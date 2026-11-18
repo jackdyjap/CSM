@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
 import { CatatanKhusus } from "@/components/catatan-khusus";
+import { KotakDataJemaat } from "@/components/data-jemaat";
 import { KotakKartu } from "@/components/kotak-kartu";
 import { ProyekAnggota } from "@/components/proyek-anggota";
 import { ProfilBaca, ProfilUbah } from "@/components/profil";
 import { FormAksi } from "@/components/form-aksi";
 import { Judul, Kotak, Lipatan, Pilihan, TautanTombol } from "@/components/ui";
-import { hapusAnggota, pindahKelompok, ubahStatusAktif } from "@/lib/aksi-profil";
+import { hapusAnggota, pindahKelompok } from "@/lib/aksi-profil";
 import { bacaProfil } from "@/lib/profil-server";
 import { aksesKelompok, kelompokKelolaan, wajibMasuk } from "@/lib/sesi";
 
@@ -19,6 +20,13 @@ export default async function HalamanAnggota({ params }: PageProps<"/kelompok/[i
 
   const kelompok = await kelompokKelolaan(supabase, peran, id);
   const bolehUbah = Boolean(kelompok);
+
+  // Ketua Tim dari tim kelompok ini boleh mengatur data jemaat (keputusan 30).
+  let ketuaTimIni = false;
+  if (!bolehUbah && peran.ketua_tim.length > 0) {
+    const { data: k } = await supabase.from("kelompok").select("tim_id").eq("id", id).maybeSingle();
+    ketuaTimIni = peran.ketua_tim.some((t) => t.tim_id === k?.tim_id);
+  }
 
   // Kelompok tujuan pindah: Admin semua kelompok; pemimpin hanya kelompok lain yang dipimpinnya.
   let tujuan: { id: string; nama: string }[] = [];
@@ -45,17 +53,16 @@ export default async function HalamanAnggota({ params }: PageProps<"/kelompok/[i
       </div>
       {bolehUbah ? (
         <>
+          <KotakDataJemaat profil={profil} />
           <ProfilUbah supabase={supabase} profil={profil} olehPemimpin />
           <KotakKartu supabase={supabase} anggotaId={profil.id} nama={profil.nama_lengkap} kelompokId={id} mode="kelola" />
-          <KelolaAnggota
-            anggotaId={profil.id}
-            nama={profil.nama_lengkap}
-            aktif={profil.aktif}
-            tujuan={tujuan}
-          />
+          <KelolaAnggota anggotaId={profil.id} nama={profil.nama_lengkap} tujuan={tujuan} />
         </>
       ) : (
-        <ProfilBaca supabase={supabase} profil={profil} />
+        <>
+          {ketuaTimIni ? <KotakDataJemaat profil={profil} /> : null}
+          <ProfilBaca supabase={supabase} profil={profil} />
+        </>
       )}
       <ProyekAnggota supabase={supabase} kelompokId={id} anggotaId={profil.id} bolehUbah={bolehUbah} />
       <CatatanKhusus
@@ -73,27 +80,15 @@ export default async function HalamanAnggota({ params }: PageProps<"/kelompok/[i
 function KelolaAnggota({
   anggotaId,
   nama,
-  aktif,
   tujuan,
 }: {
   anggotaId: string;
   nama: string;
-  aktif: boolean;
   tujuan: { id: string; nama: string }[];
 }) {
   return (
     <Kotak judul="Kelola anggota">
-      <p className="text-sm opacity-70">
-        Status: <strong>{aktif ? "aktif" : "tidak aktif"}</strong>. Anggota tidak aktif tidak ikut ditandai
-        tidak hadir; bila ditandai hadir, otomatis aktif kembali.
-      </p>
-      <div className="mt-3">
-        <FormAksi
-          aksi={ubahStatusAktif.bind(null, anggotaId, !aktif)}
-          tombol={aktif ? "Tandai tidak aktif" : "Aktifkan kembali"}
-          jenisTombol="biasa"
-        />
-      </div>
+      <p className="text-sm opacity-70">Status aktif/tidak aktif diatur di kotak Data jemaat.</p>
       {tujuan.length > 0 ? (
         <Lipatan judul="Pindah ke kelompok lain">
           <FormAksi aksi={pindahKelompok.bind(null, anggotaId)} tombol="Pindahkan" jenisTombol="biasa">
@@ -116,7 +111,7 @@ function KelolaAnggota({
       <Lipatan judul="Hapus anggota">
         <p className="text-sm">
           Hapus hanya bila salah input. Profil, foto, riwayat kehadiran, dan catatan khusus {nama} ikut
-          terhapus permanen. Untuk anggota yang berhenti datang, pilih <em>Tandai tidak aktif</em>.
+          terhapus permanen. Untuk anggota yang berhenti datang, ubah Status keaktifan menjadi <em>Tidak aktif</em> di kotak Data jemaat.
         </p>
         <FormAksi
           aksi={hapusAnggota.bind(null, anggotaId)}
