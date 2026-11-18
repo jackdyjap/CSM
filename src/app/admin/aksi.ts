@@ -7,6 +7,7 @@ import { pesanGalat } from "@/lib/galat";
 import type { HasilAksi } from "@/lib/hasil";
 import { buatAkunLogin } from "@/lib/buat-akun";
 import { bacaDataLogin, PANJANG_SANDI_MINIMAL, tampilHp } from "@/lib/identitas";
+import { jalankanPenghapusBerkas } from "@/lib/hapus-berkas";
 import { simpanLogin } from "@/lib/login-server";
 import { wajibAdmin } from "@/lib/sesi";
 import { buatClientAdmin } from "@/lib/supabase/admin";
@@ -193,4 +194,18 @@ export async function ubahNamaAkun(akunId: string, _: HasilAksi, fd: FormData): 
   if (!data?.length) return { galat: "Akun tidak ditemukan." };
   revalidatePath("/admin/akun");
   return { sukses: "Nama akun diubah." };
+}
+
+// ---------------------------------------------------------------- Penghapus berkas (keputusan 40)
+
+export async function hapusBerkasSekarang(): Promise<HasilAksi> {
+  await wajibAdmin();
+  try {
+    const { dihapus, gagal } = await jalankanPenghapusBerkas();
+    revalidatePath("/admin");
+    if (gagal > 0) return { galat: `${dihapus} berkas dihapus, ${gagal} gagal (akan dicoba lagi).` };
+    return { sukses: dihapus ? `${dihapus} berkas dihapus dari penyimpanan.` : "Tidak ada berkas yang perlu dihapus." };
+  } catch {
+    return { galat: "Penghapusan berkas belum bisa dijalankan. Coba lagi nanti." };
+  }
 }

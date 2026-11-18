@@ -183,3 +183,8 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - Tujuan per bahan: **semua tim** atau **satu tim**. Dibuka dan diunduh oleh **Ketua Tim** dan **Pemimpin/Wakil** kelompok di tim itu (tautan sementara 1 jam).
     - **Anggota biasa tidak punya akses**, baik daftar maupun berkasnya (diperiksa database dan aturan penyimpanan).
     - Unggah dan hapus tercatat di log; berkas yang dihapus ikut dibersihkan.
+40. **Penghapus berkas otomatis** (migrasi `…2500`; melengkapi keputusan 3 dan 4 tentang foto yang belum punya penghapus).
+    - Berkas di antrean `internal.antrean_hapus_foto` (foto, bukti transfer, bahan diskusi) dihapus dari penyimpanan **setiap malam pukul 02.00 WIB** oleh Vercel Cron (`vercel.json` → `/api/tugas/hapus-berkas`), setelah tugas tandai-tidak-aktif dan hapus-data-kedaluwarsa.
+    - Alamat itu hanya menerima permintaan dengan kunci rahasia **`CRON_SECRET`** (pengaturan Vercel). Tanpa kunci → ditolak.
+    - **Pengaman**: database hanya memberikan berkas yang sudah tidak dipakai data mana pun; berkas di folder yang tidak dikenal tidak pernah dihapus. Berkas yang gagal dihapus tetap di antrean dan dicoba lagi.
+    - Halaman Admin → Tim & kelompok menampilkan jumlah berkas di antrean dan tombol **Hapus sekarang**. Tercatat di log.

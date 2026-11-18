@@ -2,7 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Halaman yang boleh dibuka tanpa login.
-const HALAMAN_PUBLIK = ["/masuk", "/lupa-sandi", "/undangan/", "/atur-ulang/"];
+// /api/tugas/ = tugas terjadwal Vercel Cron; dilindungi kunci CRON_SECRET di rutenya sendiri.
+const HALAMAN_PUBLIK = ["/masuk", "/lupa-sandi", "/undangan/", "/atur-ulang/", "/api/tugas/"];
 
 /**
  * Berjalan sebelum setiap halaman dibuka:
