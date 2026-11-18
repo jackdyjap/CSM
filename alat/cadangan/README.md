@@ -5,8 +5,8 @@ Skrip `cadangan-csm.ps1` mencadangkan **data** aplikasi absensi CSM dari Supabas
 ## Persiapan (sekali)
 
 1. Pasang **Command Line Tools** PostgreSQL (versi sama atau lebih baru dari database Supabase; cek dengan `select version();`) dari https://www.enterprisedb.com/downloads/postgres-postgresql-downloads. Saat memasang, centang hanya *Command Line Tools*.
-2. Simpan `cadangan-csm.ps1` di `Documents\cadangan-csm`.
-3. Buka **PowerShell**, lalu:
+2. Simpan `cadangan-csm.ps1`, `PASANG-CADANGAN.bat`, dan `CADANGKAN-SEKARANG.bat` di satu folder, mis. `Documents\cadangan-csm`.
+3. **Klik dua kali `PASANG-CADANGAN.bat`.** (Atau, lewat PowerShell:)
 
 ```powershell
 cd "$HOME\Documents\cadangan-csm"
@@ -24,7 +24,7 @@ Hasil yang benar: baris `BERHASIL: ...csm-....dump (NN tabel, NN KB)`.
 
 - Riwayat ada di `Documents\cadangan-csm\cadangan.log` (cari `BERHASIL` atau `GAGAL`).
 - Bila komputer mati atau tidur pada Minggu malam, cadangan dibuat saat komputer menyala berikutnya.
-- Membuat cadangan sekarang juga: jalankan perintah di langkah 3 **tanpa** `-Siapkan`.
+- Membuat cadangan sekarang juga: klik dua kali `CADANGKAN-SEKARANG.bat`.
 - Mengganti kata sandi database: jalankan lagi dengan `-Siapkan`.
 - Menghentikan: buka **Task Scheduler**, hapus tugas "Cadangan CSM mingguan".
 
