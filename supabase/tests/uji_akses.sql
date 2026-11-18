@@ -1807,6 +1807,30 @@ select tests.periksa('Perubahan data jemaat tercatat di log',
 
 
 -- =====================================================================
+-- UJI LAPORAN GENERASI (keputusan 31)
+-- =====================================================================
+select tests.keluar();
+select tests.periksa('Generasi: batas tahun lahir tepat (1945/1946, 1964/1965, 1980/1981, 1996/1997, 2012/2013, 2024/2025)',
+  internal.generasi('1945-12-31') = 'silent'  and internal.generasi('1946-01-01') = 'boomers'
+  and internal.generasi('1964-12-31') = 'boomers' and internal.generasi('1965-01-01') = 'x'
+  and internal.generasi('1980-12-31') = 'x'     and internal.generasi('1981-01-01') = 'y'
+  and internal.generasi('1996-12-31') = 'y'     and internal.generasi('1997-01-01') = 'z'
+  and internal.generasi('2012-12-31') = 'z'     and internal.generasi('2013-01-01') = 'alpha'
+  and internal.generasi('2024-12-31') = 'alpha' and internal.generasi('2025-01-01') = 'beta'
+  and internal.generasi('1920-05-05') = 'silent' and internal.generasi(null) is null);
+
+select tests.masuk_sebagai('admin');
+select tests.periksa('Laporan Generasi: jumlah = anggota aktif; Andi (lahir 1990) di Gen Y',
+  (select sum(jumlah) from public.laporan_demografi('generasi'))
+    = (select count(*) from public.anggota where aktif)
+  and exists (select 1 from public.laporan_demografi('generasi') where kunci = 'y'));
+select tests.masuk_sebagai('ketua_a');
+select tests.harus_gagal('Ketua Tim A: tidak bisa membuka laporan generasi',
+  $q$ select * from public.laporan_demografi('generasi') $q$);
+select tests.keluar();
+
+
+-- =====================================================================
 -- RINGKASAN
 -- =====================================================================
 select no, case when lulus then 'LULUS' else 'GAGAL' end as hasil, nama, info

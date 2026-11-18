@@ -156,3 +156,4 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - Kotak **Data jemaat** di profil anggota berisi **Status jemaat, Gender, dan Aktif/Tidak aktif**. Bisa diubah oleh **Pemimpin/Wakil** kelompok itu, **Ketua Tim** dari tim itu, dan **Admin** (loket `ubah_data_jemaat`, tercatat di log). Tombol "Tandai tidak aktif" yang lama dipindah ke kotak ini.
     - Ketua Tim tetap **hanya membaca** isian profil yang lain.
     - Anggota **tidak bisa** mengubah status jemaatnya sendiri. Gender tetap baru bisa diisi setelah persetujuan data.
+31. **Laporan demografi: dimensi Generasi** menurut tahun lahir (migrasi `…1900`). Gen Beta 2025–, Gen Alpha 2013–2024, Gen Z 1997–2012, Gen Y/Milenial 1981–1996, Gen X 1965–1980, Baby Boomers 1946–1964, Silent Generation ≤1945 (Pew Research; Alpha dan Beta menurut McCrindle). Diurutkan dari yang termuda. Batas tahun cukup diubah di `internal.generasi`.
