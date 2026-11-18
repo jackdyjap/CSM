@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { PelacakRiwayat } from "@/components/pelacak-riwayat";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -15,6 +16,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="id">
       <body className="min-h-dvh">
+        <PelacakRiwayat />
         <div className="mx-auto w-full max-w-xl px-4 py-6">{children}</div>
       </body>
     </html>

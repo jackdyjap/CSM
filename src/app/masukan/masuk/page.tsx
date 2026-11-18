@@ -112,7 +112,7 @@ export default async function HalamanMasukanMasuk({ searchParams }: PageProps<"/
               </div>
             ) : null}
             <Lipatan judul={m.balasan ? "Ubah tanggapan" : "Tanggapi"}>
-              <FormAksi aksi={tanggapiMasukan.bind(null, m.id)} tombol="Simpan tanggapan" tanpaReset>
+              <FormAksi aksi={tanggapiMasukan.bind(null, m.id)} tombol="Simpan tanggapan" tanpaReset kembali="/beranda">
                   <Pilihan label="Status" name="status" defaultValue={m.status === "baru" ? "ditangani" : m.status}>
                     {Object.entries(STATUS_MASUKAN).map(([k, v]) => (
                       <option key={k} value={k}>

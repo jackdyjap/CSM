@@ -54,7 +54,7 @@ export default async function HalamanAnggota({ params }: PageProps<"/kelompok/[i
       {bolehUbah ? (
         <>
           <KotakDataJemaat profil={profil} />
-          <ProfilUbah supabase={supabase} profil={profil} olehPemimpin />
+          <ProfilUbah supabase={supabase} profil={profil} olehPemimpin kembali={`/kelompok/${id}`} />
           <KotakKartu supabase={supabase} anggotaId={profil.id} nama={profil.nama_lengkap} kelompokId={id} mode="kelola" />
           <KelolaAnggota anggotaId={profil.id} nama={profil.nama_lengkap} tujuan={tujuan} />
         </>

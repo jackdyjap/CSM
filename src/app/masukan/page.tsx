@@ -51,7 +51,7 @@ export default async function HalamanMasukan() {
           Sampaikan keluhan, permasalahan, atau usulan perbaikan. Anda bisa melihat status dan balasannya di
           halaman ini.
         </p>
-        <FormAksi aksi={kirimMasukan} tombol="Kirim masukan">
+        <FormAksi aksi={kirimMasukan} tombol="Kirim masukan" kembali="/beranda">
           <Pilihan label="Ditujukan kepada" name="tujuan" required defaultValue="">
             <option value="" disabled>
               Pilih…

@@ -83,7 +83,7 @@ export default async function HalamanDetailProyek({ params }: PageProps<"/kelomp
 
       {kelompok.bolehUbah ? (
       <Lipatan judul="Ubah / hapus proyek">
-        <FormAksi aksi={ubahProyek.bind(null, id, proyekId)} tombol="Simpan perubahan" jenisTombol="biasa" tanpaReset>
+        <FormAksi aksi={ubahProyek.bind(null, id, proyekId)} tombol="Simpan perubahan" jenisTombol="biasa" tanpaReset kembali={`/kelompok/${id}/proyek`}>
           <Isian label="Judul" name="judul" defaultValue={proyek.judul} required />
           <IsianPanjang label="Keterangan (opsional)" name="keterangan" defaultValue={proyek.keterangan ?? ""} />
           <Isian label="Tanggal diberikan" name="diberikan_pada" type="date" defaultValue={proyek.diberikan_pada} required />
