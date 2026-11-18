@@ -16,6 +16,8 @@ import { wajibMasuk } from "@/lib/sesi";
 export default async function HalamanAturProfil() {
   const { supabase, peran } = await wajibMasuk({ bolehBelumAtur: true });
   const awal = peran.perlu_atur_profil;
+  // Setelah menyimpan, kembali ke layar sebelumnya; tidak saat login pertama (masih harus menekan Selesai).
+  const kembali = awal ? undefined : "/beranda";
 
   const sambutan = awal ? (
     <Pesan jenis="info">
@@ -36,11 +38,11 @@ export default async function HalamanAturProfil() {
           </div>
         )}
         {sambutan}
-        {peran.sandi_sementara ? <KotakSandi sementara /> : null}
-        <KotakNama nama={peran.nama} />
-        <KotakLogin supabase={supabase} akunId={peran.akun_id} punyaProfil={false} />
-        <ProfilStafUbah supabase={supabase} akunId={peran.akun_id} nama={peran.nama} />
-        {peran.sandi_sementara ? null : <KotakSandi sementara={false} />}
+        {peran.sandi_sementara ? <KotakSandi sementara kembali={kembali} /> : null}
+        <KotakNama nama={peran.nama} kembali={kembali} />
+        <KotakLogin supabase={supabase} akunId={peran.akun_id} punyaProfil={false} kembali={kembali} />
+        <ProfilStafUbah supabase={supabase} akunId={peran.akun_id} nama={peran.nama} kembali={kembali} />
+        {peran.sandi_sementara ? null : <KotakSandi sementara={false} kembali={kembali} />}
         {awal ? <KotakSelesai sandiSementara={peran.sandi_sementara} /> : null}
       </main>
     );
@@ -61,7 +63,7 @@ export default async function HalamanAturProfil() {
         </div>
       )}
       {sambutan}
-      {peran.sandi_sementara ? <KotakSandi sementara /> : null}
+      {peran.sandi_sementara ? <KotakSandi sementara kembali={kembali} /> : null}
       {awal ? null : (
         <>
           <KotakKartu
@@ -74,9 +76,9 @@ export default async function HalamanAturProfil() {
           <RiwayatKehadiran supabase={supabase} />
         </>
       )}
-      <ProfilUbah supabase={supabase} profil={profil} olehPemimpin={false} />
-      <KotakLogin supabase={supabase} akunId={peran.akun_id} punyaProfil />
-      {peran.sandi_sementara ? null : <KotakSandi sementara={false} />}
+      <ProfilUbah supabase={supabase} profil={profil} olehPemimpin={false} kembali={kembali} />
+      <KotakLogin supabase={supabase} akunId={peran.akun_id} punyaProfil kembali={kembali} />
+      {peran.sandi_sementara ? null : <KotakSandi sementara={false} kembali={kembali} />}
       {awal ? <KotakSelesai sandiSementara={peran.sandi_sementara} /> : null}
     </main>
   );

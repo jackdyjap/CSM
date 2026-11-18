@@ -30,13 +30,18 @@ import type { buatClientServer } from "@/lib/supabase/server";
 type Supabase = Awaited<ReturnType<typeof buatClientServer>>;
 
 /** Ganti kata sandi sendiri (tanpa kata sandi lama, keputusan 27). */
-export function KotakSandi({ sementara }: { sementara: boolean }) {
+export function KotakSandi({ sementara, kembali }: { sementara: boolean; kembali?: string }) {
   return (
     <Kotak judul={sementara ? "Ganti kata sandi sementara" : "Ganti kata sandi"}>
       {sementara ? (
         <Pesan jenis="info">Kata sandi Anda dibuat oleh Admin. Ganti dengan kata sandi pilihan Anda sendiri.</Pesan>
       ) : null}
-      <FormAksi aksi={gantiSandi} tombol="Simpan kata sandi baru" jenisTombol={sementara ? "utama" : "biasa"}>
+      <FormAksi
+        aksi={gantiSandi}
+        tombol="Simpan kata sandi baru"
+        jenisTombol={sementara ? "utama" : "biasa"}
+        kembali={kembali}
+      >
         <IsianSandi
           label="Kata sandi baru"
           name="sandi"
@@ -58,10 +63,10 @@ export function KotakSandi({ sementara }: { sementara: boolean }) {
 }
 
 /** Nama untuk akun tanpa profil anggota (anggota mengubah nama di Data diri). */
-export function KotakNama({ nama }: { nama: string }) {
+export function KotakNama({ nama, kembali }: { nama: string; kembali?: string }) {
   return (
     <Kotak judul="Nama">
-      <FormAksi aksi={ubahNamaSaya} tombol="Simpan nama" jenisTombol="biasa" tanpaReset>
+      <FormAksi aksi={ubahNamaSaya} tombol="Simpan nama" jenisTombol="biasa" tanpaReset kembali={kembali}>
         <Isian label="Nama lengkap" name="nama" defaultValue={nama} autoComplete="name" required />
       </FormAksi>
     </Kotak>
@@ -89,7 +94,17 @@ type ProfilStaf = Pick<
 >;
 
 /** Foto dan data pribadi Admin/Ketua Tim/Pemimpin yang bukan anggota kelompok. */
-export async function ProfilStafUbah({ supabase, akunId, nama }: { supabase: Supabase; akunId: string; nama: string }) {
+export async function ProfilStafUbah({
+  supabase,
+  akunId,
+  nama,
+  kembali,
+}: {
+  supabase: Supabase;
+  akunId: string;
+  nama: string;
+  kembali?: string;
+}) {
   const { data } = await supabase
     .from("profil_staf")
     .select(
@@ -131,7 +146,7 @@ export async function ProfilStafUbah({ supabase, akunId, nama }: { supabase: Sup
         <UnggahFoto unggah={unggahFotoStaf} hapus={hapusFotoStaf} tautanFoto={foto} nama={nama} kamera="user" />
       </Kotak>
       <Kotak judul="Data pribadi">
-        <FormAksi aksi={simpanProfilStaf} tombol="Simpan data pribadi" tanpaReset>
+        <FormAksi aksi={simpanProfilStaf} tombol="Simpan data pribadi" tanpaReset kembali={kembali}>
           <PilihanEnum label="Gender" name="gender" daftar={PILIHAN_GENDER} nilai={profil.gender} />
           <Isian label="Tempat lahir" name="tempat_lahir" defaultValue={profil.tempat_lahir ?? ""} />
           <IsianLahir tanggalAwal={profil.tanggal_lahir} waliNamaAwal={null} waliHubunganAwal={null} />

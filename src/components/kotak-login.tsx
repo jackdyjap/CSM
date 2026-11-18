@@ -12,15 +12,17 @@ export async function KotakLogin({
   supabase,
   akunId,
   punyaProfil,
+  kembali,
 }: {
   supabase: Supabase;
   akunId: string;
   punyaProfil: boolean;
+  kembali?: string;
 }) {
   const data = await bacaDataLoginAkun(supabase, akunId);
   return (
     <Kotak judul="Cara masuk">
-      <FormAksi aksi={ubahLoginSaya} tombol="Simpan cara masuk" jenisTombol="biasa" tanpaReset>
+      <FormAksi aksi={ubahLoginSaya} tombol="Simpan cara masuk" jenisTombol="biasa" tanpaReset kembali={kembali}>
         <IsianLogin
           awal={data ?? undefined}
           keterangan={

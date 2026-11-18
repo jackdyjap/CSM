@@ -81,6 +81,7 @@ export async function CatatanKhusus({
                       tombol="Simpan perubahan"
                       jenisTombol="biasa"
                       tanpaReset
+                      kembali={`/kelompok/${kelompokId}`}
                     >
                       <PilihJenis nilai={c.jenis} />
                       <IsianPanjang label="Isi catatan" name="isi" defaultValue={c.isi} required maxLength={2000} />
@@ -100,7 +101,11 @@ export async function CatatanKhusus({
 
         {bolehTulis ? (
           <Lipatan judul="Tulis catatan baru">
-            <FormAksi aksi={tulisCatatan.bind(null, kelompokId, anggotaId)} tombol="Simpan catatan">
+            <FormAksi
+              aksi={tulisCatatan.bind(null, kelompokId, anggotaId)}
+              tombol="Simpan catatan"
+              kembali={`/kelompok/${kelompokId}`}
+            >
               <PilihJenis />
               <IsianPanjang
                 label="Isi catatan"

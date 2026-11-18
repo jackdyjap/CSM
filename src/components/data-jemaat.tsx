@@ -16,6 +16,7 @@ export function KotakDataJemaat({ profil }: { profil: Profil }) {
         tombol="Simpan data jemaat"
         jenisTombol="biasa"
         tanpaReset
+        kembali={`/kelompok/${profil.kelompok_id}`}
       >
         <PilihanEnum
           label="Status jemaat"

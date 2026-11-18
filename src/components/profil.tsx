@@ -71,10 +71,13 @@ export async function ProfilUbah({
   supabase,
   profil,
   olehPemimpin,
+  kembali,
 }: {
   supabase: Supabase;
   profil: Profil;
   olehPemimpin: boolean;
+  /** Halaman tujuan setelah profil tersimpan (lihat FormAksi). */
+  kembali?: string;
 }) {
   if (!profil.persetujuan_pada) {
     return (
@@ -114,7 +117,7 @@ export async function ProfilUbah({
       </Kotak>
 
       <Kotak judul="Data diri">
-        <FormAksi aksi={simpanProfil.bind(null, profil.id)} tombol="Simpan profil" tanpaReset>
+        <FormAksi aksi={simpanProfil.bind(null, profil.id)} tombol="Simpan profil" tanpaReset kembali={kembali}>
           <Isian label="Nama lengkap" name="nama_lengkap" defaultValue={profil.nama_lengkap} required />
           <PilihanEnum label="Gender" name="gender" daftar={PILIHAN_GENDER} nilai={profil.gender} />
           <Isian label="Tempat lahir" name="tempat_lahir" defaultValue={profil.tempat_lahir ?? ""} />
