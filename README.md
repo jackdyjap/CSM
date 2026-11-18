@@ -55,6 +55,7 @@ Pemilik proyek Supabase (yang bisa masuk ke dasbor supabase.com) selalu bisa mem
 
 Bila tidak ada lagi akun dengan peran Admin di aplikasi:
 
+0. **Pilih proyek Supabase yang benar: `CSM`** (organisasi GBI Daan Mogot). Akun Supabase yang sama bisa punya beberapa proyek; bila ragu, cocokkan **Project URL** (Project Settings → Data API) dengan `NEXT_PUBLIC_SUPABASE_URL` di Vercel. Akun yang dibuat atau diubah di proyek lain tidak akan terbaca aplikasi.
 1. **Buat akun** (lewati bila akunnya sudah ada): dasbor Supabase → **Authentication → Users → Add user → Create new user**. Isi email dan kata sandi, centang **Auto Confirm User**.
 2. **Jadikan Admin**: di **SQL Editor** jalankan perintah ini. Ganti **hanya alamat email**; kata `'admin'` adalah nama peran dan harus persis seperti ini.
 
@@ -64,7 +65,7 @@ select id, 'admin' from public.akun where email = 'email-anda@gmail.com'
 on conflict do nothing;
 ```
 
-3. **Periksa**: perintah ini harus menampilkan satu baris dengan `peran = admin`. Bila kosong, akun dengan email itu belum ada (ulangi langkah 1).
+3. **Periksa**: perintah ini harus menampilkan **tepat satu baris** dengan `peran = admin`. Perintah di langkah 2 tetap menulis "Success" walaupun tidak ada yang diubah, jadi langkah ini wajib. Bila hasilnya kosong ("No rows returned"), akun dengan email itu belum ada **di proyek ini**: periksa langkah 0, lalu ulangi langkah 1.
 
 ```sql
 select ak.nama_tampilan, ak.email, p.peran
