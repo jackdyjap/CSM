@@ -1543,6 +1543,96 @@ select tests.periksa('Perubahan cara masuk tercatat di log',
 
 
 -- =====================================================================
+-- UJI ATUR PROFIL · PROFIL STAF DAN LOGIN PERTAMA (keputusan 27)
+-- =====================================================================
+select tests.keluar();
+select tests.periksa('Akun baru: wajib Atur profil, kata sandi tidak sementara',
+  (select profil_diatur_pada is null and not sandi_sementara from public.akun where id = tests.id('u_rina')));
+
+select tests.masuk_sebagai_layanan();
+select tests.harus_berhasil('Server: menandai kata sandi Rina sebagai sementara (dibuat Admin)',
+  $q$ select public.layanan_tandai_sandi(tests.id('u_rina'), true) $q$);
+
+select tests.masuk_sebagai('u_rina');
+select tests.periksa('Rina: peran_saya menyebut perlu Atur profil dan kata sandi sementara',
+  (select (r ->> 'perlu_atur_profil')::boolean and (r ->> 'sandi_sementara')::boolean
+   from (select public.peran_saya() as r) x));
+select tests.harus_gagal('Rina: tidak bisa menyelesaikan Atur profil sebelum mengganti kata sandi sementara',
+  $q$ select public.selesai_atur_profil() $q$);
+select tests.harus_gagal('Rina: tidak bisa melepas sendiri penanda kata sandi sementara',
+  $q$ select public.layanan_tandai_sandi(tests.id('u_rina'), false) $q$);
+
+select tests.masuk_sebagai('budi');
+select tests.harus_berhasil('Budi: menyelesaikan Atur profil',
+  $q$ select public.selesai_atur_profil() $q$);
+select tests.periksa('Budi: peran_saya tidak lagi meminta Atur profil',
+  (select not (r ->> 'perlu_atur_profil')::boolean from (select public.peran_saya() as r) x));
+select tests.periksa('Budi: mengubah nama tampilannya sendiri (1 baris)',
+  tests.baris_terkena($q$ update public.akun set nama_tampilan = 'Budi Santoso' where id = tests.id('budi') $q$) = 1);
+select tests.harus_gagal('Budi: nama tampilan kosong ditolak',
+  $q$ update public.akun set nama_tampilan = '  ' where id = tests.id('budi') $q$);
+
+-- Profil staf
+select tests.harus_berhasil('Budi (staf tanpa profil anggota): membuat profil staf sendiri',
+  $q$ insert into public.profil_staf (akun_id, gender, pendidikan) values (tests.id('budi'), 'laki_laki', 's1') $q$);
+select tests.periksa('Profil staf Budi: waktu persetujuan terisi otomatis',
+  (select persetujuan_pada is not null from public.profil_staf where akun_id = tests.id('budi')));
+select tests.harus_gagal('Budi: tidak bisa membuat profil staf untuk Dewi',
+  $q$ insert into public.profil_staf (akun_id) values (tests.id('dewi')) $q$);
+select tests.periksa('Budi: mengubah profil stafnya (1 baris)',
+  tests.baris_terkena($q$ update public.profil_staf set tempat_lahir = 'Medan', provinsi_kode = '12' where akun_id = tests.id('budi') $q$) = 1);
+select tests.harus_gagal('Budi: wilayah yang tidak nyambung ditolak',
+  $q$ update public.profil_staf set kota_kode = '31.71' where akun_id = tests.id('budi') $q$);
+select tests.harus_gagal('Budi: foto di folder orang lain ditolak',
+  $q$ update public.profil_staf set foto_path = 'staf/' || tests.id('dewi') || '/a.jpg' where akun_id = tests.id('budi') $q$);
+select tests.harus_berhasil('Budi: mengunggah foto ke folder stafnya sendiri',
+  $q$ insert into storage.objects (bucket_id, name) values ('foto-anggota', 'staf/' || tests.id('budi') || '/1.jpg') $q$);
+select tests.harus_gagal('Budi: tidak bisa mengunggah foto ke folder staf Dewi',
+  $q$ insert into storage.objects (bucket_id, name) values ('foto-anggota', 'staf/' || tests.id('dewi') || '/1.jpg') $q$);
+select tests.periksa('Budi: memasang dan mengganti foto stafnya',
+  tests.baris_terkena($q$ update public.profil_staf set foto_path = 'staf/' || tests.id('budi') || '/1.jpg' where akun_id = tests.id('budi') $q$) = 1
+  and tests.baris_terkena($q$ update public.profil_staf set foto_path = 'staf/' || tests.id('budi') || '/2.jpg' where akun_id = tests.id('budi') $q$) = 1);
+select tests.periksa('Budi: mengubah akun_id profil staf tidak berpengaruh (tetap milik Budi)',
+  tests.baris_terkena($q$ update public.profil_staf set akun_id = tests.id('dewi') where akun_id = tests.id('budi') $q$) <= 1
+  and exists (select 1 from public.profil_staf where akun_id = tests.id('budi')));
+
+select tests.masuk_sebagai('dewi');
+select tests.periksa('Dewi: tidak bisa membaca profil staf Budi',
+  not exists (select 1 from public.profil_staf where akun_id = tests.id('budi')));
+select tests.periksa('Dewi: tidak bisa melihat foto staf Budi',
+  not exists (select 1 from storage.objects where name like 'staf/' || tests.id('budi') || '/%'));
+select tests.periksa('Dewi: tidak bisa menghapus profil staf Budi (0 baris)',
+  tests.baris_terkena($q$ delete from public.profil_staf where akun_id = tests.id('budi') $q$) = 0);
+
+select tests.masuk_sebagai('u_andi');
+select tests.harus_gagal('Andi (punya profil anggota): tidak bisa membuat profil staf',
+  $q$ insert into public.profil_staf (akun_id) values (tests.id('u_andi')) $q$);
+
+select tests.masuk_sebagai('admin');
+select tests.periksa('Admin: membaca profil staf Budi',
+  exists (select 1 from public.profil_staf where akun_id = tests.id('budi') and tempat_lahir = 'Medan'));
+select tests.periksa('Admin: melihat foto staf Budi',
+  exists (select 1 from storage.objects where name like 'staf/' || tests.id('budi') || '/%'));
+select tests.periksa('Admin: tidak bisa mengubah profil staf Budi (0 baris)',
+  tests.baris_terkena($q$ update public.profil_staf set alamat = 'x' where akun_id = tests.id('budi') $q$) = 0);
+
+select tests.masuk_sebagai_tamu();
+select tests.harus_gagal('Tamu: tidak bisa membaca profil staf', $q$ select * from public.profil_staf $q$);
+
+select tests.keluar();
+select tests.periksa('Foto staf lama Budi masuk antrean hapus',
+  exists (select 1 from internal.antrean_hapus_foto where foto_path = 'staf/' || tests.id('budi') || '/1.jpg'));
+
+-- Nama akun mengikuti nama lengkap profil anggota
+select tests.masuk_sebagai('budi');
+select tests.periksa('Budi: mengganti nama lengkap profil Andi (1 baris)',
+  tests.baris_terkena($q$ update public.anggota set nama_lengkap = 'Andi Pratama' where id = tests.id('andi') $q$) = 1);
+select tests.keluar();
+select tests.periksa('Nama akun Andi ikut berubah',
+  (select nama_tampilan = 'Andi Pratama' from public.akun where id = tests.id('u_andi')));
+
+
+-- =====================================================================
 -- RINGKASAN
 -- =====================================================================
 select no, case when lulus then 'LULUS' else 'GAGAL' end as hasil, nama, info

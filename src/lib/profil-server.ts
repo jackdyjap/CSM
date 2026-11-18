@@ -34,7 +34,10 @@ export async function tautanFotoBanyak(supabase: Supabase, lokasi: string[]) {
  * Daftar pilihan wilayah untuk keempat tingkat sesuai kode yang tersimpan,
  * supaya menu langsung terisi saat halaman dibuka.
  */
-export async function daftarWilayahAwal(supabase: Supabase, p: Profil): Promise<Wilayah[][]> {
+export async function daftarWilayahAwal(
+  supabase: Supabase,
+  p: Pick<Profil, "provinsi_kode" | "kota_kode" | "kecamatan_kode">,
+): Promise<Wilayah[][]> {
   const induk = [null, p.provinsi_kode, p.kota_kode, p.kecamatan_kode];
   return Promise.all(
     induk.map(async (kode, i) => {
@@ -48,7 +51,10 @@ export async function daftarWilayahAwal(supabase: Supabase, p: Profil): Promise<
 }
 
 /** Nama wilayah untuk tampilan baca-saja, contoh: "Menteng, Jakarta Pusat, DKI Jakarta". */
-export async function namaWilayah(supabase: Supabase, p: Profil) {
+export async function namaWilayah(
+  supabase: Supabase,
+  p: Pick<Profil, "provinsi_kode" | "kota_kode" | "kecamatan_kode" | "kelurahan_kode">,
+) {
   const kode = [p.kelurahan_kode, p.kecamatan_kode, p.kota_kode, p.provinsi_kode].filter(Boolean) as string[];
   if (kode.length === 0) return null;
   const { data } = await supabase.from("wilayah").select("kode, nama").in("kode", kode);

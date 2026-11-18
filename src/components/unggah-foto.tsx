@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { hapusFoto, unggahFoto } from "@/lib/aksi-profil";
 import { kecilkanFoto } from "@/lib/gambar";
 import type { HasilAksi } from "@/lib/hasil";
 import { Pesan, Tombol } from "./ui";
@@ -9,12 +8,16 @@ import { Pesan, Tombol } from "./ui";
 const SISI_MAKS = 800; // piksel
 
 export function UnggahFoto({
-  anggotaId,
+  unggah,
+  hapus: aksiHapus,
   tautanFoto,
   nama,
   kamera,
 }: {
-  anggotaId: string;
+  /** Aksi server yang menyimpan foto (sudah diikat ke pemiliknya: anggota atau staf). */
+  unggah: (fd: FormData) => Promise<HasilAksi>;
+  /** Aksi server yang menghapus foto. */
+  hapus: () => Promise<HasilAksi>;
   /** Tautan sementara foto saat ini, atau null bila belum ada foto. */
   tautanFoto: string | null;
   nama: string;
@@ -41,7 +44,7 @@ export function UnggahFoto({
       setPratinjau(URL.createObjectURL(kecil));
       const fd = new FormData();
       fd.set("foto", new File([kecil], "foto.jpg", { type: "image/jpeg" }));
-      const h = await unggahFoto(anggotaId, fd);
+      const h = await unggah(fd);
       setHasil(h);
       if (h.galat) setPratinjau(null);
     });
@@ -50,7 +53,7 @@ export function UnggahFoto({
   function hapus() {
     if (!confirm(`Hapus foto ${nama}?`)) return;
     mulai(async () => {
-      const h = await hapusFoto(anggotaId);
+      const h = await aksiHapus();
       setHasil(h);
       if (!h.galat) setPratinjau(null);
     });

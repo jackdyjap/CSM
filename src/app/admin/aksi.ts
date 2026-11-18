@@ -9,6 +9,7 @@ import { buatAkunLogin } from "@/lib/buat-akun";
 import { bacaDataLogin, PANJANG_SANDI_MINIMAL, tampilHp } from "@/lib/identitas";
 import { simpanLogin } from "@/lib/login-server";
 import { wajibAdmin } from "@/lib/sesi";
+import { buatClientAdmin } from "@/lib/supabase/admin";
 
 const teks = (fd: FormData, nama: string) => String(fd.get(nama) ?? "").trim();
 
@@ -52,11 +53,13 @@ export async function buatAkun(_: HasilAksi, fd: FormData): Promise<HasilAksi> {
 
   const dibuat = await buatAkunLogin({ nama, login, sandi });
   if ("galat" in dibuat) return { galat: dibuat.galat };
+  // Kata sandi dari Admin = sementara; wajib diganti saat login pertama (keputusan 27).
+  await buatClientAdmin().rpc("layanan_tandai_sandi", { p_akun: dibuat.akunId, p_sementara: true });
 
   const caraMasuk = [dibuat.rapi.nama_pengguna, dibuat.rapi.email, tampilHp(dibuat.rapi.nomor_hp)].filter(Boolean).join(" / ");
   revalidatePath("/admin/akun");
   return {
-    sukses: `Akun ${nama} dibuat. Masuk dengan ${caraMasuk}. Sampaikan kata sandinya secara pribadi, lalu beri perannya di bawah.`,
+    sukses: `Akun ${nama} dibuat. Masuk dengan ${caraMasuk}. Sampaikan kata sandi sementaranya secara pribadi (wajib diganti saat login pertama), lalu beri perannya di bawah.`,
   };
 }
 

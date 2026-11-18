@@ -133,3 +133,8 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
         - Saat migrasi: nomor dobel di profil dikosongkan kecuali satu (yang terhubung ke akun, lalu yang paling lama) dan dicatat di log (`hp_ganda_dikosongkan`); bila nomor profil dan nomor login berbeda, nomor login yang dipakai.
     - Server mencari alamat login lewat `layanan_cari_login` (khusus server). Pesan gagal masuk sama untuk "tidak terdaftar" dan "kata sandi salah". Migrasi `…1500`.
 26. **Kartu anggota memuat foto dan nomor HP** selain nama, kelompok, dan QR (mengubah keputusan 22), baik kartu cetak maupun Kartu saya di HP. Isi QR tetap kode acak tanpa data pribadi. Karena kartu kini memuat data pribadi, halaman cetak mengingatkan agar kartu disimpan dan dibagikan dengan hati-hati.
+27. **Atur profil sendiri untuk semua peran** (halaman `/profil`, migrasi `…1600`).
+    - Setiap akun mengubah sendiri: **kata sandi** (tanpa kata sandi lama), **nama**, **cara masuk** (keputusan 25), **foto**, dan **data pribadi**.
+    - **Login pertama**: semua akun (termasuk akun lama) diarahkan ke Atur profil sampai menekan **Selesai**. Akun yang dibuat Admin memakai **kata sandi sementara** yang wajib diganti dulu. Data pribadi boleh dilengkapi nanti. Halaman check-in (`/hadir`) tetap bisa dibuka.
+    - **Profil staf** (tabel `profil_staf`): Admin, Ketua Tim, dan Pemimpin yang bukan anggota kelompok punya foto dan data pribadi sendiri (isian sama dengan profil anggota, nomor HP ada di cara masuk). Diisi setelah menyetujui pencatatan data; hanya dibaca orangnya sendiri dan Admin; tidak ikut absensi atau laporan demografi. Foto di `foto-anggota/staf/<id akun>/`.
+    - Anggota mengubah nama lewat Nama lengkap di profilnya; **nama akun mengikuti** nama lengkap itu.

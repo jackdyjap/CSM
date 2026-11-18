@@ -7,7 +7,7 @@ import { CheckIn } from "./check-in";
 /** Check-in mandiri anggota dengan QR pertemuan (Fase 8). */
 export default async function HalamanHadir({ searchParams }: PageProps<"/hadir">) {
   const { k } = await searchParams;
-  const { peran } = await wajibMasuk();
+  const { peran } = await wajibMasuk({ bolehBelumAtur: true });
   const kode = typeof k === "string" ? kodePertemuanDariQr(k) : null;
 
   return (
