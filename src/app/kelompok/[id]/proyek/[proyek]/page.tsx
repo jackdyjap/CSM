@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { FormAksi } from "@/components/form-aksi";
+import { LaporanProyek } from "@/components/laporan-proyek";
 import { StatusProyekAnggota } from "@/components/status-proyek";
 import { Isian, IsianPanjang, Judul, Kotak, Lipatan, TautanTombol } from "@/components/ui";
 import { tanggalPanjang } from "@/lib/pertemuan";
@@ -7,7 +8,14 @@ import { PILIHAN_STATUS_PROYEK, type StatusProyek } from "@/lib/pilihan-fase5";
 import { aksesKelompok, wajibMasuk } from "@/lib/sesi";
 import { hapusProyek, ubahProyek } from "../aksi";
 
-type Status = { anggota_id: string; status: StatusProyek; keterangan: string | null };
+type Status = {
+  anggota_id: string;
+  status: StatusProyek;
+  keterangan: string | null;
+  alasan: string | null;
+  hasil: string | null;
+  dilaporkan_sendiri: boolean;
+};
 
 export default async function HalamanDetailProyek({ params }: PageProps<"/kelompok/[id]/proyek/[proyek]">) {
   const { id, proyek: proyekId } = await params;
@@ -23,7 +31,7 @@ export default async function HalamanDetailProyek({ params }: PageProps<"/kelomp
       .eq("kelompok_id", id)
       .maybeSingle(),
     supabase.from("anggota").select("id, nama_lengkap, aktif").eq("kelompok_id", id).order("nama_lengkap"),
-    supabase.from("status_proyek").select("anggota_id, status, keterangan").eq("proyek_id", proyekId),
+    supabase.from("status_proyek").select("anggota_id, status, keterangan, alasan, hasil, dilaporkan_sendiri").eq("proyek_id", proyekId),
   ]);
   if (!proyek) redirect(`/kelompok/${id}/proyek`);
 
@@ -64,6 +72,11 @@ export default async function HalamanDetailProyek({ params }: PageProps<"/kelomp
                     Status: <strong>{PILIHAN_STATUS_PROYEK[status.get(a.id)?.status ?? "belum"]}</strong>
                     {status.get(a.id)?.keterangan ? ` · ${status.get(a.id)?.keterangan}` : ""}
                   </p>
+                  <LaporanProyek
+                    alasan={status.get(a.id)?.alasan ?? null}
+                    hasil={status.get(a.id)?.hasil ?? null}
+                    sendiri={status.get(a.id)?.dilaporkan_sendiri ?? false}
+                  />
                 </div>
               ) : (
               <StatusProyekAnggota
@@ -74,6 +87,11 @@ export default async function HalamanDetailProyek({ params }: PageProps<"/kelomp
                 nama={a.aktif ? a.nama_lengkap : `${a.nama_lengkap} (tidak aktif)`}
                 statusAwal={status.get(a.id)?.status ?? "belum"}
                 keteranganAwal={status.get(a.id)?.keterangan ?? null}
+                laporan={{
+                  alasan: status.get(a.id)?.alasan ?? null,
+                  hasil: status.get(a.id)?.hasil ?? null,
+                  sendiri: status.get(a.id)?.dilaporkan_sendiri ?? false,
+                }}
               />
               ),
             )}

@@ -1,4 +1,5 @@
 import { Judul, Kotak, Pesan, TautanTombol, Tombol } from "@/components/ui";
+import { KotakProyekSaya } from "@/components/proyek-saya";
 import { keluar } from "@/lib/aksi-umum";
 import { wajibMasuk } from "@/lib/sesi";
 
@@ -60,6 +61,8 @@ export default async function HalamanBeranda() {
           </ul>
         </Kotak>
       ) : null}
+
+      {peran.anggota && !peran.perlu_atur_profil ? <KotakProyekSaya supabase={supabase} beranda /> : null}
 
       {peran.anggota ? (
         <Kotak judul="Keanggotaan saya">
