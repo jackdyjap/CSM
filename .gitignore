@@ -16,3 +16,6 @@ next-env.d.ts
 *.pem
 npm-debug.log*
 .vercel
+
+# Cadangan database (berisi data pribadi) tidak boleh masuk GitHub
+*.dump
