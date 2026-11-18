@@ -1894,6 +1894,62 @@ select tests.keluar();
 
 
 -- =====================================================================
+-- UJI MEMASUKKAN AKUN YANG BELUM TERGABUNG (keputusan 35)
+-- Belum tergabung: Rina (nama pengguna rina2), Tanpa Peran, Dewi, Budi, dll.
+-- =====================================================================
+select tests.masuk_sebagai('u_andi');
+select tests.harus_gagal('Andi (anggota biasa): tidak bisa mencari akun',
+  $q$ select * from public.cari_akun_belum_tergabung('rina2') $q$);
+
+select tests.masuk_sebagai('budi');
+select tests.periksa('Budi: menemukan Rina dengan nama pengguna persis (huruf besar pun)',
+  (select count(*) from public.cari_akun_belum_tergabung(' RINA2 ') where akun_id = tests.id('u_rina')) = 1);
+select tests.periksa('Budi: menemukan Rina dengan nomor HP format lain',
+  exists (select 1 from public.cari_akun_belum_tergabung('+62 812-3333-0001') where akun_id = tests.id('u_rina')));
+select tests.periksa('Budi: sebagian nama pengguna tidak menemukan apa pun (harus persis)',
+  not exists (select 1 from public.cari_akun_belum_tergabung('rina')));
+select tests.periksa('Budi: akun yang sudah tergabung (Andi) tidak muncul',
+  not exists (select 1 from public.cari_akun_belum_tergabung('u_andi@contoh.test')));
+select tests.harus_gagal('Budi: tidak bisa melihat daftar lengkap (khusus Admin)',
+  $q$ select * from public.akun_belum_tergabung() $q$);
+select tests.harus_berhasil('Budi: memasukkan Rina ke kelompoknya (A1)',
+  $q$ select public.masukkan_akun_ke_kelompok(tests.id('u_rina'), tests.id('kel_a1')) $q$);
+select tests.harus_gagal('Budi: Rina yang sudah tergabung tidak bisa dimasukkan lagi',
+  $q$ select public.masukkan_akun_ke_kelompok(tests.id('u_rina'), tests.id('kel_t1')) $q$);
+select tests.harus_gagal('Budi: tidak bisa memasukkan akun ke kelompok tim lain (B1)',
+  $q$ select public.masukkan_akun_ke_kelompok(tests.id('tanpa_peran'), tests.id('kel_b1')) $q$);
+
+select tests.keluar();
+select tests.periksa('Rina kini anggota A1 dengan nama akunnya, persetujuan belum ada',
+  (select a.kelompok_id = tests.id('kel_a1') and a.nama_lengkap = 'Rina' and a.persetujuan_pada is null
+   from public.akun ak join public.anggota a on a.id = ak.anggota_id where ak.id = tests.id('u_rina')));
+
+select tests.masuk_sebagai('ketua_a');
+select tests.harus_berhasil('Ketua A: memasukkan akun tanpa peran ke kelompok di timnya (T1)',
+  $q$ select public.masukkan_akun_ke_kelompok(tests.id('tanpa_peran'), tests.id('kel_t1')) $q$);
+select tests.harus_gagal('Ketua A: tidak bisa memasukkan ke kelompok tim lain (B1)',
+  $q$ select public.masukkan_akun_ke_kelompok(tests.id('dewi'), tests.id('kel_b1')) $q$);
+
+select tests.masuk_sebagai('ketua_b');
+select tests.harus_berhasil('Ketua B: memasukkan akun pengurus (Dewi) sebagai anggota B1',
+  $q$ select public.masukkan_akun_ke_kelompok(tests.id('dewi'), tests.id('kel_b1')) $q$);
+
+select tests.masuk_sebagai('admin');
+select tests.periksa('Admin: daftar lengkap berisi Budi (Pemimpin) dan tidak berisi Rina',
+  exists (select 1 from public.akun_belum_tergabung() where akun_id = tests.id('budi') and peran like '%Pemimpin%')
+  and not exists (select 1 from public.akun_belum_tergabung() where akun_id = tests.id('u_rina')));
+select tests.harus_berhasil('Admin: memasukkan Pemimpin (Budi) sebagai anggota A1',
+  $q$ select public.masukkan_akun_ke_kelompok(tests.id('budi'), tests.id('kel_a1')) $q$);
+select tests.keluar();
+select tests.periksa('Budi: punya profil anggota di A1 dan peran Pemimpin A1 tetap ada',
+  exists (select 1 from public.akun ak join public.anggota a on a.id = ak.anggota_id
+          where ak.id = tests.id('budi') and a.kelompok_id = tests.id('kel_a1'))
+  and exists (select 1 from public.penugasan_peran where akun_id = tests.id('budi') and kelompok_id = tests.id('kel_a1')));
+select tests.periksa('Memasukkan akun tercatat di log',
+  (select count(*) from public.log_aktivitas where tindakan = 'masukkan_akun_ke_kelompok') = 4);
+
+
+-- =====================================================================
 -- RINGKASAN
 -- =====================================================================
 select no, case when lulus then 'LULUS' else 'GAGAL' end as hasil, nama, info

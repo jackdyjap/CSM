@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { alamatSitus } from "@/lib/alamat";
 import { waktuWib } from "@/lib/format";
 import { pesanGalat } from "@/lib/galat";
@@ -57,4 +58,16 @@ export async function buatTautanAturUlang(
     tautan,
     teksWa: `Halo ${nama}, ini tautan untuk membuat kata sandi baru di aplikasi absensi kelompok (berlaku 24 jam, sekali pakai): ${tautan}`,
   };
+}
+
+/**
+ * Memasukkan akun yang belum tergabung ke kelompok ini (keputusan 35):
+ * Pemimpin/Wakil, Ketua Tim dari tim itu, atau Admin. Diperiksa database.
+ */
+export async function masukkanAkun(kelompokId: string, akunId: string): Promise<HasilAksi> {
+  const { supabase } = await wajibMasuk();
+  const { data, error } = await supabase.rpc("masukkan_akun_ke_kelompok", { p_akun: akunId, p_kelompok: kelompokId });
+  if (error || !data) return { galat: pesanGalat(error) };
+  revalidatePath(`/kelompok/${kelompokId}`);
+  redirect(`/kelompok/${kelompokId}/anggota/${data}`);
 }
