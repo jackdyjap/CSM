@@ -1633,6 +1633,106 @@ select tests.periksa('Nama akun Andi ikut berubah',
 
 
 -- =====================================================================
+-- UJI MASUKAN · KELUHAN, PERMASALAHAN, USULAN (keputusan 28)
+-- Andi = anggota A1 (Tim A). Budi = pemimpin A1, Sari = wakil A1,
+-- Ketua A = ketua Tim A, Dewi = pemimpin B1, Ketua B = ketua Tim B.
+-- =====================================================================
+select tests.masuk_sebagai('u_andi');
+select tests.harus_berhasil('Andi: kirim keluhan TANPA NAMA ke pemimpin kelompoknya',
+  $q$ select tests.simpan('m1', public.kirim_masukan('pemimpin', tests.id('kel_a1'), 'keluhan', 'Jadwal', 'Pertemuan sering mulai terlambat', true)::text) $q$);
+select tests.harus_berhasil('Andi: kirim usulan ke ketua tim kelompoknya',
+  $q$ select tests.simpan('m2', public.kirim_masukan('ketua_tim', tests.id('kel_a1'), 'usulan', 'Retret', 'Usul retret gabungan')::text) $q$);
+select tests.harus_berhasil('Andi: kirim permasalahan ke Admin',
+  $q$ select tests.simpan('m3', public.kirim_masukan('admin', null, 'permasalahan', 'Aplikasi', 'Foto tidak terunggah')::text) $q$);
+select tests.harus_gagal('Andi: tidak bisa mengirim ke pemimpin kelompok lain (B1)',
+  $q$ select public.kirim_masukan('pemimpin', tests.id('kel_b1'), 'keluhan', 'x', 'x') $q$);
+select tests.harus_gagal('Andi: tidak bisa mengirim ke ketua tim lain (lewat B1)',
+  $q$ select public.kirim_masukan('ketua_tim', tests.id('kel_b1'), 'keluhan', 'x', 'x') $q$);
+select tests.harus_gagal('Andi: judul kosong ditolak',
+  $q$ select public.kirim_masukan('admin', null, 'usulan', '  ', 'isi') $q$);
+select tests.harus_gagal('Andi: tidak bisa membaca tabel masukan langsung',
+  $q$ select * from public.masukan $q$);
+select tests.harus_gagal('Andi: tidak bisa menulis tabel masukan langsung',
+  $q$ insert into public.masukan (tujuan, jenis, judul, isi) values ('admin', 'usulan', 'x', 'x') $q$);
+select tests.periksa('Andi: melihat 3 masukan yang dikirimnya',
+  (select count(*) from public.masukan_saya()) = 3);
+select tests.periksa('Andi: masukan yang ditujukan ke orang lain tidak bisa ia tanggapi',
+  not exists (select 1 from public.masukan_masuk()));
+select tests.harus_gagal('Andi: tidak bisa menanggapi masukannya sendiri',
+  $q$ select public.tanggapi_masukan((select teks::uuid from tests.nilai where nama = 'm1'), 'selesai', 'x') $q$);
+
+select tests.masuk_sebagai('budi');
+select tests.harus_gagal('Budi (bukan anggota A1): tidak bisa mengirim ke "pemimpin" A1',
+  $q$ select public.kirim_masukan('pemimpin', tests.id('kel_a1'), 'keluhan', 'x', 'x') $q$);
+select tests.harus_berhasil('Budi (pemimpin A1): kirim permasalahan ke ketua timnya',
+  $q$ select tests.simpan('m4', public.kirim_masukan('ketua_tim', tests.id('kel_a1'), 'permasalahan', 'Tempat', 'Butuh ruang pertemuan')::text) $q$);
+select tests.periksa('Budi: menerima keluhan anonim untuk A1 tanpa nama pengirim',
+  (select pengirim_nama is null and anonim from public.masukan_masuk()
+    where id = (select teks::uuid from tests.nilai where nama = 'm1')));
+select tests.periksa('Budi: tidak menerima masukan untuk ketua tim atau Admin',
+  not exists (select 1 from public.masukan_masuk()
+               where id in (select teks::uuid from tests.nilai where nama in ('m2','m3','m4'))));
+select tests.periksa('Budi: jumlah masukan baru tampil',
+  public.jumlah_masukan_baru() >= 1);
+select tests.harus_berhasil('Budi: menanggapi keluhan (sedang ditangani + balasan)',
+  $q$ select public.tanggapi_masukan((select teks::uuid from tests.nilai where nama = 'm1'), 'ditangani', 'Terima kasih, akan kami perbaiki.') $q$);
+select tests.harus_gagal('Budi: tidak bisa menanggapi masukan untuk ketua tim',
+  $q$ select public.tanggapi_masukan((select teks::uuid from tests.nilai where nama = 'm2'), 'selesai', 'x') $q$);
+
+select tests.masuk_sebagai('sari');
+select tests.periksa('Sari (wakil A1): juga menerima keluhan untuk A1',
+  exists (select 1 from public.masukan_masuk() where id = (select teks::uuid from tests.nilai where nama = 'm1')));
+
+select tests.masuk_sebagai('dewi');
+select tests.periksa('Dewi (pemimpin B1): tidak menerima masukan A1',
+  not exists (select 1 from public.masukan_masuk()
+               where id in (select teks::uuid from tests.nilai where nama in ('m1','m2','m3','m4'))));
+select tests.harus_gagal('Dewi: tidak bisa menanggapi keluhan A1',
+  $q$ select public.tanggapi_masukan((select teks::uuid from tests.nilai where nama = 'm1'), 'selesai', 'x') $q$);
+
+select tests.masuk_sebagai('ketua_a');
+select tests.periksa('Ketua A: menerima usulan Andi (dengan nama) dan permasalahan Budi',
+  (select count(*) from public.masukan_masuk()
+    where id in (select teks::uuid from tests.nilai where nama in ('m2','m4'))) = 2
+  and (select pengirim_nama is not null from public.masukan_masuk()
+        where id = (select teks::uuid from tests.nilai where nama = 'm2')));
+select tests.periksa('Ketua A: tidak menerima masukan untuk pemimpin atau Admin',
+  not exists (select 1 from public.masukan_masuk()
+               where id in (select teks::uuid from tests.nilai where nama in ('m1','m3'))));
+select tests.harus_berhasil('Ketua A: menandai usulan selesai',
+  $q$ select public.tanggapi_masukan((select teks::uuid from tests.nilai where nama = 'm2'), 'selesai', 'Sudah dijadwalkan.') $q$);
+
+select tests.masuk_sebagai('ketua_b');
+select tests.periksa('Ketua B: tidak menerima masukan Tim A',
+  not exists (select 1 from public.masukan_masuk()
+               where id in (select teks::uuid from tests.nilai where nama in ('m1','m2','m3','m4'))));
+
+select tests.masuk_sebagai('admin');
+select tests.periksa('Admin: membaca keempat masukan',
+  (select count(*) from public.masukan_masuk()
+    where id in (select teks::uuid from tests.nilai where nama in ('m1','m2','m3','m4'))) = 4);
+select tests.periksa('Admin: melihat pengirim masukan anonim',
+  (select pengirim_nama is not null from public.masukan_masuk()
+    where id = (select teks::uuid from tests.nilai where nama = 'm1')));
+select tests.harus_berhasil('Admin: menanggapi permasalahan',
+  $q$ select public.tanggapi_masukan((select teks::uuid from tests.nilai where nama = 'm3'), 'selesai', 'Sudah diperbaiki.') $q$);
+
+select tests.masuk_sebagai('u_andi');
+select tests.periksa('Andi: melihat status dan balasan atas keluhannya',
+  (select status = 'ditangani' and balasan = 'Terima kasih, akan kami perbaiki.' and dibalas_pada is not null
+   from public.masukan_saya() where id = (select teks::uuid from tests.nilai where nama = 'm1')));
+
+select tests.masuk_sebagai_tamu();
+select tests.harus_gagal('Tamu: tidak bisa membaca masukan', $q$ select * from public.masukan_masuk() $q$);
+select tests.harus_gagal('Tamu: tidak bisa mengirim masukan',
+  $q$ select public.kirim_masukan('admin', null, 'usulan', 'x', 'x') $q$);
+select tests.keluar();
+select tests.periksa('Pengiriman dan tanggapan masukan tercatat di log',
+  exists (select 1 from public.log_aktivitas where tindakan = 'kirim_masukan')
+  and exists (select 1 from public.log_aktivitas where tindakan = 'tanggapi_masukan'));
+
+
+-- =====================================================================
 -- RINGKASAN
 -- =====================================================================
 select no, case when lulus then 'LULUS' else 'GAGAL' end as hasil, nama, info

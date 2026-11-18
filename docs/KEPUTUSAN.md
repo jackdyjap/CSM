@@ -138,3 +138,12 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - **Login pertama**: semua akun (termasuk akun lama) diarahkan ke Atur profil sampai menekan **Selesai**. Akun yang dibuat Admin memakai **kata sandi sementara** yang wajib diganti dulu. Data pribadi boleh dilengkapi nanti. Halaman check-in (`/hadir`) tetap bisa dibuka.
     - **Profil staf** (tabel `profil_staf`): Admin, Ketua Tim, dan Pemimpin yang bukan anggota kelompok punya foto dan data pribadi sendiri (isian sama dengan profil anggota, nomor HP ada di cara masuk). Diisi setelah menyetujui pencatatan data; hanya dibaca orangnya sendiri dan Admin; tidak ikut absensi atau laporan demografi. Foto di `foto-anggota/staf/<id akun>/`.
     - Anggota mengubah nama lewat Nama lengkap di profilnya; **nama akun mengikuti** nama lengkap itu.
+28. **Masukan: keluhan, permasalahan, usulan perbaikan** (`/masukan`, `/masukan/masuk`, migrasi `…1700`).
+    - Semua peran bisa mengirim. Pengirim memilih **jenis** (Keluhan, Permasalahan, Usulan perbaikan) dan **tujuan**:
+        - **Pemimpin kelompok**: hanya anggota kelompok itu.
+        - **Ketua tim** dari kelompoknya: anggota, atau pemimpin/wakil kelompok itu.
+        - **Admin**: siapa saja.
+    - Boleh **tanpa nama**: penerima tidak melihat nama pengirim, tetapi pengirim tetap membaca balasan. Database tetap mencatat pengirimnya; hanya Admin yang bisa melihatnya (untuk menangani penyalahgunaan).
+    - Penerima memberi **status** (Baru, Sedang ditangani, Selesai) dan **balasan** yang dibaca pengirim. Pemimpin/wakil menerima masukan untuk kelompoknya, ketua tim untuk timnya. **Admin membaca dan menanggapi semua masukan.**
+    - Tabel `masukan` tidak bisa dibaca langsung; semua lewat loket database, supaya pengirim anonim tidak bocor. Pengiriman dan tanggapan tercatat di log (tanpa isi).
+    - Beranda: kotak **Masukan**, dengan jumlah masukan baru untuk penerima.

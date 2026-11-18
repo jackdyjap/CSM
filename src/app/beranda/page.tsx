@@ -3,7 +3,9 @@ import { keluar } from "@/lib/aksi-umum";
 import { wajibMasuk } from "@/lib/sesi";
 
 export default async function HalamanBeranda() {
-  const { peran } = await wajibMasuk();
+  const { supabase, peran } = await wajibMasuk();
+  const penerimaMasukan = peran.admin || peran.ketua_tim.length > 0 || peran.pemimpin.length > 0;
+  const { data: masukanBaru } = penerimaMasukan ? await supabase.rpc("jumlah_masukan_baru") : { data: 0 };
   const tanpaPeran =
     !peran.admin && peran.ketua_tim.length === 0 && peran.pemimpin.length === 0 && !peran.anggota;
 
@@ -77,6 +79,18 @@ export default async function HalamanBeranda() {
           </p>
         </Kotak>
       ) : null}
+
+      <Kotak judul="Masukan">
+        <p className="mb-3 text-sm opacity-70">Keluhan, permasalahan, atau usulan perbaikan.</p>
+        <div className="flex flex-wrap gap-2">
+          <TautanTombol href="/masukan">Kirim masukan</TautanTombol>
+          {penerimaMasukan ? (
+            <TautanTombol href="/masukan/masuk" jenis={masukanBaru ? "utama" : "biasa"}>
+              Masukan masuk{masukanBaru ? ` (${masukanBaru} baru)` : ""}
+            </TautanTombol>
+          ) : null}
+        </div>
+      </Kotak>
 
       <div className="flex flex-wrap gap-2">
         {peran.anggota ? null : <TautanTombol href="/profil">Atur profil</TautanTombol>}
