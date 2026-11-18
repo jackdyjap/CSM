@@ -13,6 +13,7 @@ import {
 export const DIMENSI = {
   gender: "Gender",
   rentang_usia: "Rentang usia",
+  generasi: "Generasi",
   pendidikan: "Pendidikan terakhir",
   status_nikah: "Status pernikahan",
   pekerjaan: "Pekerjaan",
@@ -33,6 +34,16 @@ const URUTAN: Partial<Record<Dimensi, Record<string, string>>> = {
   pekerjaan: PILIHAN_PEKERJAAN,
   baptis: PILIHAN_BAPTIS,
   status_jemaat: PILIHAN_STATUS_JEMAAT,
+  // Urut dari yang termuda (keputusan 31; batas tahun di internal.generasi).
+  generasi: {
+    beta: "Gen Beta (2025–)",
+    alpha: "Gen Alpha (2013–2024)",
+    z: "Gen Z (1997–2012)",
+    y: "Gen Y / Milenial (1981–1996)",
+    x: "Gen X (1965–1980)",
+    boomers: "Baby Boomers (1946–1964)",
+    silent: "Silent Generation (≤1945)",
+  },
   rentang_usia: {
     "0-12": "0–12 tahun",
     "13-17": "13–17 tahun",
