@@ -27,6 +27,7 @@ export default async function HalamanBeranda() {
             <TautanTombol href="/admin/akun">Akun &amp; peran</TautanTombol>
             <TautanTombol href="/admin/laporan">Laporan demografi</TautanTombol>
             <TautanTombol href="/admin/laporan-proyek">Laporan proyek ketaatan</TautanTombol>
+            <TautanTombol href="/admin/bahan">Bahan diskusi</TautanTombol>
           </div>
         </Kotak>
       ) : null}
@@ -81,6 +82,13 @@ export default async function HalamanBeranda() {
           <p className="mt-2 text-sm opacity-70">
             Saat pertemuan, scan QR di layar pemimpin dengan kamera HP. Riwayat kehadiran ada di Profil saya.
           </p>
+        </Kotak>
+      ) : null}
+
+      {!peran.admin && (peran.ketua_tim.length > 0 || peran.pemimpin.length > 0) ? (
+        <Kotak judul="Bahan diskusi">
+          <p className="mb-3 text-sm opacity-70">Bahan diskusi PDF dari Admin untuk pengurus.</p>
+          <TautanTombol href="/bahan">Buka bahan diskusi</TautanTombol>
         </Kotak>
       ) : null}
 

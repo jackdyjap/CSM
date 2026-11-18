@@ -178,3 +178,8 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - Isi: **Ringkasan** (jumlah dan persen penugasan: Sudah selesai, Sedang dijalankan, Belum dijalankan, Tidak dikerjakan, **Belum dilaporkan**), **Per kelompok** (persen selesai), dan **Per proyek** (setiap anggota dengan statusnya, hasil/alasan, catatan pemimpin, dan tanda "diisi pemimpin").
     - Penugasan = proyek × anggota aktif, ditambah anggota tidak aktif yang sudah punya status. "Belum dilaporkan" = belum ada status sama sekali.
     - **Cetak / simpan PDF** lewat dialog cetak. Pembuatan dan ekspor tercatat di log. Khusus Admin.
+39. **Bahan diskusi PDF dari Admin untuk pengurus** (`/admin/bahan` untuk Admin, `/bahan` untuk pengurus; migrasi `…2400`).
+    - **Admin** mengunggah, mengubah (judul, tanggal dipakai, keterangan, tujuan), dan menghapus. Berkas PDF maksimal **10 MB**, diunggah langsung dari peramban ke folder privat `bahan-diskusi`.
+    - Tujuan per bahan: **semua tim** atau **satu tim**. Dibuka dan diunduh oleh **Ketua Tim** dan **Pemimpin/Wakil** kelompok di tim itu (tautan sementara 1 jam).
+    - **Anggota biasa tidak punya akses**, baik daftar maupun berkasnya (diperiksa database dan aturan penyimpanan).
+    - Unggah dan hapus tercatat di log; berkas yang dihapus ikut dibersihkan.
