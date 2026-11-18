@@ -1,8 +1,8 @@
 import { GrafikBatang } from "@/components/grafik-batang";
 import { TabelSilang } from "@/components/tabel-silang";
 import { Judul, Kotak, Pesan, Pilihan, TautanTombol, Tombol } from "@/components/ui";
-import { bacaPilihan, DIMENSI, formatPersen, parameterAlamat } from "@/lib/laporan";
-import { ambilLaporan, judulLaporan, namaCakupan } from "@/lib/laporan-server";
+import { bacaPilihan, DIMENSI, formatPersen, NAMA_RINGKASAN, parameterAlamat, type Pilihan as PilihanLaporan } from "@/lib/laporan";
+import { ambilLaporan, ambilRingkasan, judulLaporan, namaCakupan } from "@/lib/laporan-server";
 import { hariIniWib } from "@/lib/profil";
 import { wajibAdmin } from "@/lib/sesi";
 import { TombolPdf } from "./tombol-pdf";
@@ -12,12 +12,15 @@ export default async function HalamanLaporan({ searchParams }: PageProps<"/admin
   const { supabase } = await wajibAdmin();
   const p = bacaPilihan(await searchParams);
 
-  const [{ data: dataTim }, { data: dataKelompok }, { laporan, galat }, cakupan] = await Promise.all([
+  const [{ data: dataTim }, { data: dataKelompok }, satu, ringkasan, cakupan] = await Promise.all([
     supabase.from("tim").select("id, nama").order("nama"),
     supabase.from("kelompok").select("id, nama, tim_id").order("nama"),
-    ambilLaporan(supabase, p),
+    p.ringkasan ? null : ambilLaporan(supabase, p),
+    p.ringkasan ? ambilRingkasan(supabase, p) : null,
     namaCakupan(supabase, p),
   ]);
+  const laporan = satu?.laporan ?? null;
+  const galat = satu?.galat ?? ringkasan?.galat ?? null;
   const tim = dataTim ?? [];
   const kelompok = dataKelompok ?? [];
   const nilaiCakupan = p.cakupan === "semua" ? "semua" : `${p.cakupan}:${p.cakupanId}`;
@@ -34,7 +37,8 @@ export default async function HalamanLaporan({ searchParams }: PageProps<"/admin
 
         <Kotak>
           <form method="get" className="grid grid-cols-2 gap-x-3">
-            <Pilihan label="Dimensi" name="d" defaultValue={p.dimensi}>
+            <Pilihan label="Dimensi" name="d" defaultValue={p.ringkasan ? "ringkasan" : p.dimensi}>
+              <option value="ringkasan">{NAMA_RINGKASAN}</option>
               {Object.entries(DIMENSI).map(([k, v]) => (
                 <option key={k} value={k}>
                   {v}
@@ -75,6 +79,30 @@ export default async function HalamanLaporan({ searchParams }: PageProps<"/admin
 
       {galat ? <Pesan jenis="galat">{galat}</Pesan> : null}
 
+      {ringkasan?.bagian ? (
+        <>
+          <h2 className="mb-3 text-lg font-semibold">{judul}</h2>
+          <p className="mb-4 text-sm opacity-70">
+            Dibuat {hariIniWib()}. Persentase dihitung dari yang sudah mengisi. Pilih satu dimensi di atas untuk
+            melihat rincian per kelompok.
+          </p>
+          {ringkasan.bagian.map(({ dimensi, laporan: l }) => (
+            <Kotak key={dimensi} judul={DIMENSI[dimensi]}>
+              <p className="mb-3 text-sm opacity-70">
+                {l.terisi.toLocaleString("id-ID")} orang sudah mengisi
+                {l.belum ? `, ${l.belum.toLocaleString("id-ID")} belum diisi` : ""}.
+              </p>
+              {l.kategori.length === 0 ? (
+                <p className="opacity-70">Belum ada data.</p>
+              ) : (
+                <GrafikBatang kategori={l.kategori} tampil={p.tampil} />
+              )}
+            </Kotak>
+          ))}
+          <TombolEkspor p={p} />
+        </>
+      ) : null}
+
       {laporan ? (
         <>
           <Kotak judul={judul}>
@@ -103,18 +131,32 @@ export default async function HalamanLaporan({ searchParams }: PageProps<"/admin
             </Kotak>
           ) : null}
 
-          <div className="jangan-cetak mb-6 flex flex-wrap items-center gap-2">
-            <a
-              href={`/admin/laporan/ekspor?${parameterAlamat(p)}`}
-              className="inline-flex min-h-11 items-center rounded-lg bg-utama px-4 py-2 font-medium text-white hover:opacity-90 dark:text-black"
-            >
-              Unduh Excel (.xlsx)
-            </a>
-            <TombolPdf parameter={{ dimensi: p.dimensi, cakupan: p.cakupan, cakupan_id: p.cakupanId ?? "", hanya_aktif: String(p.hanyaAktif) }} />
-            <span className="text-xs opacity-70">Setiap pembuatan dan ekspor laporan tercatat di log.</span>
-          </div>
+          <TombolEkspor p={p} />
         </>
       ) : null}
     </main>
+  );
+}
+
+/** Unduh Excel dan Cetak/PDF (tercatat di log). */
+function TombolEkspor({ p }: { p: PilihanLaporan }) {
+  return (
+    <div className="jangan-cetak mb-6 flex flex-wrap items-center gap-2">
+      <a
+        href={`/admin/laporan/ekspor?${parameterAlamat(p)}`}
+        className="inline-flex min-h-11 items-center rounded-lg bg-utama px-4 py-2 font-medium text-white hover:opacity-90 dark:text-black"
+      >
+        Unduh Excel (.xlsx)
+      </a>
+      <TombolPdf
+        parameter={{
+          dimensi: p.ringkasan ? "ringkasan" : p.dimensi,
+          cakupan: p.cakupan,
+          cakupan_id: p.cakupanId ?? "",
+          hanya_aktif: String(p.hanyaAktif),
+        }}
+      />
+      <span className="text-xs opacity-70">Setiap pembuatan dan ekspor laporan tercatat di log.</span>
+    </div>
   );
 }
