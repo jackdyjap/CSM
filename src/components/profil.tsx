@@ -3,6 +3,9 @@ import { tampilHp } from "@/lib/identitas";
 import {
   hitungUsia,
   isianKosong,
+  kunciBaptis,
+  PILIHAN_BAPTIS,
+  PILIHAN_STATUS_JEMAAT,
   PILIHAN_GENDER,
   PILIHAN_NIKAH,
   PILIHAN_PEKERJAAN,
@@ -133,6 +136,7 @@ export async function ProfilUbah({
           <PilihanEnum label="Status pernikahan" name="status_nikah" daftar={PILIHAN_NIKAH} nilai={profil.status_nikah} />
           <PilihanEnum label="Pendidikan terakhir" name="pendidikan" daftar={PILIHAN_PENDIDIKAN} nilai={profil.pendidikan} />
           <PilihanEnum label="Pekerjaan" name="pekerjaan" daftar={PILIHAN_PEKERJAAN} nilai={profil.pekerjaan} />
+          <PilihanEnum label="Baptis" name="baptis" daftar={PILIHAN_BAPTIS} nilai={kunciBaptis(profil.baptis)} />
           <Isian
             label="Nomor HP (opsional)"
             keterangan="Bila orang ini punya akun, nomor ini juga dipakai untuk masuk ke aplikasi."
@@ -191,6 +195,8 @@ export async function ProfilBaca({ supabase, profil }: { supabase: Supabase; pro
     ["Status pernikahan", profil.status_nikah ? PILIHAN_NIKAH[profil.status_nikah] : null],
     ["Pendidikan terakhir", profil.pendidikan ? PILIHAN_PENDIDIKAN[profil.pendidikan] : null],
     ["Pekerjaan", profil.pekerjaan ? PILIHAN_PEKERJAAN[profil.pekerjaan] : null],
+    ["Baptis", profil.baptis === null ? null : PILIHAN_BAPTIS[kunciBaptis(profil.baptis)!]],
+    ["Status jemaat", profil.status_jemaat ? PILIHAN_STATUS_JEMAAT[profil.status_jemaat] : null],
     ["Nomor HP", tampilHp(profil.no_hp) || null],
     ["Orang tua/wali", profil.wali_nama ? `${profil.wali_nama}${profil.wali_hubungan ? ` (${profil.wali_hubungan})` : ""}` : null],
   ];

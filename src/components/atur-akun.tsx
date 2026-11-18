@@ -15,7 +15,15 @@ import {
   unggahFotoStaf,
 } from "@/lib/aksi-akun";
 import { PANJANG_SANDI_MINIMAL } from "@/lib/identitas";
-import { PILIHAN_GENDER, PILIHAN_NIKAH, PILIHAN_PEKERJAAN, PILIHAN_PENDIDIKAN, type Profil } from "@/lib/profil";
+import {
+  kunciBaptis,
+  PILIHAN_BAPTIS,
+  PILIHAN_GENDER,
+  PILIHAN_NIKAH,
+  PILIHAN_PEKERJAAN,
+  PILIHAN_PENDIDIKAN,
+  type Profil,
+} from "@/lib/profil";
 import { daftarWilayahAwal, tautanFoto } from "@/lib/profil-server";
 import type { buatClientServer } from "@/lib/supabase/server";
 
@@ -77,7 +85,7 @@ export function KotakSelesai({ sandiSementara }: { sandiSementara: boolean }) {
 type ProfilStaf = Pick<
   Profil,
   | "gender" | "foto_path" | "tempat_lahir" | "tanggal_lahir" | "alamat" | "provinsi_kode" | "kota_kode"
-  | "kecamatan_kode" | "kelurahan_kode" | "status_nikah" | "pendidikan" | "pekerjaan"
+  | "kecamatan_kode" | "kelurahan_kode" | "status_nikah" | "pendidikan" | "pekerjaan" | "baptis"
 >;
 
 /** Foto dan data pribadi Admin/Ketua Tim/Pemimpin yang bukan anggota kelompok. */
@@ -86,7 +94,7 @@ export async function ProfilStafUbah({ supabase, akunId, nama }: { supabase: Sup
     .from("profil_staf")
     .select(
       "gender, foto_path, tempat_lahir, tanggal_lahir, alamat, provinsi_kode, kota_kode, kecamatan_kode, " +
-        "kelurahan_kode, status_nikah, pendidikan, pekerjaan",
+        "kelurahan_kode, status_nikah, pendidikan, pekerjaan, baptis",
     )
     .eq("akun_id", akunId)
     .maybeSingle();
@@ -140,6 +148,7 @@ export async function ProfilStafUbah({ supabase, akunId, nama }: { supabase: Sup
           <PilihanEnum label="Status pernikahan" name="status_nikah" daftar={PILIHAN_NIKAH} nilai={profil.status_nikah} />
           <PilihanEnum label="Pendidikan terakhir" name="pendidikan" daftar={PILIHAN_PENDIDIKAN} nilai={profil.pendidikan} />
           <PilihanEnum label="Pekerjaan" name="pekerjaan" daftar={PILIHAN_PEKERJAAN} nilai={profil.pekerjaan} />
+          <PilihanEnum label="Baptis" name="baptis" daftar={PILIHAN_BAPTIS} nilai={kunciBaptis(profil.baptis)} />
         </FormAksi>
       </Kotak>
     </>

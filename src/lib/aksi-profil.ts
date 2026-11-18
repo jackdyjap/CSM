@@ -10,8 +10,10 @@ import {
   PILIHAN_NIKAH,
   PILIHAN_PEKERJAAN,
   PILIHAN_PENDIDIKAN,
+  PILIHAN_STATUS_JEMAAT,
   USIA_DEWASA,
 } from "@/lib/profil";
+import { baptis as bacaBaptis } from "@/lib/isian";
 import { bolehKelola, wajibMasuk } from "@/lib/sesi";
 
 // Hak akses SELALU diperiksa database (aturan akses + penjaga jaga_anggota).
@@ -131,6 +133,7 @@ export async function simpanProfil(anggotaId: string, _: HasilAksi, fd: FormData
       status_nikah: pilihan(fd, "status_nikah", PILIHAN_NIKAH),
       pendidikan: pilihan(fd, "pendidikan", PILIHAN_PENDIDIKAN),
       pekerjaan: pilihan(fd, "pekerjaan", PILIHAN_PEKERJAAN),
+      baptis: bacaBaptis(fd),
       no_hp: noHp,
       wali_nama: waliNama,
       wali_hubungan: perluWali ? teks(fd, "wali_hubungan") : null,
@@ -235,16 +238,6 @@ export async function hapusFoto(anggotaId: string): Promise<HasilAksi> {
 
 // ---------------------------------------------------------------- Koreksi anggota (keputusan 13)
 
-export async function ubahStatusAktif(anggotaId: string, aktif: boolean): Promise<HasilAksi> {
-  const { supabase, kelompokId } = await kelompokAnggota(anggotaId);
-  if (!kelompokId) return { galat: "Anggota tidak ditemukan." };
-  const { data, error } = await supabase.from("anggota").update({ aktif }).eq("id", anggotaId).select("id");
-  if (error) return { galat: pesanGalat(error) };
-  if (!data?.length) return { galat: "Anda tidak berhak mengubah status anggota ini." };
-  segarkan(anggotaId, kelompokId);
-  return { sukses: aktif ? "Anggota diaktifkan kembali." : "Anggota ditandai tidak aktif." };
-}
-
 export async function pindahKelompok(anggotaId: string, _: HasilAksi, fd: FormData): Promise<HasilAksi> {
   const tujuan = teks(fd, "kelompok_id");
   if (!tujuan) return { galat: "Pilih kelompok tujuan." };
@@ -284,4 +277,23 @@ export async function buatUlangKartu(anggotaId: string): Promise<HasilAksi> {
   if (error) return { galat: pesanGalat(error) };
   segarkan(anggotaId, kelompokId);
   return { sukses: "Kode kartu baru dibuat. Kartu lama tidak berlaku lagi; cetak kartu baru." };
+}
+
+// ---------------------------------------------------------------- Data jemaat (keputusan 30)
+
+/** Gender, aktif/tidak aktif, dan status jemaat: pemimpin/wakil, Ketua Tim dari tim itu, atau Admin. */
+export async function ubahDataJemaat(anggotaId: string, kelompokId: string, _: HasilAksi, fd: FormData): Promise<HasilAksi> {
+  const aktif = teks(fd, "aktif");
+  if (aktif !== "ya" && aktif !== "tidak") return { galat: "Pilih status aktif." };
+
+  const { supabase } = await wajibMasuk();
+  const { error } = await supabase.rpc("ubah_data_jemaat", {
+    p_anggota: anggotaId,
+    p_gender: pilihan(fd, "gender", PILIHAN_GENDER),
+    p_aktif: aktif === "ya",
+    p_status_jemaat: pilihan(fd, "status_jemaat", PILIHAN_STATUS_JEMAAT),
+  });
+  if (error) return { galat: pesanGalat(error) };
+  segarkan(anggotaId, kelompokId);
+  return { sukses: "Data jemaat tersimpan." };
 }

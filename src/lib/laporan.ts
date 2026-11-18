@@ -1,7 +1,14 @@
 // Laporan demografi (Fase 9). Angka dihitung di database (laporan_demografi),
 // per kelompok; di sini hanya dijumlahkan dan disusun untuk tampilan/ekspor.
 
-import { PILIHAN_GENDER, PILIHAN_NIKAH, PILIHAN_PEKERJAAN, PILIHAN_PENDIDIKAN } from "@/lib/profil";
+import {
+  PILIHAN_BAPTIS,
+  PILIHAN_GENDER,
+  PILIHAN_NIKAH,
+  PILIHAN_PEKERJAAN,
+  PILIHAN_PENDIDIKAN,
+  PILIHAN_STATUS_JEMAAT,
+} from "@/lib/profil";
 
 export const DIMENSI = {
   gender: "Gender",
@@ -9,6 +16,8 @@ export const DIMENSI = {
   pendidikan: "Pendidikan terakhir",
   status_nikah: "Status pernikahan",
   pekerjaan: "Pekerjaan",
+  baptis: "Baptis",
+  status_jemaat: "Status jemaat",
   provinsi: "Provinsi",
   kota: "Kota/Kabupaten",
   kecamatan: "Kecamatan",
@@ -22,6 +31,8 @@ const URUTAN: Partial<Record<Dimensi, Record<string, string>>> = {
   pendidikan: PILIHAN_PENDIDIKAN,
   status_nikah: PILIHAN_NIKAH,
   pekerjaan: PILIHAN_PEKERJAAN,
+  baptis: PILIHAN_BAPTIS,
+  status_jemaat: PILIHAN_STATUS_JEMAAT,
   rentang_usia: {
     "0-12": "0–12 tahun",
     "13-17": "13–17 tahun",

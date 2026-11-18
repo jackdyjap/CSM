@@ -9,7 +9,7 @@ import { redirect } from "next/navigation";
 import { pesanGalat } from "@/lib/galat";
 import type { HasilAksi } from "@/lib/hasil";
 import { PANJANG_SANDI_MINIMAL } from "@/lib/identitas";
-import { pilihan, teks } from "@/lib/isian";
+import { baptis as bacaBaptis, pilihan, teks } from "@/lib/isian";
 import { PILIHAN_GENDER, PILIHAN_NIKAH, PILIHAN_PEKERJAAN, PILIHAN_PENDIDIKAN } from "@/lib/profil";
 import { wajibMasuk } from "@/lib/sesi";
 import { buatClientAdmin } from "@/lib/supabase/admin";
@@ -107,6 +107,7 @@ export async function simpanProfilStaf(_: HasilAksi, fd: FormData): Promise<Hasi
       status_nikah: pilihan(fd, "status_nikah", PILIHAN_NIKAH),
       pendidikan: pilihan(fd, "pendidikan", PILIHAN_PENDIDIKAN),
       pekerjaan: pilihan(fd, "pekerjaan", PILIHAN_PEKERJAAN),
+      baptis: bacaBaptis(fd),
     })
     .eq("akun_id", peran.akun_id)
     .select("akun_id");
