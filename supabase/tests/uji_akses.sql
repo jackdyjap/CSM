@@ -2052,6 +2052,89 @@ select tests.periksa('Pembuatan laporan proyek tercatat di log',
 
 
 -- =====================================================================
+-- UJI BAHAN DISKUSI PDF (keputusan 39)
+-- Tim A: Ketua A, Budi (pemimpin A1, T1), Sari (wakil A1). Tim B: Ketua B, Dewi.
+-- Andi = anggota biasa A1.
+-- =====================================================================
+select tests.keluar();
+insert into tests.ids values
+  ('bahan_semua', '88888888-0000-0000-0000-000000000001'),
+  ('bahan_a',     '88888888-0000-0000-0000-000000000002'),
+  ('bahan_b',     '88888888-0000-0000-0000-000000000003');
+
+select tests.masuk_sebagai('budi');
+select tests.harus_gagal('Budi (pemimpin): tidak bisa menambah bahan diskusi',
+  $q$ insert into public.bahan_diskusi (judul, lokasi, nama_berkas, ukuran)
+      values ('x', gen_random_uuid() || '/x.pdf', 'x.pdf', 10) $q$);
+select tests.harus_gagal('Budi: tidak bisa mengunggah berkas ke folder bahan diskusi',
+  $q$ insert into storage.objects (bucket_id, name) values ('bahan-diskusi', 'x/x.pdf') $q$);
+
+select tests.masuk_sebagai('admin');
+select tests.harus_berhasil('Admin: mengunggah berkas PDF bahan untuk semua tim',
+  $q$ insert into storage.objects (bucket_id, name)
+      values ('bahan-diskusi', tests.id('bahan_semua') || '/minggu-1.pdf'),
+             ('bahan-diskusi', tests.id('bahan_a') || '/tim-a.pdf'),
+             ('bahan-diskusi', tests.id('bahan_b') || '/tim-b.pdf') $q$);
+select tests.harus_berhasil('Admin: mencatat bahan untuk semua tim, Tim A, dan Tim B',
+  $q$ insert into public.bahan_diskusi (id, judul, tanggal_pakai, tim_id, lokasi, nama_berkas, ukuran) values
+      (tests.id('bahan_semua'), 'Pekan 1', bantu.hari_ini_wib(), null, tests.id('bahan_semua') || '/minggu-1.pdf', 'minggu-1.pdf', 1000),
+      (tests.id('bahan_a'), 'Khusus Tim A', null, tests.id('tim_a'), tests.id('bahan_a') || '/tim-a.pdf', 'tim-a.pdf', 2000),
+      (tests.id('bahan_b'), 'Khusus Tim B', null, tests.id('tim_b'), tests.id('bahan_b') || '/tim-b.pdf', 'tim-b.pdf', 3000) $q$);
+select tests.harus_gagal('Berkas di luar folder bahannya ditolak',
+  $q$ insert into public.bahan_diskusi (judul, lokasi, nama_berkas, ukuran) values ('x', 'lain/x.pdf', 'x.pdf', 10) $q$);
+select tests.harus_gagal('Berkas lebih dari 10 MB ditolak',
+  $q$ insert into public.bahan_diskusi (id, judul, lokasi, nama_berkas, ukuran)
+      values ('88888888-0000-0000-0000-000000000009', 'x', '88888888-0000-0000-0000-000000000009/x.pdf', 'x.pdf', 10485761) $q$);
+select tests.periksa('Admin: melihat ketiga bahan',
+  (select count(*) from public.bahan_diskusi where id in (tests.id('bahan_semua'), tests.id('bahan_a'), tests.id('bahan_b'))) = 3);
+
+select tests.masuk_sebagai('budi');
+select tests.periksa('Budi (pemimpin Tim A): melihat bahan semua tim dan Tim A, bukan Tim B',
+  exists (select 1 from public.bahan_diskusi where id = tests.id('bahan_semua'))
+  and exists (select 1 from public.bahan_diskusi where id = tests.id('bahan_a'))
+  and not exists (select 1 from public.bahan_diskusi where id = tests.id('bahan_b')));
+select tests.periksa('Budi: bisa membuka berkas bahan Tim A, tidak berkas Tim B',
+  exists (select 1 from storage.objects where bucket_id = 'bahan-diskusi' and name = tests.id('bahan_a') || '/tim-a.pdf')
+  and not exists (select 1 from storage.objects where bucket_id = 'bahan-diskusi' and name = tests.id('bahan_b') || '/tim-b.pdf'));
+select tests.periksa('Budi: tidak bisa mengubah atau menghapus bahan (0 baris)',
+  tests.baris_terkena($q$ update public.bahan_diskusi set judul = 'x' where id = tests.id('bahan_a') $q$) = 0
+  and tests.baris_terkena($q$ delete from public.bahan_diskusi where id = tests.id('bahan_a') $q$) = 0);
+
+select tests.masuk_sebagai('sari');
+select tests.periksa('Sari (wakil A1): melihat bahan Tim A',
+  exists (select 1 from public.bahan_diskusi where id = tests.id('bahan_a')));
+
+select tests.masuk_sebagai('ketua_b');
+select tests.periksa('Ketua Tim B: melihat bahan semua tim dan Tim B, bukan Tim A',
+  exists (select 1 from public.bahan_diskusi where id = tests.id('bahan_semua'))
+  and exists (select 1 from public.bahan_diskusi where id = tests.id('bahan_b'))
+  and not exists (select 1 from public.bahan_diskusi where id = tests.id('bahan_a')));
+
+select tests.masuk_sebagai('u_andi');
+select tests.periksa('Andi (anggota biasa): tidak melihat bahan apa pun',
+  not exists (select 1 from public.bahan_diskusi));
+select tests.periksa('Andi: tidak bisa membuka berkas bahan',
+  not exists (select 1 from storage.objects where bucket_id = 'bahan-diskusi'));
+
+select tests.masuk_sebagai_tamu();
+select tests.harus_gagal('Tamu: tidak bisa membaca bahan diskusi', $q$ select * from public.bahan_diskusi $q$);
+
+select tests.masuk_sebagai('admin');
+select tests.periksa('Admin: mengubah judul; lokasi berkas tidak ikut berubah',
+  tests.baris_terkena($q$ update public.bahan_diskusi set judul = 'Pekan 1 (revisi)', lokasi = 'x/y.pdf'
+                         where id = tests.id('bahan_semua') $q$) = 1
+  and (select lokasi = tests.id('bahan_semua') || '/minggu-1.pdf' from public.bahan_diskusi where id = tests.id('bahan_semua')));
+select tests.periksa('Admin: menghapus bahan Tim B (1 baris)',
+  tests.baris_terkena($q$ delete from public.bahan_diskusi where id = tests.id('bahan_b') $q$) = 1);
+select tests.keluar();
+select tests.periksa('Berkas bahan yang dihapus masuk antrean hapus',
+  exists (select 1 from internal.antrean_hapus_foto where bucket = 'bahan-diskusi' and foto_path = tests.id('bahan_b') || '/tim-b.pdf'));
+select tests.periksa('Unggah dan hapus bahan tercatat di log',
+  exists (select 1 from public.log_aktivitas where tindakan = 'unggah_bahan_diskusi')
+  and exists (select 1 from public.log_aktivitas where tindakan = 'hapus_bahan_diskusi'));
+
+
+-- =====================================================================
 -- RINGKASAN
 -- =====================================================================
 select no, case when lulus then 'LULUS' else 'GAGAL' end as hasil, nama, info
