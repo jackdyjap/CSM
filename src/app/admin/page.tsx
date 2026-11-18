@@ -1,7 +1,7 @@
 import { FormAksi } from "@/components/form-aksi";
 import { Isian, Judul, Kotak, Lipatan, Pilihan, TautanTombol } from "@/components/ui";
 import { wajibAdmin } from "@/lib/sesi";
-import { hapusTim, tambahKelompok, tambahTim, ubahNamaTim } from "./aksi";
+import { hapusBerkasSekarang, hapusTim, tambahKelompok, tambahTim, ubahNamaTim } from "./aksi";
 
 export default async function HalamanAdmin() {
   const { supabase } = await wajibAdmin();
@@ -10,6 +10,7 @@ export default async function HalamanAdmin() {
     .select("id, nama, kelompok(id, nama)")
     .order("nama");
   const tim = daftarTim ?? [];
+  const { data: antrean } = await supabase.rpc("jumlah_antrean_berkas");
 
   return (
     <main>
@@ -89,6 +90,14 @@ export default async function HalamanAdmin() {
             <Isian label="Nama kelompok" name="nama" required />
           </FormAksi>
         )}
+      </Kotak>
+      <Kotak judul="Pembersihan berkas">
+        <p className="mb-3 text-sm opacity-70">
+          Foto, bukti transfer, dan bahan diskusi yang datanya sudah dihapus menunggu dihapus dari penyimpanan:{" "}
+          <strong>{typeof antrean === "number" ? antrean : "?"} berkas</strong>. Dihapus otomatis setiap malam pukul
+          02.00 WIB; berkas yang masih dipakai tidak pernah ikut terhapus.
+        </p>
+        <FormAksi aksi={hapusBerkasSekarang} tombol="Hapus sekarang" jenisTombol="biasa" />
       </Kotak>
     </main>
   );

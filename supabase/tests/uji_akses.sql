@@ -2135,6 +2135,45 @@ select tests.periksa('Unggah dan hapus bahan tercatat di log',
 
 
 -- =====================================================================
+-- UJI PENGHAPUS BERKAS OTOMATIS (keputusan 40)
+-- =====================================================================
+select tests.keluar();
+-- Satu berkas yatim (sudah tidak dipakai) dan satu yang masih dipakai foto Bima.
+insert into internal.antrean_hapus_foto (foto_path, bucket) values
+  ('yatim/foto-lama.jpg', 'foto-anggota'),
+  ((select foto_path from public.anggota where id = tests.id('bima')), 'foto-anggota'),
+  ('x/tak-dikenal.bin', 'folder-lain');
+
+select tests.masuk_sebagai('admin');
+select tests.periksa('Admin: melihat jumlah berkas di antrean',
+  public.jumlah_antrean_berkas() >= 3);
+select tests.harus_gagal('Admin: tidak bisa memanggil loket server',
+  $q$ select * from public.layanan_ambil_antrean_berkas() $q$);
+select tests.masuk_sebagai('budi');
+select tests.harus_gagal('Budi: tidak bisa melihat jumlah antrean', $q$ select public.jumlah_antrean_berkas() $q$);
+
+select tests.masuk_sebagai_layanan();
+select tests.simpan('n_antrean', (select count(*)::text from public.layanan_ambil_antrean_berkas(1000)));
+select tests.periksa('Server: berkas yatim siap dihapus',
+  exists (select 1 from public.layanan_ambil_antrean_berkas(1000) where lokasi = 'yatim/foto-lama.jpg'));
+select tests.periksa('Server: foto Bima yang masih dipakai TIDAK diberikan untuk dihapus',
+  not exists (select 1 from public.layanan_ambil_antrean_berkas(1000) l
+              join public.anggota a on a.foto_path = l.lokasi where a.id = tests.id('bima')));
+select tests.periksa('Server: berkas di folder tak dikenal tidak diberikan untuk dihapus',
+  not exists (select 1 from public.layanan_ambil_antrean_berkas(1000) where bucket = 'folder-lain'));
+select tests.periksa('Server: menandai berkas yatim selesai dihapus (1 baris)',
+  public.layanan_selesai_antrean_berkas(array(select id from public.layanan_ambil_antrean_berkas(1000)
+                                              where lokasi = 'yatim/foto-lama.jpg')) = 1);
+select tests.keluar();
+select tests.periksa('Antrean: berkas yatim dan foto yang masih dipakai sudah keluar dari antrean',
+  not exists (select 1 from internal.antrean_hapus_foto
+              where foto_path = 'yatim/foto-lama.jpg'
+                 or foto_path = (select foto_path from public.anggota where id = tests.id('bima'))));
+select tests.periksa('Penghapusan berkas tercatat di log',
+  exists (select 1 from public.log_aktivitas where tindakan = 'hapus_berkas_antrean'));
+
+
+-- =====================================================================
 -- RINGKASAN
 -- =====================================================================
 select no, case when lulus then 'LULUS' else 'GAGAL' end as hasil, nama, info

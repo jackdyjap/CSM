@@ -36,7 +36,7 @@ Teknologi: **Next.js** (tampilan) + **Supabase** (login, database PostgreSQL, at
 ## Menjalankan aplikasi di komputer
 
 1. Pasang Node.js versi 22.
-2. Salin `.env.example` menjadi `.env.local`, lalu isi tiga nilainya dari Supabase.
+2. Salin `.env.example` menjadi `.env.local`, lalu isi tiga nilai pertamanya dari Supabase. `CRON_SECRET` hanya diperlukan di Vercel (lihat bagian *Penghapus berkas otomatis*).
 3. Jalankan:
 
 ```bash
@@ -76,3 +76,13 @@ where ak.email = 'email-anda@gmail.com';
 4. Masuk ke aplikasi dengan akun itu. Saat login pertama, akun dibawa ke **Atur profil**; tekan **Selesai, ke Beranda** dan menu Admin muncul.
 
 Saran: selalu punya minimal **2 akun Admin** di aplikasi, dan lindungi login dasbor Supabase dengan kata sandi kuat serta verifikasi dua langkah (2FA).
+
+## Penghapus berkas otomatis
+
+Foto, bukti transfer, dan bahan diskusi yang datanya sudah dihapus akan dihapus dari penyimpanan Supabase **setiap malam pukul 02.00 WIB** (Vercel Cron, `vercel.json`). Supaya berjalan, isi satu pengaturan di Vercel:
+
+1. Buka proyek di vercel.com → **Settings → Environment Variables**.
+2. Tambahkan **`CRON_SECRET`** dengan isi teks acak panjang (minimal 16 karakter, mis. buat di https://1password.com/password-generator), untuk lingkungan **Production**.
+3. Buka **Deployments** → deployment terbaru → **Redeploy**, supaya pengaturan baru terbaca.
+
+Jumlah berkas yang menunggu dihapus terlihat di Admin → Tim & kelompok, beserta tombol **Hapus sekarang**.
