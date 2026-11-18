@@ -1,51 +1,47 @@
-// Mengubah isian "Email atau nomor HP" menjadi alamat login.
+// Cara masuk ke aplikasi (keputusan 6 dan 25).
 //
-// Nomor HP tidak memakai SMS (Cara B). Di belakang layar nomor HP diubah
-// menjadi alamat email pengganti, misalnya 081234567890 -> 6281234567890@hp.invalid.
-// Akhiran ".invalid" disediakan khusus untuk alamat yang tidak nyata, sehingga
-// tidak akan pernah ada email yang terkirim ke alamat ini.
+// Satu akun boleh punya nama pengguna, email, dan nomor HP sekaligus; masuk
+// cukup dengan salah satunya. Ketiganya unik dan diperiksa di database
+// (migrasi …1500). Server mencari alamat login Supabase Auth lewat
+// layanan_cari_login().
+//
+// Nomor HP tidak memakai SMS (Cara B). Akun yang dibuat tanpa email memakai
+// alamat pengganti berakhiran ".invalid", yang tidak akan pernah menerima email.
 
 export const DOMAIN_HP = "hp.invalid";
+export const PANJANG_SANDI_MINIMAL = 8;
 
-export type Identitas = {
-  jenis: "email" | "hp";
-  /** Alamat yang dipakai untuk login ke Supabase. */
-  emailLogin: string;
-  /** Yang ditampilkan ke pengguna, misalnya 081234567890 atau nama@contoh.com. */
-  tampil: string;
-};
+export type DataLogin = { nama_pengguna: string; email: string; nomor_hp: string };
 
-const POLA_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-
-export function bacaIdentitas(masukan: string): Identitas | null {
-  const teks = masukan.trim();
-  if (!teks) return null;
-
-  if (teks.includes("@")) {
-    const email = teks.toLowerCase();
-    if (!POLA_EMAIL.test(email) || email.endsWith(`@${DOMAIN_HP}`)) return null;
-    return { jenis: "email", emailLogin: email, tampil: email };
-  }
-
-  // Nomor HP: buang spasi, tanda hubung, titik, dan kurung.
-  let angka = teks.replace(/[\s\-.()]/g, "");
-  if (angka.startsWith("+")) angka = angka.slice(1);
-  if (!/^\d+$/.test(angka)) return null;
-
-  if (angka.startsWith("0")) angka = "62" + angka.slice(1);
-  else if (angka.startsWith("8")) angka = "62" + angka;
-
-  // Nomor Indonesia: 62 + 8 + 7 sampai 11 angka.
-  if (!/^628\d{7,11}$/.test(angka)) return null;
-
-  return {
-    jenis: "hp",
-    emailLogin: `${angka}@${DOMAIN_HP}`,
-    tampil: "0" + angka.slice(2),
-  };
+/** Ketiga isian cara masuk dari formulir (boleh kosong; dirapikan di database). */
+export function bacaDataLogin(fd: FormData): DataLogin {
+  const ambil = (nama: string) => String(fd.get(nama) ?? "").trim();
+  return { nama_pengguna: ambil("nama_pengguna"), email: ambil("email"), nomor_hp: ambil("nomor_hp") };
 }
 
-export const PESAN_IDENTITAS_SALAH =
-  "Tulis email yang benar (contoh: nama@gmail.com) atau nomor HP Indonesia (contoh: 081234567890).";
+export const PESAN_LOGIN_KOSONG = "Isi minimal satu: nama pengguna, email, atau nomor HP.";
 
-export const PANJANG_SANDI_MINIMAL = 8;
+export function adaDataLogin(d: DataLogin) {
+  return Boolean(d.nama_pengguna || d.email || d.nomor_hp);
+}
+
+/**
+ * Alamat login Supabase Auth untuk akun baru, dari isian yang SUDAH dirapikan
+ * database (huruf kecil; nomor HP 628xxx). Email asli dipakai bila ada.
+ */
+export function alamatAuthBaru(d: { nama_pengguna: string | null; email: string | null; nomor_hp: string | null }) {
+  if (d.email) return d.email;
+  if (d.nomor_hp) return `${d.nomor_hp}@${DOMAIN_HP}`;
+  return `${d.nama_pengguna}@nama.invalid`;
+}
+
+/** Alamat cadangan bila alamat di atas ternyata masih tercatat di Supabase Auth. */
+export function alamatAuthCadangan() {
+  return `${crypto.randomUUID()}@akun.invalid`;
+}
+
+/** 6281234567890 -> 081234567890 (nomor HP yang tersimpan di database). */
+export function tampilHp(hp: string | null | undefined) {
+  if (!hp) return "";
+  return hp.startsWith("62") ? "0" + hp.slice(2) : hp;
+}

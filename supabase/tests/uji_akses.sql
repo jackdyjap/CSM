@@ -409,7 +409,7 @@ select tests.harus_gagal('Ketua A: tidak bisa menulis catatan untuk Andi (A1)',
 select tests.harus_gagal('Ketua A: tidak bisa membaca catatan Bima (tim B)',
   $q$ select * from public.baca_catatan(tests.id('bima')) $q$);
 select tests.periksa('Ketua A (peran ganda): bisa mengubah profil Asep di A2',
-  tests.baris_terkena($q$ update public.anggota set no_hp = '0812' where id = tests.id('asep') $q$) = 1);
+  tests.baris_terkena($q$ update public.anggota set no_hp = '0812 9999 0001' where id = tests.id('asep') $q$) = 1);
 select tests.harus_berhasil('Ketua A (peran ganda): bisa menulis catatan untuk Asep di A2',
   $q$ select public.tulis_catatan(tests.id('asep'), 'umum', 'Rajin') $q$);
 select tests.harus_gagal('Ketua A: tidak bisa membuka laporan demografi',
@@ -1377,6 +1377,169 @@ select tests.harus_gagal('Budi (pemimpin): tidak bisa membuka laporan kelompokny
 select tests.keluar();
 select tests.periksa('Ekspor PDF tercatat di log',
   exists (select 1 from public.log_aktivitas where tindakan = 'ekspor_laporan' and detail ->> 'format' = 'pdf'));
+
+
+-- =====================================================================
+-- UJI LOGIN FLEKSIBEL · NAMA PENGGUNA, EMAIL, ATAU NOMOR HP (keputusan 25)
+-- =====================================================================
+select tests.keluar();
+select tests.periksa('Nomor HP dirapikan: 0812-3456-7890, +62 812 3456 7890, 812 3456 7890 -> 6281234567890',
+  internal.normal_hp('0812-3456-7890') = '6281234567890' and internal.normal_hp('+62 812 3456 7890') = '6281234567890'
+  and internal.normal_hp('812 3456 7890') = '6281234567890');
+select tests.periksa('Nomor HP tidak sah dikenali (telepon rumah, huruf, terlalu pendek)',
+  internal.normal_hp('021555123') is null and internal.normal_hp('abc') is null and internal.normal_hp('0812') is null);
+
+insert into tests.ids values
+  ('u_rina', '33333333-0000-0000-0000-00000000000d'),
+  ('sari_p', '44444444-0000-0000-0000-00000000aa01'),
+  ('tono',   '44444444-0000-0000-0000-00000000aa02');
+-- Tono: profil di T1 dengan nomor HP, belum punya akun.
+insert into public.anggota (id, kelompok_id, nama_lengkap, persetujuan_pada, no_hp)
+values (tests.id('tono'), tests.id('kel_t1'), 'Tono', now(), '0812-7777-0001');
+select tests.periksa('Nomor HP profil disimpan dalam bentuk baku 628..',
+  (select no_hp = '6281277770001' from public.anggota where id = tests.id('tono')));
+insert into auth.users (id, email, raw_user_meta_data) values
+  (tests.id('u_rina'), 'rina@contoh.test',
+   '{"nama":"Rina","nama_pengguna":"Rina.K","email":"Rina@Contoh.test","nomor_hp":"0812-3333-0001"}');
+select tests.periksa('Akun baru: nama pengguna, email, nomor HP tersimpan rapi (huruf kecil, 628..) dan ringkasannya benar',
+  (select nama_pengguna = 'rina.k' and email = 'rina@contoh.test' and nomor_hp = '6281233330001'
+          and login = 'rina.k · rina@contoh.test · 081233330001' from public.akun where id = tests.id('u_rina')));
+select tests.harus_gagal('Akun baru dengan nama pengguna yang sama (huruf besar) ditolak',
+  $q$ insert into auth.users (email, raw_user_meta_data) values ('x1@contoh.test', '{"nama_pengguna":"RINA.K"}') $q$);
+select tests.harus_gagal('Akun baru dengan email yang sama (huruf besar) ditolak',
+  $q$ insert into auth.users (email, raw_user_meta_data) values ('x2@contoh.test', '{"email":"RINA@contoh.test"}') $q$);
+select tests.harus_gagal('Akun baru dengan nomor HP yang sama (format lain) ditolak',
+  $q$ insert into auth.users (email, raw_user_meta_data) values ('x3@contoh.test', '{"nomor_hp":"+62 812 3333 0001"}') $q$);
+select tests.harus_gagal('Akun baru dengan nomor HP milik profil anggota lain (Tono) ditolak',
+  $q$ insert into auth.users (email, raw_user_meta_data) values ('x4@contoh.test', '{"nomor_hp":"081277770001"}') $q$);
+
+-- Server: mencari alamat login dan memeriksa isian pendaftaran
+select tests.masuk_sebagai_layanan();
+select tests.periksa('Server: masuk dengan nama pengguna (huruf besar pun) menemukan akun Rina',
+  public.layanan_cari_login(' RINA.K ') = 'rina@contoh.test');
+select tests.periksa('Server: masuk dengan email menemukan akun Rina',
+  public.layanan_cari_login('Rina@Contoh.Test') = 'rina@contoh.test');
+select tests.periksa('Server: masuk dengan nomor HP (0812.., +62.., 812..) menemukan akun Rina',
+  public.layanan_cari_login('081233330001') = 'rina@contoh.test'
+  and public.layanan_cari_login('+62 812-3333-0001') = 'rina@contoh.test'
+  and public.layanan_cari_login('81233330001') = 'rina@contoh.test');
+select tests.periksa('Server: isian yang tidak terdaftar atau kosong -> tidak ditemukan',
+  public.layanan_cari_login('tidakada') is null and public.layanan_cari_login('') is null
+  and public.layanan_cari_login('089999999999') is null);
+select tests.periksa('Server: cek pendaftaran mengembalikan isian yang sudah dirapikan',
+  (select nama_pengguna = 'rina_baru' and email = 'rb@contoh.test' and nomor_hp = '6281233330009'
+   from public.layanan_cek_login_baru('Rina_Baru', 'RB@contoh.test', '0812 3333 0009')));
+select tests.harus_gagal('Server: cek pendaftaran menolak nama pengguna yang sudah dipakai',
+  $q$ select * from public.layanan_cek_login_baru('rina.k', null, null) $q$);
+select tests.harus_gagal('Server: cek pendaftaran menolak nama pengguna diawali angka',
+  $q$ select * from public.layanan_cek_login_baru('1rina', null, null) $q$);
+select tests.harus_gagal('Server: cek pendaftaran menolak nama pengguna berspasi',
+  $q$ select * from public.layanan_cek_login_baru('rina k', null, null) $q$);
+select tests.harus_gagal('Server: cek pendaftaran menolak nama pengguna 2 huruf',
+  $q$ select * from public.layanan_cek_login_baru('ri', null, null) $q$);
+select tests.harus_gagal('Server: cek pendaftaran menolak isian kosong semua',
+  $q$ select * from public.layanan_cek_login_baru('', ' ', null) $q$);
+select tests.harus_gagal('Server: cek pendaftaran menolak alamat .invalid',
+  $q$ select * from public.layanan_cek_login_baru(null, '6281@hp.invalid', null) $q$);
+select tests.harus_gagal('Server: cek pendaftaran menolak nomor HP profil Tono (anggota baru)',
+  $q$ select * from public.layanan_cek_login_baru(null, null, '081277770001') $q$);
+select tests.harus_berhasil('Server: nomor HP profil Tono boleh dipakai bila mendaftar untuk profil Tono',
+  $q$ select * from public.layanan_cek_login_baru(null, null, '081277770001', tests.id('tono')) $q$);
+
+select tests.masuk_sebagai_tamu();
+select tests.harus_gagal('Tamu: tidak bisa mencari alamat login',
+  $q$ select public.layanan_cari_login('rina.k') $q$);
+select tests.harus_gagal('Tamu: tidak bisa mengubah cara masuk',
+  $q$ select public.ubah_login(tests.id('u_rina'), 'x', null, null) $q$);
+
+-- Mengubah cara masuk sendiri
+select tests.masuk_sebagai('u_rina');
+select tests.harus_gagal('Rina: tidak bisa memanggil loket pencarian login (khusus server)',
+  $q$ select public.layanan_cari_login('budi@contoh.test') $q$);
+select tests.harus_berhasil('Rina: mengganti nama pengguna sendiri',
+  $q$ select public.ubah_login(tests.id('u_rina'), 'rina2', 'rina@contoh.test', '081233330001') $q$);
+select tests.periksa('Rina: membaca data loginnya sendiri (nomor HP tampil 08..)',
+  (select nama_pengguna = 'rina2' and nomor_hp = '081233330001' from public.data_login(tests.id('u_rina'))));
+select tests.harus_gagal('Rina: tidak bisa mengosongkan semua cara masuk',
+  $q$ select public.ubah_login(tests.id('u_rina'), '', '', '') $q$);
+select tests.harus_gagal('Rina: tidak bisa memakai email akun Budi',
+  $q$ select public.ubah_login(tests.id('u_rina'), 'rina2', 'budi@contoh.test', null) $q$);
+select tests.harus_gagal('Rina: tidak bisa memakai nomor HP yang tidak sah',
+  $q$ select public.ubah_login(tests.id('u_rina'), 'rina2', null, '12345') $q$);
+select tests.harus_gagal('Rina: tidak bisa mengubah cara masuk akun Budi',
+  $q$ select public.ubah_login(tests.id('budi'), 'budi_palsu', null, null) $q$);
+select tests.harus_gagal('Rina: tidak bisa membaca data login Budi',
+  $q$ select * from public.data_login(tests.id('budi')) $q$);
+select tests.harus_gagal('Rina: tidak bisa mengubah kolom email akun langsung',
+  $q$ update public.akun set email = 'x@contoh.test' where id = tests.id('u_rina') $q$);
+
+select tests.masuk_sebagai_layanan();
+select tests.periksa('Server: nama pengguna lama Rina tidak berlaku lagi, yang baru berlaku',
+  public.layanan_cari_login('rina.k') is null and public.layanan_cari_login('rina2') = 'rina@contoh.test');
+
+-- Admin mengubah cara masuk akun lain
+select tests.masuk_sebagai('admin');
+select tests.harus_berhasil('Admin: memberi nama pengguna untuk akun Budi',
+  $q$ select public.ubah_login(tests.id('budi'), 'Budi', 'budi@contoh.test', null) $q$);
+select tests.periksa('Admin: membaca data login Budi',
+  (select nama_pengguna = 'budi' from public.data_login(tests.id('budi'))));
+select tests.harus_berhasil('Admin: akun Bima hanya memakai nomor HP',
+  $q$ select public.ubah_login(tests.id('u_bima'), null, null, '081255550001') $q$);
+select tests.periksa('Nomor HP login Bima ikut tersimpan di profil Bima',
+  (select no_hp = '6281255550001' from public.anggota where id = tests.id('bima')));
+
+-- Nomor HP login = nomor HP profil (disamakan)
+select tests.masuk_sebagai('u_andi');
+select tests.harus_berhasil('Andi: mengisi nama pengguna dan nomor HP login sendiri',
+  $q$ select public.ubah_login(tests.id('u_andi'), 'andi', 'u_andi@contoh.test', '0812 4444 0001') $q$);
+select tests.periksa('Nomor HP login Andi ikut tersimpan di profil Andi',
+  (select no_hp = '6281244440001' from public.anggota where id = tests.id('andi')));
+
+select tests.masuk_sebagai('budi');
+select tests.periksa('Budi: mengubah nomor HP di profil Andi (1 baris)',
+  tests.baris_terkena($q$ update public.anggota set no_hp = '081244440002' where id = tests.id('andi') $q$) = 1);
+select tests.harus_gagal('Budi: nomor HP profil yang sama dengan profil Tono ditolak',
+  $q$ update public.anggota set no_hp = '081277770001' where id = tests.id('andi') $q$);
+select tests.harus_gagal('Budi: nomor HP profil yang sama dengan nomor login Rina ditolak',
+  $q$ update public.anggota set no_hp = '081233330001' where id = tests.id('andi') $q$);
+select tests.harus_gagal('Budi: nomor HP profil yang tidak sah ditolak',
+  $q$ update public.anggota set no_hp = '12345' where id = tests.id('andi') $q$);
+select tests.harus_gagal('Budi: anggota baru dengan nomor HP Tono ditolak',
+  $q$ insert into public.anggota (kelompok_id, nama_lengkap, persetujuan_pada, no_hp)
+      values (tests.id('kel_a1'), 'Dobel', now(), '0812 7777 0001') $q$);
+select tests.harus_berhasil('Budi: mencatat persetujuan Ani (akunnya mendaftar dengan nomor HP)',
+  $q$ update public.anggota set persetujuan_pada = now() where id = tests.id('ani') $q$);
+select tests.keluar();
+select tests.periksa('Nomor HP login Andi ikut berubah setelah profil diubah pemimpin',
+  (select nomor_hp = '6281244440002' from public.akun where id = tests.id('u_andi')));
+select tests.periksa('Profil Ani otomatis berisi nomor HP loginnya setelah persetujuan',
+  (select no_hp = '6281234567890' from public.anggota where id = tests.id('ani')));
+
+select tests.masuk_sebagai_layanan();
+select tests.periksa('Server: masuk dengan nomor HP baru Andi berhasil, nomor lama tidak',
+  public.layanan_cari_login('081244440002') = 'u_andi@contoh.test'
+  and public.layanan_cari_login('081244440001') is null);
+
+select tests.masuk_sebagai('dewi');
+select tests.harus_gagal('Dewi: tidak bisa menghapus nomor HP Bima (satu-satunya cara masuk Bima)',
+  $q$ update public.anggota set no_hp = null where id = tests.id('bima') $q$);
+
+-- Nomor HP login staf hanya diubah orangnya sendiri atau Admin
+select tests.keluar();
+insert into public.anggota (id, kelompok_id, nama_lengkap, persetujuan_pada)
+values (tests.id('sari_p'), tests.id('kel_t1'), 'Sari', now());
+update public.akun set anggota_id = tests.id('sari_p') where id = tests.id('sari');
+select tests.masuk_sebagai('budi');
+select tests.harus_gagal('Budi (pemimpin T1): tidak bisa mengganti nomor HP profil Sari (staf)',
+  $q$ update public.anggota set no_hp = '081266660001' where id = tests.id('sari_p') $q$);
+select tests.masuk_sebagai('sari');
+select tests.harus_berhasil('Sari: mengganti nomor HP di profilnya sendiri',
+  $q$ update public.anggota set no_hp = '081266660001' where id = tests.id('sari_p') $q$);
+select tests.keluar();
+select tests.periksa('Nomor HP login Sari ikut berubah',
+  (select nomor_hp = '6281266660001' from public.akun where id = tests.id('sari')));
+select tests.periksa('Perubahan cara masuk tercatat di log',
+  exists (select 1 from public.log_aktivitas where tindakan = 'ubah_login' and akun_id = tests.id('admin')));
 
 
 -- =====================================================================

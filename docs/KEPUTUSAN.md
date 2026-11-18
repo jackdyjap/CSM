@@ -119,3 +119,17 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - Tampilan: grafik batang horizontal satu warna (biru `#2a78d6`, gelap `#3987e5`, divalidasi kontras ≥ 3:1) dengan nilai di ujung batang dan tooltip; tabel silang kategori × kelompok dengan gradasi satu warna.
     - Ekspor **Excel (.xlsx)**: lembar Ringkasan, Tabel silang (jumlah), Tabel silang (persen). Dipilih .xlsx, bukan CSV, karena Excel berbahasa Indonesia sering salah membaca pemisah CSV. **PDF** lewat Cetak / Simpan PDF. Setiap pembuatan dan ekspor tercatat di log.
     - Pustaka `exceljs` 4.4.0 (MIT). Ketergantungannya `uuid` dipaksa ke 11.1.1 (`overrides` di package.json) untuk menutup GHSA-w5hq-g745-h8pq; exceljs hanya memakai `uuid.v4`, dan pembuatan/pembacaan xlsx sudah diuji dengan versi itu.
+
+## Diputuskan 18 November 2026
+
+25. **Masuk dengan nama pengguna, email, ATAU nomor HP** (memperluas keputusan 6; tetap tanpa SMS).
+    - Satu akun boleh punya ketiganya; masuk cukup dengan salah satunya. **Minimal satu** harus ada. Nama pengguna **tidak wajib**.
+    - Ketiganya **unik**. Huruf besar/kecil dianggap sama; nomor HP disimpan dalam bentuk baku `628…`, jadi `0812…`, `+62 812…`, dan `812…` dihitung sama.
+    - Nama pengguna: 3–30 karakter, huruf kecil/angka/titik/garis bawah, **diawali huruf** (sehingga tidak tertukar dengan email atau nomor HP).
+    - Diisi saat daftar lewat undangan, saat Admin membuat akun, dan bisa diubah sendiri di **Profil saya → Cara masuk** (staf tanpa profil: **Akun saya**). Admin bisa mengubahnya di Akun & peran.
+    - **Nomor HP login = nomor HP di profil anggota** (disamakan). Mengubah salah satunya ikut mengubah yang lain. Nomor HP profil juga unik dan tidak boleh sama dengan nomor login akun orang lain.
+        - Nomor HP yang dipakai masuk tidak bisa dihapus bila akun tidak punya email/nama pengguna.
+        - Nomor HP login seorang **pemimpin/staf** hanya bisa diubah orangnya sendiri atau Admin.
+        - Saat migrasi: nomor dobel di profil dikosongkan kecuali satu (yang terhubung ke akun, lalu yang paling lama) dan dicatat di log (`hp_ganda_dikosongkan`); bila nomor profil dan nomor login berbeda, nomor login yang dipakai.
+    - Server mencari alamat login lewat `layanan_cari_login` (khusus server). Pesan gagal masuk sama untuk "tidak terdaftar" dan "kata sandi salah". Migrasi `…1500`.
+26. **Kartu anggota memuat foto dan nomor HP** selain nama, kelompok, dan QR (mengubah keputusan 22), baik kartu cetak maupun Kartu saya di HP. Isi QR tetap kode acak tanpa data pribadi. Karena kartu kini memuat data pribadi, halaman cetak mengingatkan agar kartu disimpan dan dibagikan dengan hati-hati.

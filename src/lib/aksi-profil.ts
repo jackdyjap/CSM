@@ -111,9 +111,7 @@ export async function simpanProfil(anggotaId: string, _: HasilAksi, fd: FormData
   const kelurahan = kecamatan ? teks(fd, "kelurahan_kode") : null;
 
   const noHp = teks(fd, "no_hp");
-  if (noHp && !/^[0-9+\-\s]{8,20}$/.test(noHp)) {
-    return { galat: "Nomor HP hanya boleh berisi angka, spasi, tanda + atau -." };
-  }
+  // Format dan keunikan nomor HP diperiksa database (keputusan 25).
 
   const { supabase, kelompokId } = await kelompokAnggota(anggotaId);
   if (!kelompokId) return { galat: "Anggota tidak ditemukan." };
