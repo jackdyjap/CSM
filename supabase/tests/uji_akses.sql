@@ -1950,6 +1950,75 @@ select tests.periksa('Memasukkan akun tercatat di log',
 
 
 -- =====================================================================
+-- UJI LAPORAN PROYEK KETAATAN OLEH ANGGOTA SENDIRI (keputusan 36)
+-- A1: Andi, Rina, dan Budi (pemimpin yang kini juga anggota A1).
+-- =====================================================================
+select tests.keluar();
+insert into tests.ids values
+  ('pr_a1', '77777777-0000-0000-0000-0000000000a1'),
+  ('pr_b1', '77777777-0000-0000-0000-0000000000b1');
+insert into public.proyek_ketaatan (id, kelompok_id, judul) values
+  (tests.id('pr_a1'), tests.id('kel_a1'), 'Baca Injil Markus'),
+  (tests.id('pr_b1'), tests.id('kel_b1'), 'Proyek B1');
+
+select tests.masuk_sebagai('u_andi');
+select tests.periksa('Andi: melihat proyek kelompoknya (A1), bukan proyek B1',
+  exists (select 1 from public.proyek_saya() where proyek_id = tests.id('pr_a1') and status = 'belum')
+  and not exists (select 1 from public.proyek_saya() where proyek_id = tests.id('pr_b1')));
+select tests.harus_gagal('Andi: "Belum dijalankan" tanpa alasan ditolak',
+  $q$ select public.lapor_proyek_saya(tests.id('pr_a1'), 'belum', '  ') $q$);
+select tests.harus_berhasil('Andi: "Belum dijalankan" dengan alasan',
+  $q$ select public.lapor_proyek_saya(tests.id('pr_a1'), 'belum', 'Sedang sakit minggu ini') $q$);
+select tests.periksa('Andi: alasan tersimpan dan tercatat dilaporkan sendiri',
+  (select alasan = 'Sedang sakit minggu ini' and dilaporkan_sendiri from public.proyek_saya() where proyek_id = tests.id('pr_a1')));
+select tests.harus_gagal('Andi: "Sudah selesai" tanpa hasil ditolak',
+  $q$ select public.lapor_proyek_saya(tests.id('pr_a1'), 'selesai', null, '') $q$);
+select tests.harus_berhasil('Andi: "Sudah selesai" dengan hasil',
+  $q$ select public.lapor_proyek_saya(tests.id('pr_a1'), 'selesai', null, 'Lebih sabar kepada keluarga') $q$);
+select tests.periksa('Andi: hasil tersimpan, alasan lama dihapus',
+  (select status = 'selesai' and hasil = 'Lebih sabar kepada keluarga' and alasan is null
+   from public.proyek_saya() where proyek_id = tests.id('pr_a1')));
+select tests.harus_gagal('Andi: tidak bisa melapor "Tidak dikerjakan" (khusus pemimpin)',
+  $q$ select public.lapor_proyek_saya(tests.id('pr_a1'), 'tidak_dikerjakan') $q$);
+select tests.harus_gagal('Andi: tidak bisa melapor proyek kelompok lain',
+  $q$ select public.lapor_proyek_saya(tests.id('pr_b1'), 'sedang') $q$);
+select tests.periksa('Andi: tidak bisa membaca tabel status proyek (laporan anggota lain tertutup)',
+  not exists (select 1 from public.status_proyek));
+
+select tests.masuk_sebagai('u_rina');
+select tests.periksa('Rina: hanya melihat statusnya sendiri (belum), bukan hasil Andi',
+  (select status = 'belum' and hasil is null from public.proyek_saya() where proyek_id = tests.id('pr_a1')));
+select tests.harus_berhasil('Rina: "Sedang dijalankan" tanpa keterangan',
+  $q$ select public.lapor_proyek_saya(tests.id('pr_a1'), 'sedang') $q$);
+
+select tests.masuk_sebagai('ketua_a');
+select tests.periksa('Ketua A: membaca hasil yang dilaporkan Andi',
+  (select hasil = 'Lebih sabar kepada keluarga' and dilaporkan_sendiri from public.status_proyek
+   where proyek_id = tests.id('pr_a1') and anggota_id = tests.id('andi')));
+select tests.harus_gagal('Ketua A (bukan anggota kelompok): tidak bisa melapor',
+  $q$ select public.lapor_proyek_saya(tests.id('pr_a1'), 'sedang') $q$);
+
+select tests.masuk_sebagai('budi');
+select tests.harus_berhasil('Budi (pemimpin yang juga anggota A1): melaporkan proyeknya sendiri',
+  $q$ select public.lapor_proyek_saya(tests.id('pr_a1'), 'sedang') $q$);
+select tests.periksa('Budi: mengubah status Andi menjadi Sedang (1 baris)',
+  tests.baris_terkena($q$ update public.status_proyek set status = 'sedang'
+                         where proyek_id = tests.id('pr_a1') and anggota_id = tests.id('andi') $q$) = 1);
+select tests.periksa('Status Andi kini diisi pemimpin: tidak dilaporkan sendiri, hasil dihapus, pengubah Budi',
+  (select not dilaporkan_sendiri and hasil is null and diubah_oleh = tests.id('budi') from public.status_proyek
+   where proyek_id = tests.id('pr_a1') and anggota_id = tests.id('andi')));
+
+select tests.masuk_sebagai_tamu();
+select tests.harus_gagal('Tamu: tidak bisa membaca proyek', $q$ select * from public.proyek_saya() $q$);
+select tests.keluar();
+select tests.periksa('Laporan Budi tercatat dilaporkan sendiri',
+  (select dilaporkan_sendiri from public.status_proyek s join public.akun ak on ak.anggota_id = s.anggota_id
+   where s.proyek_id = tests.id('pr_a1') and ak.id = tests.id('budi')));
+select tests.periksa('Laporan proyek tercatat di log',
+  (select count(*) from public.log_aktivitas where tindakan = 'lapor_proyek') = 4);
+
+
+-- =====================================================================
 -- RINGKASAN
 -- =====================================================================
 select no, case when lulus then 'LULUS' else 'GAGAL' end as hasil, nama, info

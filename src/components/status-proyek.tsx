@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { setelStatus } from "@/app/kelompok/[id]/proyek/aksi";
 import { PILIHAN_STATUS_PROYEK, type StatusProyek } from "@/lib/pilihan-fase5";
+import { LaporanProyek } from "./laporan-proyek";
 import { Tombol } from "./ui";
 
 const WARNA: Record<StatusProyek, string> = {
@@ -23,6 +24,7 @@ export function StatusProyekAnggota({
   nama,
   statusAwal,
   keteranganAwal,
+  laporan,
 }: {
   kelompokId: string;
   proyekId: string;
@@ -30,6 +32,8 @@ export function StatusProyekAnggota({
   nama: string;
   statusAwal: StatusProyek;
   keteranganAwal: string | null;
+  /** Alasan/hasil yang dilaporkan anggota (keputusan 36). */
+  laporan?: { alasan: string | null; hasil: string | null; sendiri: boolean };
 }) {
   const [status, setStatus] = useState<StatusProyek>(statusAwal);
   const [keterangan, setKeterangan] = useState(keteranganAwal ?? "");
@@ -83,6 +87,11 @@ export function StatusProyekAnggota({
           </button>
         ))}
       </div>
+      {laporan && status === statusAwal ? (
+        <div className="mb-2">
+          <LaporanProyek alasan={laporan.alasan} hasil={laporan.hasil} sendiri={laporan.sendiri} />
+        </div>
+      ) : null}
       <div className="flex gap-2">
         <label className="flex-1">
           <span className="sr-only">Keterangan untuk {nama}</span>

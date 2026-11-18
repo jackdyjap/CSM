@@ -74,6 +74,19 @@ export default async function HalamanProyek({ params }: PageProps<"/kelompok/[id
       {kelompok.bolehUbah ? (
       <Kotak>
         <Lipatan judul="+ Buat proyek baru">
+          <p className="text-sm opacity-70">
+            Setiap anggota kelompok langsung melihat proyek baru di Beranda (ditandai &ldquo;Baru&rdquo;) dan bisa
+            melaporkan perkembangannya di sana.
+            {peran.pemimpin.some((k) => k.kelompok_id === id) && !peran.anggota ? (
+              <>
+                {" "}Supaya Anda sendiri juga ikut melapor, daftarkan akun Anda sebagai anggota lewat{" "}
+                <a href={`/kelompok/${id}/masukkan-akun`} className="underline">
+                  Masukkan akun yang sudah ada
+                </a>
+                .
+              </>
+            ) : null}
+          </p>
           <FormAksi aksi={buatProyek.bind(null, id)} tombol="Buat proyek">
             <Isian label="Judul" name="judul" required placeholder="Contoh: Baca Injil Yohanes" />
             <IsianPanjang label="Keterangan (opsional)" name="keterangan" placeholder="Contoh: satu pasal setiap hari" />

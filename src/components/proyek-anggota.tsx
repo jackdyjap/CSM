@@ -3,13 +3,21 @@ import { PILIHAN_STATUS_PROYEK, type StatusProyek } from "@/lib/pilihan-fase5";
 import { tanggalPanjang } from "@/lib/pertemuan";
 import { hariIniWib } from "@/lib/profil";
 import type { buatClientServer } from "@/lib/supabase/server";
+import { LaporanProyek } from "./laporan-proyek";
 import { StatusProyekAnggota } from "./status-proyek";
 import { Kotak } from "./ui";
 
 type Supabase = Awaited<ReturnType<typeof buatClientServer>>;
 
 type Proyek = { id: string; judul: string; tenggat: string | null; diberikan_pada: string };
-type Status = { proyek_id: string; status: StatusProyek; keterangan: string | null };
+type Status = {
+  proyek_id: string;
+  status: StatusProyek;
+  keterangan: string | null;
+  alasan: string | null;
+  hasil: string | null;
+  dilaporkan_sendiri: boolean;
+};
 
 /**
  * Status semua proyek ketaatan kelompok untuk SATU anggota (keputusan 18).
@@ -32,7 +40,7 @@ export async function ProyekAnggota({
       .select("id, judul, tenggat, diberikan_pada")
       .eq("kelompok_id", kelompokId)
       .order("diberikan_pada", { ascending: false }),
-    supabase.from("status_proyek").select("proyek_id, status, keterangan").eq("anggota_id", anggotaId),
+    supabase.from("status_proyek").select("proyek_id, status, keterangan, alasan, hasil, dilaporkan_sendiri").eq("anggota_id", anggotaId),
   ]);
   const proyek = (dataProyek ?? []) as Proyek[];
   const status = new Map(((dataStatus ?? []) as Status[]).map((s) => [s.proyek_id, s]));
@@ -66,6 +74,7 @@ export async function ProyekAnggota({
                   nama={judul}
                   statusAwal={s?.status ?? "belum"}
                   keteranganAwal={s?.keterangan ?? null}
+                  laporan={{ alasan: s?.alasan ?? null, hasil: s?.hasil ?? null, sendiri: s?.dilaporkan_sendiri ?? false }}
                 />
               ) : (
                 <div key={p.id} className="py-3">
@@ -74,6 +83,7 @@ export async function ProyekAnggota({
                     Status: <strong>{PILIHAN_STATUS_PROYEK[s?.status ?? "belum"]}</strong>
                     {s?.keterangan ? ` · ${s.keterangan}` : ""}
                   </p>
+                  <LaporanProyek alasan={s?.alasan ?? null} hasil={s?.hasil ?? null} sendiri={s?.dilaporkan_sendiri ?? false} />
                 </div>
               );
             })}

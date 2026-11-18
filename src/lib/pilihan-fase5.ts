@@ -17,3 +17,11 @@ export type StatusProyek = keyof typeof PILIHAN_STATUS_PROYEK;
 
 /** Batas absen berturut-turut untuk daftar tindak lanjut (keputusan 17). */
 export const BATAS_ABSEN = 3;
+
+/** Pilihan saat anggota melaporkan proyeknya sendiri (keputusan 36). */
+export const PILIHAN_LAPOR_PROYEK = {
+  belum: "Belum dijalankan",
+  sedang: "Sedang dijalankan",
+  selesai: "Sudah selesai",
+} as const;
+export type LaporProyek = keyof typeof PILIHAN_LAPOR_PROYEK;

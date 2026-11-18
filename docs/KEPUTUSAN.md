@@ -169,3 +169,8 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - Tombol **"+ Masukkan akun yang sudah ada"** di halaman kelompok. **Pemimpin/Wakil**: ke kelompoknya; **Ketua Tim**: ke kelompok di timnya; **Admin**: ke kelompok mana pun.
     - Pemimpin dan Ketua Tim mencari dengan **nama pengguna, email, atau nomor HP yang persis** (data kontak tidak bisa dijelajah); **Admin** juga melihat daftar lengkap.
     - **Langsung masuk** tanpa konfirmasi pemilik akun; profil anggota dibuat dengan nama akunnya dan tercatat di log. Data pribadi tetap baru bisa diisi setelah persetujuan data. Akun yang sudah tergabung dipindah lewat *Pindah ke kelompok lain*.
+36. **Anggota melaporkan sendiri proyek ketaatannya** (migrasi `…2200`). Pilihan: **Belum dijalankan** + alasan (wajib), **Sedang dijalankan**, atau **Sudah selesai** + hasil yang didapat (wajib).
+    - Berlaku untuk setiap anggota, termasuk pemimpin yang terdaftar sebagai anggota kelompoknya (lewat *Masukkan akun yang sudah ada*, keputusan 35).
+    - Anggota hanya membaca proyek kelompoknya dan laporan **miliknya sendiri**. Alasan/hasil dibaca pemimpin/wakil, Ketua Tim, dan Admin di halaman proyek dan profil anggota, dengan tanda "dilaporkan sendiri".
+    - Pemimpin/Wakil dan Admin **tetap boleh mengubah** status (termasuk "Tidak dikerjakan"); yang terakhir mengubah tercatat. Alasan hanya disimpan untuk status Belum, hasil hanya untuk Selesai.
+37. **Notifikasi proyek ketaatan di Beranda.** Proyek yang belum "Sudah selesai" tampil di Beranda setiap anggota; yang belum pernah dilaporkan ditandai **"Baru"**, dan laporannya bisa langsung diisi di sana. Ini notifikasi di dalam aplikasi; notifikasi ke HP (push/WhatsApp otomatis) belum ada.

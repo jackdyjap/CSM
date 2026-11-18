@@ -3,6 +3,7 @@ import { KotakNama, KotakSandi, KotakSelesai, ProfilStafUbah } from "@/component
 import { KotakKartu } from "@/components/kotak-kartu";
 import { KotakLogin } from "@/components/kotak-login";
 import { ProfilUbah } from "@/components/profil";
+import { KotakProyekSaya } from "@/components/proyek-saya";
 import { RiwayatKehadiran } from "@/components/riwayat-kehadiran";
 import { Judul, Pesan, TautanTombol } from "@/components/ui";
 import { bacaProfil } from "@/lib/profil-server";
@@ -74,6 +75,7 @@ export default async function HalamanAturProfil() {
             mode="diri"
           />
           <RiwayatKehadiran supabase={supabase} />
+          <KotakProyekSaya supabase={supabase} />
         </>
       )}
       <ProfilUbah supabase={supabase} profil={profil} olehPemimpin={false} kembali={kembali} />
