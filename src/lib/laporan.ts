@@ -26,6 +26,10 @@ export const DIMENSI = {
 } as const;
 export type Dimensi = keyof typeof DIMENSI;
 
+/** Isi tampilan Ringkasan: lima info sekaligus (keputusan 32). */
+export const DIMENSI_RINGKASAN: Dimensi[] = ["baptis", "pendidikan", "status_nikah", "status_jemaat", "generasi"];
+export const NAMA_RINGKASAN = "Ringkasan (5 info sekaligus)";
+
 /** Urutan dan label kategori untuk dimensi berdaftar tetap (wilayah diurutkan menurut nama). */
 const URUTAN: Partial<Record<Dimensi, Record<string, string>>> = {
   gender: PILIHAN_GENDER,
@@ -136,6 +140,8 @@ export function susunLaporan(baris: BarisDb[], dimensi: Dimensi): Laporan {
 }
 
 export type Pilihan = {
+  /** Ringkasan = DIMENSI_RINGKASAN sekaligus; dimensi lalu tidak dipakai. */
+  ringkasan: boolean;
   dimensi: Dimensi;
   cakupan: "semua" | "tim" | "kelompok";
   cakupanId: string | null;
@@ -146,6 +152,8 @@ export type Pilihan = {
 /** Membaca pilihan laporan dari parameter alamat (?d=&c=&id=&aktif=&t=). */
 export function bacaPilihan(p: Record<string, string | string[] | undefined>): Pilihan {
   const s = (k: string) => (typeof p[k] === "string" ? (p[k] as string) : "");
+  // Tanpa pilihan (halaman baru dibuka) = Ringkasan.
+  const ringkasan = s("d") === "" || s("d") === "ringkasan";
   const dimensi = (s("d") in DIMENSI ? s("d") : "gender") as Dimensi;
   // Menu cakupan mengirim satu nilai "cak" = semua | tim:<id> | kelompok:<id>
   const [cakJenis, cakId] = s("cak").split(":");
@@ -154,6 +162,7 @@ export function bacaPilihan(p: Record<string, string | string[] | undefined>): P
   const cakupanId = /^[0-9a-f-]{36}$/.test(idMentah) ? idMentah : null;
   const cakupan = (c === "tim" || c === "kelompok") && cakupanId ? c : "semua";
   return {
+    ringkasan,
     dimensi,
     cakupan,
     cakupanId: cakupan === "semua" ? null : cakupanId,
@@ -163,7 +172,7 @@ export function bacaPilihan(p: Record<string, string | string[] | undefined>): P
 }
 
 export function parameterAlamat(p: Pilihan, tambahan: Record<string, string> = {}) {
-  const q = new URLSearchParams({ d: p.dimensi, c: p.cakupan, aktif: p.hanyaAktif ? "1" : "0", t: p.tampil, ...tambahan });
+  const q = new URLSearchParams({ d: p.ringkasan ? "ringkasan" : p.dimensi, c: p.cakupan, aktif: p.hanyaAktif ? "1" : "0", t: p.tampil, ...tambahan });
   if (p.cakupanId) q.set("id", p.cakupanId);
   return q.toString();
 }

@@ -1,6 +1,6 @@
 import "server-only";
 import { pesanGalat } from "@/lib/galat";
-import { DIMENSI, susunLaporan, type BarisDb, type Pilihan } from "@/lib/laporan";
+import { DIMENSI, DIMENSI_RINGKASAN, NAMA_RINGKASAN, susunLaporan, type BarisDb, type Pilihan } from "@/lib/laporan";
 import type { buatClientServer } from "@/lib/supabase/server";
 
 type Supabase = Awaited<ReturnType<typeof buatClientServer>>;
@@ -17,6 +17,14 @@ export async function ambilLaporan(supabase: Supabase, p: Pilihan) {
   return { galat: null, laporan: susunLaporan((data ?? []) as BarisDb[], p.dimensi) };
 }
 
+/** Ringkasan: kelima info sekaligus, berurutan seperti DIMENSI_RINGKASAN. */
+export async function ambilRingkasan(supabase: Supabase, p: Pilihan) {
+  const hasil = await Promise.all(DIMENSI_RINGKASAN.map((dimensi) => ambilLaporan(supabase, { ...p, dimensi })));
+  const galat = hasil.find((h) => h.galat)?.galat ?? null;
+  if (galat) return { galat, bagian: null };
+  return { galat: null, bagian: DIMENSI_RINGKASAN.map((dimensi, i) => ({ dimensi, laporan: hasil[i].laporan! })) };
+}
+
 /** Nama cakupan untuk judul laporan, mis. "Tim HG 1" atau "Kelompok COOL Apen Rivai". */
 export async function namaCakupan(supabase: Supabase, p: Pilihan) {
   if (p.cakupan === "semua" || !p.cakupanId) return "Semua tim";
@@ -26,5 +34,5 @@ export async function namaCakupan(supabase: Supabase, p: Pilihan) {
 }
 
 export function judulLaporan(p: Pilihan, cakupan: string) {
-  return `${DIMENSI[p.dimensi]} · ${cakupan} · ${p.hanyaAktif ? "anggota aktif" : "semua anggota"}`;
+  return `${p.ringkasan ? NAMA_RINGKASAN : DIMENSI[p.dimensi]} · ${cakupan} · ${p.hanyaAktif ? "anggota aktif" : "semua anggota"}`;
 }

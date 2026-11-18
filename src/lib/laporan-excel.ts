@@ -1,6 +1,6 @@
 import "server-only";
 import ExcelJS from "exceljs";
-import { DIMENSI, persen, type Laporan, type Pilihan } from "@/lib/laporan";
+import { DIMENSI, persen, type Dimensi, type Laporan, type Pilihan } from "@/lib/laporan";
 import { hariIniWib } from "@/lib/profil";
 
 /** Berkas Excel laporan demografi: Ringkasan + tabel silang (jumlah dan persen). */
@@ -52,5 +52,34 @@ export async function buatExcelLaporan(laporan: Laporan, pilihan: Pilihan, judul
     t.views = [{ state: "frozen", xSplit: 2, ySplit: 4 }];
   }
 
+  return wb.xlsx.writeBuffer();
+}
+
+/** Berkas Excel Ringkasan: satu lembar per info (ringkasan + jumlah per kelompok). */
+export async function buatExcelRingkasan(bagian: { dimensi: Dimensi; laporan: Laporan }[], judul: string) {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = "Absensi Kelompok Kecil";
+  wb.created = new Date();
+  const tebal = { bold: true } as const;
+
+  for (const { dimensi, laporan } of bagian) {
+    const w = wb.addWorksheet(DIMENSI[dimensi]);
+    w.addRow([`${DIMENSI[dimensi]} · ${judul}`]).font = { bold: true, size: 13 };
+    w.addRow([`Dibuat ${hariIniWib()}. Persentase dihitung dari yang sudah mengisi; "Belum diisi" tidak dihitung.`]);
+    w.addRow([]);
+    w.addRow([DIMENSI[dimensi], "Jumlah", "Persen", "", ...laporan.kelompok.map((k) => `${k.nama} (${k.tim})`)]).font = tebal;
+    for (const kat of laporan.kategori) {
+      w.addRow([kat.label, kat.total, kat.persen / 100, "", ...laporan.kelompok.map((k) => k.jumlah.get(kat.kunci) ?? 0)]);
+    }
+    w.addRow(["Total terisi", laporan.terisi, laporan.terisi ? 1 : 0, "", ...laporan.kelompok.map((k) => k.terisi)]).font = tebal;
+    w.addRow(["Belum diisi", laporan.belum, null, "", ...laporan.kelompok.map((k) => k.belum)]);
+    w.getColumn(1).width = 30;
+    w.getColumn(2).width = 10;
+    w.getColumn(3).width = 10;
+    w.getColumn(3).numFmt = "0.0%";
+    w.getColumn(4).width = 2;
+    for (let i = 5; i < laporan.kelompok.length + 5; i++) w.getColumn(i).width = 18;
+    w.views = [{ state: "frozen", xSplit: 1, ySplit: 4 }];
+  }
   return wb.xlsx.writeBuffer();
 }
