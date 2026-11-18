@@ -33,6 +33,7 @@ export default async function HalamanLaporan({ searchParams }: PageProps<"/admin
         <div className="mb-4 flex flex-wrap gap-2">
           <TautanTombol href="/beranda">← Beranda</TautanTombol>
           <TautanTombol href="/admin">Tim &amp; kelompok</TautanTombol>
+          <TautanTombol href="/admin/laporan-proyek">Laporan proyek ketaatan</TautanTombol>
         </div>
 
         <Kotak>
