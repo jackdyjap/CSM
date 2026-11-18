@@ -161,3 +161,7 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
 33. **Kembali otomatis setelah menyimpan.** Di halaman detail, setelah input/update berhasil, pesan "tersimpan" tampil sekitar 1 detik lalu layar kembali ke layar sebelumnya. Berlaku untuk: profil anggota (Data diri), Data jemaat, Atur profil (nama, cara masuk, data pribadi, kata sandi), catatan khusus (tulis/ubah), ubah proyek, kirim masukan, dan tanggapi masukan.
     - **Tetap di halaman**: pembuatan tautan undangan/atur ulang (tautannya harus dibagikan dulu), mode pertemuan, daftar Admin (tim, kelompok, akun, peran), persetujuan data (formulir profil baru muncul sesudahnya), dan Atur profil saat login pertama (harus menekan Selesai).
     - Bila halaman dibuka langsung dari tautan (tidak ada layar sebelumnya di aplikasi), tujuan cadangannya Beranda, halaman kelompok, atau daftar proyek.
+34. **Atur ulang kata sandi per peran** (memperluas keputusan 6; migrasi `…2000`). Caranya tetap tautan 24 jam sekali pakai.
+    - **Admin**: semua akun (untuk dirinya sendiri lewat Atur profil → Ganti kata sandi).
+    - **Ketua Tim**: anggota **dan** Pemimpin/Wakil kelompok di timnya; lewat kotak **Atur ulang kata sandi** di halaman kelompok. Tidak untuk Admin, Ketua Tim mana pun, atau pengurus yang juga memegang peran di luar timnya.
+    - **Pemimpin/Wakil**: anggota kelompoknya yang bukan pengurus (seperti sebelumnya); sesama pengurus kelompok tidak saling reset. Tombol hanya tampil untuk akun yang boleh di-reset.
