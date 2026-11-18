@@ -1,5 +1,6 @@
 import { FormAksi } from "@/components/form-aksi";
 import { IsianLahir } from "@/components/isian-lahir";
+import { IsianSandi } from "@/components/isian-sandi";
 import { PilihWilayah } from "@/components/pilih-wilayah";
 import { PilihanEnum } from "@/components/profil";
 import { Isian, IsianPanjang, Kotak, Pesan } from "@/components/ui";
@@ -28,19 +29,17 @@ export function KotakSandi({ sementara }: { sementara: boolean }) {
         <Pesan jenis="info">Kata sandi Anda dibuat oleh Admin. Ganti dengan kata sandi pilihan Anda sendiri.</Pesan>
       ) : null}
       <FormAksi aksi={gantiSandi} tombol="Simpan kata sandi baru" jenisTombol={sementara ? "utama" : "biasa"}>
-        <Isian
+        <IsianSandi
           label="Kata sandi baru"
           name="sandi"
-          type="password"
           minLength={PANJANG_SANDI_MINIMAL}
           autoComplete="new-password"
           keterangan={`Minimal ${PANJANG_SANDI_MINIMAL} karakter.`}
           required
         />
-        <Isian
+        <IsianSandi
           label="Ulangi kata sandi baru"
           name="sandi_ulang"
-          type="password"
           minLength={PANJANG_SANDI_MINIMAL}
           autoComplete="new-password"
           required
