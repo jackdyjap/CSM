@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { IsianSandi } from "@/components/isian-sandi";
 import { Isian, Pesan, Tombol } from "@/components/ui";
 import { masuk, type HasilMasuk } from "./aksi";
 
@@ -22,7 +23,7 @@ export function FormMasuk({ lanjut }: { lanjut?: string }) {
         placeholder="budi.santoso, nama@gmail.com, atau 0812…"
         required
       />
-      <Isian label="Kata sandi" name="sandi" type="password" autoComplete="current-password" required />
+      <IsianSandi label="Kata sandi" name="sandi" autoComplete="current-password" required />
       <Tombol type="submit" disabled={sedangProses} className="w-full">
         {sedangProses ? "Sedang masuk…" : "Masuk"}
       </Tombol>

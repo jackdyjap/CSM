@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
-import { Isian, Pesan, Tombol } from "@/components/ui";
+import { IsianSandi } from "@/components/isian-sandi";
+import { Pesan, Tombol } from "@/components/ui";
 import type { HasilAksi } from "@/lib/hasil";
 import { PANJANG_SANDI_MINIMAL } from "@/lib/identitas";
 import { aturUlangSandi } from "./aksi";
@@ -15,19 +16,17 @@ export function FormAturUlang({ token }: { token: string }) {
   return (
     <form action={aksi}>
       {hasil.galat ? <Pesan jenis="galat">{hasil.galat}</Pesan> : null}
-      <Isian
+      <IsianSandi
         label="Kata sandi baru"
         name="sandi"
-        type="password"
         minLength={PANJANG_SANDI_MINIMAL}
         autoComplete="new-password"
         keterangan={`Minimal ${PANJANG_SANDI_MINIMAL} karakter.`}
         required
       />
-      <Isian
+      <IsianSandi
         label="Ulangi kata sandi baru"
         name="sandi_ulang"
-        type="password"
         minLength={PANJANG_SANDI_MINIMAL}
         autoComplete="new-password"
         required
