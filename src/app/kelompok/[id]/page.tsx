@@ -105,7 +105,7 @@ export default async function HalamanKelompok({ params, searchParams }: PageProp
       ) : (
         <p className="mb-4 rounded-lg border border-black/10 px-3 py-2 text-sm opacity-80 dark:border-white/10">
           Tampilan baca saja (Ketua Tim). Perubahan dilakukan oleh pemimpin kelompok atau Admin, kecuali Data
-          jemaat di profil anggota dan atur ulang kata sandi.
+          jemaat di profil anggota, atur ulang kata sandi, dan memasukkan akun yang sudah ada.
         </p>
       )}
 
@@ -143,6 +143,7 @@ export default async function HalamanKelompok({ params, searchParams }: PageProp
               <TautanTombol href={`/kelompok/${id}/kartu`}>Cetak kartu QR</TautanTombol>
             </>
           ) : null}
+          <TautanTombol href={`/kelompok/${id}/masukkan-akun`}>+ Masukkan akun yang sudah ada</TautanTombol>
           {jumlahBelumLengkap > 0 || hanyaBelumLengkap ? (
             <TautanTombol href={hanyaBelumLengkap ? `/kelompok/${id}` : `/kelompok/${id}?belum=1`}>
               {hanyaBelumLengkap ? "Tampilkan semua" : `Belum lengkap saja (${jumlahBelumLengkap})`}

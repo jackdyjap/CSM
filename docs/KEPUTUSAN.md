@@ -165,3 +165,7 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - **Admin**: semua akun (untuk dirinya sendiri lewat Atur profil → Ganti kata sandi).
     - **Ketua Tim**: anggota **dan** Pemimpin/Wakil kelompok di timnya; lewat kotak **Atur ulang kata sandi** di halaman kelompok. Tidak untuk Admin, Ketua Tim mana pun, atau pengurus yang juga memegang peran di luar timnya.
     - **Pemimpin/Wakil**: anggota kelompoknya yang bukan pengurus (seperti sebelumnya); sesama pengurus kelompok tidak saling reset. Tombol hanya tampil untuk akun yang boleh di-reset.
+35. **Memasukkan akun yang belum tergabung ke kelompok** (migrasi `…2100`). Akun belum tergabung = akun tanpa profil anggota (dibuat Admin, kelompoknya dihapus, atau profilnya terhapus otomatis); akun pengurus juga boleh dimasukkan sebagai anggota.
+    - Tombol **"+ Masukkan akun yang sudah ada"** di halaman kelompok. **Pemimpin/Wakil**: ke kelompoknya; **Ketua Tim**: ke kelompok di timnya; **Admin**: ke kelompok mana pun.
+    - Pemimpin dan Ketua Tim mencari dengan **nama pengguna, email, atau nomor HP yang persis** (data kontak tidak bisa dijelajah); **Admin** juga melihat daftar lengkap.
+    - **Langsung masuk** tanpa konfirmasi pemilik akun; profil anggota dibuat dengan nama akunnya dan tercatat di log. Data pribadi tetap baru bisa diisi setelah persetujuan data. Akun yang sudah tergabung dipindah lewat *Pindah ke kelompok lain*.
