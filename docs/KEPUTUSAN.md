@@ -174,3 +174,7 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - Anggota hanya membaca proyek kelompoknya dan laporan **miliknya sendiri**. Alasan/hasil dibaca pemimpin/wakil, Ketua Tim, dan Admin di halaman proyek dan profil anggota, dengan tanda "dilaporkan sendiri".
     - Pemimpin/Wakil dan Admin **tetap boleh mengubah** status (termasuk "Tidak dikerjakan"); yang terakhir mengubah tercatat. Alasan hanya disimpan untuk status Belum, hasil hanya untuk Selesai.
 37. **Notifikasi proyek ketaatan di Beranda.** Proyek yang belum "Sudah selesai" tampil di Beranda setiap anggota; yang belum pernah dilaporkan ditandai **"Baru"**, dan laporannya bisa langsung diisi di sana. Ini notifikasi di dalam aplikasi; notifikasi ke HP (push/WhatsApp otomatis) belum ada.
+38. **Laporan proyek ketaatan untuk Admin** (`/admin/laporan-proyek`, migrasi `…2300`). Cakupan: semua tim, satu tim, atau satu kelompok.
+    - Isi: **Ringkasan** (jumlah dan persen penugasan: Sudah selesai, Sedang dijalankan, Belum dijalankan, Tidak dikerjakan, **Belum dilaporkan**), **Per kelompok** (persen selesai), dan **Per proyek** (setiap anggota dengan statusnya, hasil/alasan, catatan pemimpin, dan tanda "diisi pemimpin").
+    - Penugasan = proyek × anggota aktif, ditambah anggota tidak aktif yang sudah punya status. "Belum dilaporkan" = belum ada status sama sekali.
+    - **Cetak / simpan PDF** lewat dialog cetak. Pembuatan dan ekspor tercatat di log. Khusus Admin.

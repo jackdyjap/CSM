@@ -2019,6 +2019,39 @@ select tests.periksa('Laporan proyek tercatat di log',
 
 
 -- =====================================================================
+-- UJI LAPORAN PROYEK KETAATAN UNTUK ADMIN (keputusan 38)
+-- Proyek A1 "Baca Injil Markus" (pr_a1) dan B1 (pr_b1) dari uji sebelumnya.
+-- =====================================================================
+select tests.masuk_sebagai('admin');
+select tests.periksa('Admin: laporan semua tim memuat proyek A1 dan B1',
+  exists (select 1 from public.laporan_proyek() where proyek_id = tests.id('pr_a1'))
+  and exists (select 1 from public.laporan_proyek() where proyek_id = tests.id('pr_b1')));
+select tests.periksa('Admin: satu baris per anggota aktif A1 untuk proyek A1',
+  (select count(*) from public.laporan_proyek('kelompok', tests.id('kel_a1')) where proyek_id = tests.id('pr_a1'))
+  = (select count(*) from public.anggota a
+     where a.kelompok_id = tests.id('kel_a1')
+       and (a.aktif or exists (select 1 from public.status_proyek s where s.proyek_id = tests.id('pr_a1') and s.anggota_id = a.id))));
+select tests.periksa('Admin: laporan satu tim (Tim A) tidak memuat proyek B1',
+  not exists (select 1 from public.laporan_proyek('tim', tests.id('tim_a')) where proyek_id = tests.id('pr_b1')));
+select tests.periksa('Admin: anggota tanpa status tampil sebagai belum dilaporkan; Rina tercatat Sedang',
+  exists (select 1 from public.laporan_proyek('kelompok', tests.id('kel_b1')) where not dilaporkan and status = 'belum')
+  and exists (select 1 from public.laporan_proyek('kelompok', tests.id('kel_a1'))
+              where proyek_id = tests.id('pr_a1') and anggota_nama = 'Rina' and status = 'sedang' and dilaporkan));
+select tests.harus_gagal('Cakupan tim tanpa id ditolak',
+  $q$ select * from public.laporan_proyek('tim', null) $q$);
+
+select tests.masuk_sebagai('ketua_a');
+select tests.harus_gagal('Ketua Tim A: tidak bisa membuka laporan proyek Admin',
+  $q$ select * from public.laporan_proyek('tim', tests.id('tim_a')) $q$);
+select tests.masuk_sebagai('budi');
+select tests.harus_gagal('Budi (pemimpin): tidak bisa membuka laporan proyek Admin',
+  $q$ select * from public.laporan_proyek('kelompok', tests.id('kel_a1')) $q$);
+select tests.keluar();
+select tests.periksa('Pembuatan laporan proyek tercatat di log',
+  exists (select 1 from public.log_aktivitas where tindakan = 'buat_laporan_proyek'));
+
+
+-- =====================================================================
 -- RINGKASAN
 -- =====================================================================
 select no, case when lulus then 'LULUS' else 'GAGAL' end as hasil, nama, info

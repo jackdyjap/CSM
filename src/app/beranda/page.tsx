@@ -26,6 +26,7 @@ export default async function HalamanBeranda() {
             <TautanTombol href="/admin">Tim &amp; kelompok</TautanTombol>
             <TautanTombol href="/admin/akun">Akun &amp; peran</TautanTombol>
             <TautanTombol href="/admin/laporan">Laporan demografi</TautanTombol>
+            <TautanTombol href="/admin/laporan-proyek">Laporan proyek ketaatan</TautanTombol>
           </div>
         </Kotak>
       ) : null}
