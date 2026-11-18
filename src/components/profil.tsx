@@ -1,4 +1,4 @@
-import { catatPersetujuan, simpanProfil } from "@/lib/aksi-profil";
+import { catatPersetujuan, hapusFoto, simpanProfil, unggahFoto } from "@/lib/aksi-profil";
 import { tampilHp } from "@/lib/identitas";
 import {
   hitungUsia,
@@ -102,7 +102,8 @@ export async function ProfilUbah({
 
       <Kotak judul="Foto">
         <UnggahFoto
-          anggotaId={profil.id}
+          unggah={unggahFoto.bind(null, profil.id)}
+          hapus={hapusFoto.bind(null, profil.id)}
           tautanFoto={foto}
           nama={profil.nama_lengkap}
           kamera={olehPemimpin ? "environment" : "user"}
@@ -151,7 +152,7 @@ export async function ProfilUbah({
   );
 }
 
-function PilihanEnum({
+export function PilihanEnum({
   label,
   name,
   daftar,

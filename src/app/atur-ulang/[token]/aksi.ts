@@ -23,5 +23,7 @@ export async function aturUlangSandi(token: string, _: HasilAksi, fd: FormData):
   if (galatUbah) {
     return { galat: "Kata sandi gagal diubah. Minta tautan baru kepada pemimpin kelompok." };
   }
+  // Kata sandi kini pilihan pengguna sendiri, bukan sementara dari Admin.
+  await admin.rpc("layanan_tandai_sandi", { p_akun: akunId, p_sementara: false });
   redirect("/masuk?pesan=sandi-diubah");
 }

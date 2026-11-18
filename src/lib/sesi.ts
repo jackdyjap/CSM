@@ -1,4 +1,5 @@
 import "server-only";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { buatClientServer } from "@/lib/supabase/server";
 
@@ -6,6 +7,10 @@ export type PeranSaya = {
   akun_id: string;
   nama: string;
   login: string | null;
+  /** Belum menyelesaikan Atur profil (login pertama, keputusan 27). */
+  perlu_atur_profil: boolean;
+  /** Kata sandi dibuat Admin dan belum diganti. */
+  sandi_sementara: boolean;
   admin: boolean;
   ketua_tim: { tim_id: string; nama: string }[];
   pemimpin: {
@@ -32,10 +37,18 @@ export async function ambilPeranSaya() {
   return { supabase, peran: (data as PeranSaya | null) ?? null };
 }
 
-/** Untuk halaman yang wajib login. Bila belum login, diarahkan ke /masuk. */
-export async function wajibMasuk() {
+/**
+ * Untuk halaman yang wajib login. Bila belum login, diarahkan ke /masuk.
+ * Pengguna yang belum menyelesaikan Atur profil (login pertama) diarahkan ke
+ * /profil, kecuali halaman yang memberi `bolehBelumAtur` (Atur profil sendiri
+ * dan check-in). Aksi formulir tidak diarahkan, supaya Atur profil bisa disimpan.
+ */
+export async function wajibMasuk(opsi: { bolehBelumAtur?: boolean } = {}) {
   const { supabase, peran } = await ambilPeranSaya();
   if (!peran) redirect("/masuk");
+  if (peran.perlu_atur_profil && !opsi.bolehBelumAtur && !(await headers()).get("next-action")) {
+    redirect("/profil");
+  }
   return { supabase, peran };
 }
 
