@@ -5,9 +5,10 @@ import { redirect } from "next/navigation";
 import { alamatSitus } from "@/lib/alamat";
 import { pesanGalat } from "@/lib/galat";
 import type { HasilAksi } from "@/lib/hasil";
-import { bacaIdentitas, PANJANG_SANDI_MINIMAL, PESAN_IDENTITAS_SALAH } from "@/lib/identitas";
+import { buatAkunLogin } from "@/lib/buat-akun";
+import { bacaDataLogin, PANJANG_SANDI_MINIMAL, tampilHp } from "@/lib/identitas";
+import { simpanLogin } from "@/lib/login-server";
 import { wajibAdmin } from "@/lib/sesi";
-import { buatClientAdmin } from "@/lib/supabase/admin";
 
 const teks = (fd: FormData, nama: string) => String(fd.get(nama) ?? "").trim();
 
@@ -41,34 +42,28 @@ export async function tambahKelompok(_: HasilAksi, fd: FormData): Promise<HasilA
 export async function buatAkun(_: HasilAksi, fd: FormData): Promise<HasilAksi> {
   await wajibAdmin();
   const nama = teks(fd, "nama");
-  const identitas = bacaIdentitas(teks(fd, "identitas"));
+  const login = bacaDataLogin(fd);
   const sandi = String(fd.get("sandi") ?? "");
 
   if (!nama) return { galat: "Nama belum diisi." };
-  if (!identitas) return { galat: PESAN_IDENTITAS_SALAH };
   if (sandi.length < PANJANG_SANDI_MINIMAL) {
     return { galat: `Kata sandi minimal ${PANJANG_SANDI_MINIMAL} karakter.` };
   }
 
-  const admin = buatClientAdmin();
-  const { error } = await admin.auth.admin.createUser({
-    email: identitas.emailLogin,
-    password: sandi,
-    email_confirm: true,
-    user_metadata: { nama, login: identitas.tampil },
-  });
+  const dibuat = await buatAkunLogin({ nama, login, sandi });
+  if ("galat" in dibuat) return { galat: dibuat.galat };
 
-  if (error) {
-    if (error.code === "email_exists" || /already/i.test(error.message)) {
-      return { galat: `${identitas.tampil} sudah terdaftar.` };
-    }
-    return { galat: "Akun gagal dibuat. Coba lagi." };
-  }
-
+  const caraMasuk = [dibuat.rapi.nama_pengguna, dibuat.rapi.email, tampilHp(dibuat.rapi.nomor_hp)].filter(Boolean).join(" / ");
   revalidatePath("/admin/akun");
   return {
-    sukses: `Akun ${nama} (${identitas.tampil}) dibuat. Sampaikan kata sandinya secara pribadi, lalu beri perannya di bawah.`,
+    sukses: `Akun ${nama} dibuat. Masuk dengan ${caraMasuk}. Sampaikan kata sandinya secara pribadi, lalu beri perannya di bawah.`,
   };
+}
+
+/** Admin mengubah nama pengguna, email, dan nomor HP sebuah akun (keputusan 25). */
+export async function ubahLoginAkun(akunId: string, _: HasilAksi, fd: FormData): Promise<HasilAksi> {
+  const { supabase } = await wajibAdmin();
+  return simpanLogin(supabase, akunId, bacaDataLogin(fd), ["/admin/akun"]);
 }
 
 export async function beriPeran(_: HasilAksi, fd: FormData): Promise<HasilAksi> {

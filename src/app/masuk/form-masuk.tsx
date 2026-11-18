@@ -13,12 +13,13 @@ export function FormMasuk({ lanjut }: { lanjut?: string }) {
       {lanjut ? <input type="hidden" name="lanjut" value={lanjut} /> : null}
       {hasil.galat ? <Pesan jenis="galat">{hasil.galat}</Pesan> : null}
       <Isian
-        label="Email atau nomor HP"
+        label="Nama pengguna, email, atau nomor HP"
         name="identitas"
         autoComplete="username"
-        inputMode="email"
+        autoCapitalize="none"
+        spellCheck={false}
         defaultValue={hasil.identitas}
-        placeholder="nama@gmail.com atau 081234567890"
+        placeholder="budi.santoso, nama@gmail.com, atau 0812…"
         required
       />
       <Isian label="Kata sandi" name="sandi" type="password" autoComplete="current-password" required />

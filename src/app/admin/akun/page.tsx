@@ -1,8 +1,9 @@
 import { FormAksi } from "@/components/form-aksi";
 import { Isian, Judul, Kotak, Lipatan, Pilihan, TautanTombol } from "@/components/ui";
-import { PANJANG_SANDI_MINIMAL } from "@/lib/identitas";
+import { IsianLogin } from "@/components/isian-login";
+import { PANJANG_SANDI_MINIMAL, tampilHp } from "@/lib/identitas";
 import { wajibAdmin } from "@/lib/sesi";
-import { beriPeran, buatAkun, buatTautanAturUlang, hapusPeran, ubahNamaAkun } from "../aksi";
+import { beriPeran, buatAkun, buatTautanAturUlang, hapusPeran, ubahLoginAkun, ubahNamaAkun } from "../aksi";
 
 const NAMA_PERAN = { admin: "Admin", ketua_tim: "Ketua Tim", pemimpin: "Pemimpin" } as const;
 
@@ -10,6 +11,9 @@ type BarisAkun = {
   id: string;
   nama_tampilan: string;
   login: string | null;
+  nama_pengguna: string | null;
+  email: string | null;
+  nomor_hp: string | null;
   anggota_id: string | null;
   penugasan_peran: {
     id: string;
@@ -28,7 +32,7 @@ export default async function HalamanAkun() {
     supabase
       .from("akun")
       .select(
-        "id, nama_tampilan, login, anggota_id, penugasan_peran(id, peran, jabatan, tim(nama), kelompok(nama))",
+        "id, nama_tampilan, login, nama_pengguna, email, nomor_hp, anggota_id, penugasan_peran(id, peran, jabatan, tim(nama), kelompok(nama))",
       )
       .order("nama_tampilan"),
     supabase.from("tim").select("id, nama").order("nama"),
@@ -52,12 +56,7 @@ export default async function HalamanAkun() {
         </p>
         <FormAksi aksi={buatAkun} tombol="Buat akun">
           <Isian label="Nama" name="nama" required />
-          <Isian
-            label="Email atau nomor HP"
-            name="identitas"
-            placeholder="nama@gmail.com atau 081234567890"
-            required
-          />
+          <IsianLogin />
           <Isian
             label="Kata sandi sementara"
             name="sandi"
@@ -143,6 +142,18 @@ export default async function HalamanAkun() {
                   jenisTombol="biasa"
                 />
               </div>
+              <Lipatan judul="Ubah cara masuk (nama pengguna, email, nomor HP)">
+                <FormAksi aksi={ubahLoginAkun.bind(null, a.id)} tombol="Simpan cara masuk" jenisTombol="biasa" tanpaReset>
+                  <IsianLogin
+                    awal={{ nama_pengguna: a.nama_pengguna, email: a.email, nomor_hp: tampilHp(a.nomor_hp) }}
+                    keterangan={
+                      a.anggota_id
+                        ? "Minimal satu. Nomor HP ikut tersimpan di profil anggotanya."
+                        : "Minimal satu. Masuk cukup dengan salah satunya."
+                    }
+                  />
+                </FormAksi>
+              </Lipatan>
               <Lipatan judul="Ubah nama akun">
                 <FormAksi aksi={ubahNamaAkun.bind(null, a.id)} tombol="Simpan nama" jenisTombol="biasa" tanpaReset>
                   <Isian label="Nama tampilan" name="nama" defaultValue={a.nama_tampilan} required />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { IsianLogin } from "@/components/isian-login";
 import { Isian, Pesan, Tombol } from "@/components/ui";
 import type { HasilAksi } from "@/lib/hasil";
 import { PANJANG_SANDI_MINIMAL } from "@/lib/identitas";
@@ -16,14 +17,7 @@ export function FormDaftar({ token, namaAwal }: { token: string; namaAwal: strin
     <form action={aksi}>
       {hasil.galat ? <Pesan jenis="galat">{hasil.galat}</Pesan> : null}
       <Isian label="Nama lengkap" name="nama" defaultValue={namaAwal} autoComplete="name" required />
-      <Isian
-        label="Email atau nomor HP"
-        name="identitas"
-        autoComplete="username"
-        placeholder="nama@gmail.com atau 081234567890"
-        keterangan="Dipakai setiap kali masuk ke aplikasi."
-        required
-      />
+      <IsianLogin keterangan="Cara masuk ke aplikasi: isi minimal satu. Nanti cukup masuk dengan salah satunya." />
       <Isian
         label="Buat kata sandi"
         name="sandi"

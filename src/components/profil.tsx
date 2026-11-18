@@ -1,4 +1,5 @@
 import { catatPersetujuan, simpanProfil } from "@/lib/aksi-profil";
+import { tampilHp } from "@/lib/identitas";
 import {
   hitungUsia,
   isianKosong,
@@ -133,10 +134,11 @@ export async function ProfilUbah({
           <PilihanEnum label="Pekerjaan" name="pekerjaan" daftar={PILIHAN_PEKERJAAN} nilai={profil.pekerjaan} />
           <Isian
             label="Nomor HP (opsional)"
+            keterangan="Bila orang ini punya akun, nomor ini juga dipakai untuk masuk ke aplikasi."
             name="no_hp"
             type="tel"
             inputMode="tel"
-            defaultValue={profil.no_hp ?? ""}
+            defaultValue={tampilHp(profil.no_hp)}
             placeholder="08xxxxxxxxxx"
           />
         </FormAksi>
@@ -188,7 +190,7 @@ export async function ProfilBaca({ supabase, profil }: { supabase: Supabase; pro
     ["Status pernikahan", profil.status_nikah ? PILIHAN_NIKAH[profil.status_nikah] : null],
     ["Pendidikan terakhir", profil.pendidikan ? PILIHAN_PENDIDIKAN[profil.pendidikan] : null],
     ["Pekerjaan", profil.pekerjaan ? PILIHAN_PEKERJAAN[profil.pekerjaan] : null],
-    ["Nomor HP", profil.no_hp],
+    ["Nomor HP", tampilHp(profil.no_hp) || null],
     ["Orang tua/wali", profil.wali_nama ? `${profil.wali_nama}${profil.wali_hubungan ? ` (${profil.wali_hubungan})` : ""}` : null],
   ];
 

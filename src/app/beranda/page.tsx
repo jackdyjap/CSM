@@ -78,11 +78,14 @@ export default async function HalamanBeranda() {
         </Kotak>
       ) : null}
 
-      <form action={keluar}>
-        <Tombol type="submit" jenis="biasa">
-          Keluar
-        </Tombol>
-      </form>
+      <div className="flex flex-wrap gap-2">
+        {peran.anggota ? null : <TautanTombol href="/profil">Akun saya (cara masuk)</TautanTombol>}
+        <form action={keluar}>
+          <Tombol type="submit" jenis="biasa">
+            Keluar
+          </Tombol>
+        </form>
+      </div>
     </main>
   );
 }
