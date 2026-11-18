@@ -48,3 +48,31 @@ npm run dev
 ```
 
 4. Buka http://localhost:3000.
+
+## Memulihkan akses Admin
+
+Pemilik proyek Supabase (yang bisa masuk ke dasbor supabase.com) selalu bisa memulihkan akses, karena aplikasi tidak bisa menghapus akun dasbor itu. Tombol hapus di aplikasi hanya menghapus isi data; tabel, aturan akses, dan fungsi tetap ada.
+
+Bila tidak ada lagi akun dengan peran Admin di aplikasi:
+
+1. **Buat akun** (lewati bila akunnya sudah ada): dasbor Supabase → **Authentication → Users → Add user → Create new user**. Isi email dan kata sandi, centang **Auto Confirm User**.
+2. **Jadikan Admin**: di **SQL Editor** jalankan perintah ini. Ganti **hanya alamat email**; kata `'admin'` adalah nama peran dan harus persis seperti ini.
+
+```sql
+insert into public.penugasan_peran (akun_id, peran)
+select id, 'admin' from public.akun where email = 'email-anda@gmail.com'
+on conflict do nothing;
+```
+
+3. **Periksa**: perintah ini harus menampilkan satu baris dengan `peran = admin`. Bila kosong, akun dengan email itu belum ada (ulangi langkah 1).
+
+```sql
+select ak.nama_tampilan, ak.email, p.peran
+from public.akun ak
+join public.penugasan_peran p on p.akun_id = ak.id
+where ak.email = 'email-anda@gmail.com';
+```
+
+4. Masuk ke aplikasi dengan akun itu. Saat login pertama, akun dibawa ke **Atur profil**; tekan **Selesai, ke Beranda** dan menu Admin muncul.
+
+Saran: selalu punya minimal **2 akun Admin** di aplikasi, dan lindungi login dasbor Supabase dengan kata sandi kuat serta verifikasi dua langkah (2FA).
