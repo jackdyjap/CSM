@@ -1831,6 +1831,69 @@ select tests.keluar();
 
 
 -- =====================================================================
+-- UJI ATUR ULANG KATA SANDI OLEH KETUA TIM (keputusan 34)
+-- Tim A: kelompok A1 (Budi pemimpin, Sari wakil, anggota Andi) dan T1 (Budi).
+-- Tim B: kelompok B1 (Dewi pemimpin, anggota Bima). Ketua A / Ketua B.
+-- =====================================================================
+select tests.masuk_sebagai('ketua_a');
+select tests.harus_berhasil('Ketua A: atur ulang kata sandi anggota timnya (Andi)',
+  $q$ select * from public.buat_tautan_atur_ulang(tests.id('u_andi')) $q$);
+select tests.harus_berhasil('Ketua A: atur ulang kata sandi Pemimpin kelompok di timnya (Budi)',
+  $q$ select * from public.buat_tautan_atur_ulang(tests.id('budi')) $q$);
+select tests.harus_berhasil('Ketua A: atur ulang kata sandi Wakil kelompok di timnya (Sari)',
+  $q$ select * from public.buat_tautan_atur_ulang(tests.id('sari')) $q$);
+select tests.harus_gagal('Ketua A: tidak bisa untuk anggota tim lain (Bima)',
+  $q$ select * from public.buat_tautan_atur_ulang(tests.id('u_bima')) $q$);
+select tests.harus_gagal('Ketua A: tidak bisa untuk pemimpin tim lain (Dewi)',
+  $q$ select * from public.buat_tautan_atur_ulang(tests.id('dewi')) $q$);
+select tests.harus_gagal('Ketua A: tidak bisa untuk Admin',
+  $q$ select * from public.buat_tautan_atur_ulang(tests.id('admin')) $q$);
+select tests.harus_gagal('Ketua A: tidak bisa untuk Ketua Tim lain',
+  $q$ select * from public.buat_tautan_atur_ulang(tests.id('ketua_b')) $q$);
+select tests.harus_gagal('Ketua A: tidak bisa untuk dirinya sendiri',
+  $q$ select * from public.buat_tautan_atur_ulang(tests.id('ketua_a')) $q$);
+select tests.periksa('Ketua A: daftar A1 berisi Budi (Pemimpin), Sari (Wakil), dan Andi (Anggota)',
+  (select count(*) from public.akun_bisa_atur_ulang(tests.id('kel_a1'))
+    where (akun_id = tests.id('budi') and keterangan = 'Pemimpin')
+       or (akun_id = tests.id('sari') and keterangan = 'Wakil')
+       or (akun_id = tests.id('u_andi') and keterangan = 'Anggota')) = 3);
+select tests.periksa('Ketua A: daftar B1 kosong',
+  not exists (select 1 from public.akun_bisa_atur_ulang(tests.id('kel_b1'))));
+
+-- Pengurus yang juga memegang peran di tim lain: hanya Admin.
+select tests.keluar();
+insert into public.penugasan_peran (akun_id, peran, kelompok_id, jabatan)
+values (tests.id('budi'), 'pemimpin', tests.id('kel_b1'), 'wakil');
+select tests.masuk_sebagai('ketua_a');
+select tests.harus_gagal('Ketua A: tidak bisa untuk Budi bila Budi juga pengurus di tim B',
+  $q$ select * from public.buat_tautan_atur_ulang(tests.id('budi')) $q$);
+select tests.keluar();
+delete from public.penugasan_peran where akun_id = tests.id('budi') and kelompok_id = tests.id('kel_b1');
+
+select tests.masuk_sebagai('ketua_b');
+select tests.harus_gagal('Ketua B: tidak bisa untuk anggota Tim A (Andi)',
+  $q$ select * from public.buat_tautan_atur_ulang(tests.id('u_andi')) $q$);
+select tests.harus_berhasil('Ketua B: atur ulang kata sandi anggota timnya (Bima)',
+  $q$ select * from public.buat_tautan_atur_ulang(tests.id('u_bima')) $q$);
+select tests.harus_gagal('Ketua B: tidak bisa untuk Dewi, karena Dewi juga Ketua Tim (diberi di uji Admin)',
+  $q$ select * from public.buat_tautan_atur_ulang(tests.id('dewi')) $q$);
+
+select tests.masuk_sebagai('budi');
+select tests.periksa('Budi (pemimpin A1): daftar A1 berisi Andi tetapi bukan Sari',
+  exists (select 1 from public.akun_bisa_atur_ulang(tests.id('kel_a1')) where akun_id = tests.id('u_andi'))
+  and not exists (select 1 from public.akun_bisa_atur_ulang(tests.id('kel_a1')) where akun_id = tests.id('sari')));
+select tests.harus_gagal('Budi: tetap tidak bisa untuk Wakilnya (Sari)',
+  $q$ select * from public.buat_tautan_atur_ulang(tests.id('sari')) $q$);
+
+select tests.masuk_sebagai('admin');
+select tests.harus_berhasil('Admin: atur ulang kata sandi Ketua Tim A',
+  $q$ select * from public.buat_tautan_atur_ulang(tests.id('ketua_a')) $q$);
+select tests.harus_gagal('Admin: tidak lewat tautan untuk dirinya sendiri (ganti di Atur profil)',
+  $q$ select * from public.buat_tautan_atur_ulang(tests.id('admin')) $q$);
+select tests.keluar();
+
+
+-- =====================================================================
 -- RINGKASAN
 -- =====================================================================
 select no, case when lulus then 'LULUS' else 'GAGAL' end as hasil, nama, info

@@ -23,6 +23,7 @@ Isi folder ini:
 | `migrations/…1700_masukan.sql` | Masukan: keluhan, permasalahan, usulan (keputusan 28) |
 | `migrations/…1800_baptis_status_jemaat.sql` | Baptis, status jemaat, data jemaat oleh Ketua Tim (keputusan 29–30) |
 | `migrations/…1900_laporan_generasi.sql` | Laporan demografi: dimensi Generasi (keputusan 31) |
+| `migrations/…2000_reset_ketua_tim.sql` | Atur ulang kata sandi oleh Ketua Tim (keputusan 34) |
 | `data/wilayah_01..04.sql` | Data wilayah Indonesia (Kepmendagri 2025) |
 | `tests/uji_akses.sql` | 328 uji akses untuk semua peran (data uji dibatalkan otomatis di akhir) |
 | `tests/lokal/` | Alat untuk menjalankan uji di komputer tanpa Supabase |
@@ -34,7 +35,7 @@ Isi folder ini:
 3. Fase 2: jalankan `migrations/…0600_login_undangan.sql` dengan cara yang sama.
 4. Fase 3: jalankan `data/wilayah_01.sql` sampai `wilayah_04.sql` **berurutan**, satu per satu (masing-masing ±1,3 MB). Tidak ada migrasi baru di Fase 3.
 5. Fase 4: jalankan `migrations/…0700_mode_pertemuan.sql`.
-6. Jalankan `migrations/…0800_admin_kelola_semua.sql` (keputusan 12), lalu `…0900_koreksi_data.sql` (keputusan 13–15), lalu `…1000_bukti_persembahan.sql` (keputusan 16), lalu `…1100_tindak_lanjut.sql` (Fase 5), lalu `…1200_admin_tulis_catatan.sql` (keputusan 18), lalu `…1300_ringkasan_tim.sql` (Fase 6), lalu `…1400_kartu_qr.sql` (Fase 7), lalu `…1500_login_fleksibel.sql` (keputusan 25), lalu `…1600_atur_profil.sql` (keputusan 27), lalu `…1700_masukan.sql` (keputusan 28), lalu `…1800_baptis_status_jemaat.sql` (keputusan 29–30), lalu `…1900_laporan_generasi.sql` (keputusan 31).
+6. Jalankan `migrations/…0800_admin_kelola_semua.sql` (keputusan 12), lalu `…0900_koreksi_data.sql` (keputusan 13–15), lalu `…1000_bukti_persembahan.sql` (keputusan 16), lalu `…1100_tindak_lanjut.sql` (Fase 5), lalu `…1200_admin_tulis_catatan.sql` (keputusan 18), lalu `…1300_ringkasan_tim.sql` (Fase 6), lalu `…1400_kartu_qr.sql` (Fase 7), lalu `…1500_login_fleksibel.sql` (keputusan 25), lalu `…1600_atur_profil.sql` (keputusan 27), lalu `…1700_masukan.sql` (keputusan 28), lalu `…1800_baptis_status_jemaat.sql` (keputusan 29–30), lalu `…1900_laporan_generasi.sql` (keputusan 31), lalu `…2000_reset_ketua_tim.sql` (keputusan 34).
 7. Jangan jalankan file di `tests/lokal/`. Isinya hanya tiruan Supabase untuk pengujian.
 
 ## Menjalankan uji di komputer (PostgreSQL 16)

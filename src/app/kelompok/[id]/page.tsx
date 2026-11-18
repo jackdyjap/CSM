@@ -32,7 +32,7 @@ export default async function HalamanKelompok({ params, searchParams }: PageProp
   const kelompok = await aksesKelompok(supabase, peran, id);
   if (!kelompok) redirect("/beranda");
 
-  const [{ data: anggota }, { data: status }, { data: dataUndangan }] = await Promise.all([
+  const [{ data: anggota }, { data: status }, { data: dataUndangan }, { data: dataReset }] = await Promise.all([
     supabase
       .from("anggota")
       .select(`id, aktif, persetujuan_pada, ${KOLOM_KELENGKAPAN}`)
@@ -46,7 +46,13 @@ export default async function HalamanKelompok({ params, searchParams }: PageProp
       .is("dipakai_pada", null)
       .gt("kedaluwarsa_pada", new Date().toISOString())
       .order("dibuat_pada", { ascending: false }),
+    // Ketua Tim: akun di kelompok ini yang boleh diatur ulang kata sandinya (keputusan 34).
+    supabase.rpc("akun_bisa_atur_ulang", { p_kelompok: id }),
   ]);
+  const daftarReset = (dataReset ?? []) as { akun_id: string; nama: string; keterangan: string; login: string | null }[];
+  const bolehReset = new Set(daftarReset.map((r) => r.akun_id));
+  // Kotak terpisah hanya untuk Ketua Tim (pemimpin/Admin memakai tombol di daftar anggota / Akun & peran).
+  const bisaReset = kelompok.bolehUbah ? [] : daftarReset;
 
   const undangan = (dataUndangan ?? []) as unknown as BarisUndangan[];
   const { data: dataTindakLanjut } = await supabase.rpc("tindak_lanjut", { p_kelompok: id, p_batas_absen: BATAS_ABSEN });
@@ -98,9 +104,34 @@ export default async function HalamanKelompok({ params, searchParams }: PageProp
         </Kotak>
       ) : (
         <p className="mb-4 rounded-lg border border-black/10 px-3 py-2 text-sm opacity-80 dark:border-white/10">
-          Tampilan baca saja (Ketua Tim). Perubahan dilakukan oleh pemimpin kelompok atau Admin.
+          Tampilan baca saja (Ketua Tim). Perubahan dilakukan oleh pemimpin kelompok atau Admin, kecuali Data
+          jemaat di profil anggota dan atur ulang kata sandi.
         </p>
       )}
+
+      {bisaReset.length > 0 ? (
+        <Kotak judul="Atur ulang kata sandi">
+          <p className="mb-3 text-sm opacity-70">
+            Untuk anggota atau pengurus kelompok ini yang lupa kata sandi. Buat tautan, lalu kirim lewat WhatsApp;
+            tautan berlaku 24 jam dan hanya bisa dipakai sekali.
+          </p>
+          <ul className="divide-y divide-black/10 dark:divide-white/10">
+            {bisaReset.map((r) => (
+              <li key={r.akun_id} className="py-3">
+                <p className="font-semibold">
+                  {r.nama} <span className="text-sm font-normal opacity-70">· {r.keterangan}</span>
+                </p>
+                <p className="mb-2 text-sm opacity-70">{r.login ?? "-"}</p>
+                <FormAksi
+                  aksi={buatTautanAturUlang.bind(null, r.akun_id, r.nama)}
+                  tombol="Tautan atur ulang kata sandi"
+                  jenisTombol="biasa"
+                />
+              </li>
+            ))}
+          </ul>
+        </Kotak>
+      ) : null}
 
       <Kotak judul={`Anggota (${semua.length})`}>
         <div className="mb-3 flex flex-wrap gap-2">
@@ -147,11 +178,15 @@ export default async function HalamanKelompok({ params, searchParams }: PageProp
                   {!kelompok.bolehUbah ? null : s?.punya_akun && s.akun_id ? (
                     <>
                       <p className="mb-2 text-sm opacity-70">Punya akun: {s.login ?? "-"}</p>
-                      <FormAksi
-                        aksi={buatTautanAturUlang.bind(null, s.akun_id, a.nama_lengkap)}
-                        tombol="Tautan atur ulang kata sandi"
-                        jenisTombol="biasa"
-                      />
+                      {bolehReset.has(s.akun_id) ? (
+                        <FormAksi
+                          aksi={buatTautanAturUlang.bind(null, s.akun_id, a.nama_lengkap)}
+                          tombol="Tautan atur ulang kata sandi"
+                          jenisTombol="biasa"
+                        />
+                      ) : (
+                        <p className="text-xs opacity-70">Kata sandi pengurus diatur ulang oleh Ketua Tim atau Admin.</p>
+                      )}
                     </>
                   ) : (
                     <>
