@@ -204,3 +204,4 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - Akun anggota langsung mendapat profil anggota dengan nama akunnya. Data pribadinya tetap baru bisa diisi setelah persetujuan data.
     - Hak diperiksa database dua kali (`izin_buat_akun` sebelum akun dibuat, `pasang_akun_baru` sesudahnya). Kode izin berlaku 15 menit, sekali pakai, dan hanya untuk akun yang dibuat dengannya. Bila pemasangan gagal, akun yang baru dibuat dibatalkan. Tercatat di log (`buat_akun`) beserta pembuatnya.
     - Tautan undangan tetap bisa dipakai seperti sebelumnya.
+43. **Laporan demografi: wilayah cukup sampai provinsi** (mengubah daftar dimensi di keputusan 24). Pilihan Kota/Kabupaten, Kecamatan, dan Kelurahan/Desa dihapus dari laporan dan ekspor Excel; tautan lama ke pilihan itu menampilkan laporan Gender. **Isian profil tidak berubah**: wilayah tetap diisi sampai kelurahan dan tetap menjadi syarat profil lengkap (keputusan 8). Database tidak diubah.
