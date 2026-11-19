@@ -19,10 +19,8 @@ export const DIMENSI = {
   pekerjaan: "Pekerjaan",
   baptis: "Baptis",
   status_jemaat: "Status jemaat",
+  // Wilayah cukup sampai provinsi (keputusan 43).
   provinsi: "Provinsi",
-  kota: "Kota/Kabupaten",
-  kecamatan: "Kecamatan",
-  kelurahan: "Kelurahan/Desa",
 } as const;
 export type Dimensi = keyof typeof DIMENSI;
 
