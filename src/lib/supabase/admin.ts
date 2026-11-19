@@ -5,7 +5,7 @@ import { supabaseUrl } from "@/lib/env";
 /**
  * Sambungan ke Supabase dengan KUNCI RAHASIA (service_role).
  * Melewati aturan akses, jadi HANYA dipakai di server untuk:
- *   - membuat akun login baru (undangan, Admin),
+ *   - membuat dan membatalkan akun login baru (undangan, pengurus),
  *   - memakai tautan undangan / tautan atur ulang kata sandi.
  * Jangan pernah dipakai untuk membaca data atas nama pengguna.
  */

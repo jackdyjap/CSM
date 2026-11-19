@@ -2174,6 +2174,156 @@ select tests.periksa('Penghapusan berkas tercatat di log',
 
 
 -- =====================================================================
+-- UJI 26 · MEMBUAT AKUN OLEH PENGURUS & MENGHAPUS AKUN (keputusan 41, 42)
+-- =====================================================================
+select tests.keluar();
+insert into tests.ids values
+  ('baru_budi',  '66666666-0000-0000-0000-000000000001'),
+  ('baru_ketua', '66666666-0000-0000-0000-000000000002'),
+  ('baru_liar',  '66666666-0000-0000-0000-000000000003'),
+  ('baru_admin', '66666666-0000-0000-0000-000000000004');
+
+-- Pemimpin/Wakil: hanya anggota kelompoknya sendiri.
+select tests.masuk_sebagai('budi');
+select tests.harus_berhasil('Buat akun: Budi boleh membuat akun anggota di kelompoknya',
+  $q$ select tests.simpan('izin_budi', public.izin_buat_akun('anggota', tests.id('kel_a1'))::text) $q$);
+select tests.harus_gagal('Buat akun: Budi tidak bisa membuat akun anggota di kelompok lain',
+  $q$ select public.izin_buat_akun('anggota', tests.id('kel_b1')) $q$);
+select tests.harus_gagal('Buat akun: Budi tidak bisa membuat akun Wakil',
+  $q$ select public.izin_buat_akun('wakil', tests.id('kel_a1')) $q$);
+select tests.harus_gagal('Buat akun: Budi tidak bisa membuat akun Ketua Tim',
+  $q$ select public.izin_buat_akun('ketua_tim', null, tests.id('tim_a')) $q$);
+select tests.harus_gagal('Buat akun: Budi tidak bisa membuat akun tanpa tujuan',
+  $q$ select public.izin_buat_akun('tanpa') $q$);
+select tests.harus_gagal('Buat akun: Budi tidak bisa memanggil pengecek hak dengan tujuan aneh',
+  $q$ select public.izin_buat_akun('raja', tests.id('kel_a1')) $q$);
+
+-- Anggota biasa: tidak boleh sama sekali.
+select tests.masuk_sebagai('u_andi');
+select tests.harus_gagal('Buat akun: anggota biasa tidak bisa membuat akun',
+  $q$ select public.izin_buat_akun('anggota', tests.id('kel_a1')) $q$);
+select tests.masuk_sebagai_tamu();
+select tests.harus_gagal('Buat akun: tamu tidak bisa membuat akun',
+  $q$ select public.izin_buat_akun('anggota', tests.id('kel_a1')) $q$);
+
+-- Ketua Tim: anggota/Pemimpin/Wakil di timnya.
+select tests.masuk_sebagai('ketua_a');
+select tests.harus_berhasil('Buat akun: Ketua Tim A boleh membuat akun anggota di kelompok timnya',
+  $q$ select public.izin_buat_akun('anggota', tests.id('kel_a1')) $q$);
+select tests.harus_berhasil('Buat akun: Ketua Tim A boleh membuat akun Pemimpin di kelompok timnya',
+  $q$ select tests.simpan('izin_ketua', public.izin_buat_akun('pemimpin', tests.id('kel_a1'))::text) $q$);
+select tests.harus_berhasil('Buat akun: Ketua Tim A boleh membuat akun Wakil di kelompok timnya',
+  $q$ select public.izin_buat_akun('wakil', tests.id('kel_a1')) $q$);
+select tests.harus_gagal('Buat akun: Ketua Tim A tidak bisa membuat akun anggota di tim B',
+  $q$ select public.izin_buat_akun('anggota', tests.id('kel_b1')) $q$);
+select tests.harus_gagal('Buat akun: Ketua Tim A tidak bisa membuat akun Pemimpin di tim B',
+  $q$ select public.izin_buat_akun('pemimpin', tests.id('kel_b1')) $q$);
+select tests.harus_gagal('Buat akun: Ketua Tim A tidak bisa membuat akun Ketua Tim',
+  $q$ select public.izin_buat_akun('ketua_tim', null, tests.id('tim_a')) $q$);
+select tests.harus_gagal('Buat akun: Ketua Tim A tidak bisa membuat akun Admin',
+  $q$ select public.izin_buat_akun('admin') $q$);
+
+-- Admin: semuanya.
+select tests.masuk_sebagai('admin');
+select tests.harus_berhasil('Buat akun: Admin boleh membuat akun Ketua Tim untuk tim mana pun',
+  $q$ select public.izin_buat_akun('ketua_tim', null, tests.id('tim_b')) $q$);
+select tests.harus_berhasil('Buat akun: Admin boleh membuat akun Pemimpin di kelompok mana pun',
+  $q$ select public.izin_buat_akun('pemimpin', tests.id('kel_b1')) $q$);
+select tests.harus_berhasil('Buat akun: Admin boleh membuat akun Admin',
+  $q$ select tests.simpan('izin_admin', public.izin_buat_akun('admin')::text) $q$);
+select tests.harus_berhasil('Buat akun: Admin boleh membuat akun tanpa tujuan',
+  $q$ select public.izin_buat_akun('tanpa') $q$);
+select tests.harus_gagal('Buat akun: Admin tetap wajib memilih kelompok untuk akun anggota',
+  $q$ select public.izin_buat_akun('anggota', null) $q$);
+
+-- Server membuat akun login; kode izin tersimpan di data akun.
+select tests.keluar();
+insert into auth.users (id, email, raw_user_meta_data) values
+  (tests.id('baru_budi'),  'baru_budi@contoh.test',
+   jsonb_build_object('nama', 'Anggota Baru', 'izin', (select teks from tests.nilai where nama = 'izin_budi'))),
+  (tests.id('baru_ketua'), 'baru_ketua@contoh.test',
+   jsonb_build_object('nama', 'Pemimpin Baru', 'izin', (select teks from tests.nilai where nama = 'izin_ketua'))),
+  (tests.id('baru_liar'),  'baru_liar@contoh.test', jsonb_build_object('nama', 'Akun Lain')),
+  (tests.id('baru_admin'), 'baru_admin@contoh.test',
+   jsonb_build_object('nama', 'Admin Baru', 'izin', (select teks from tests.nilai where nama = 'izin_admin')));
+
+select tests.masuk_sebagai('ketua_a');
+select tests.harus_gagal('Pasang akun: Ketua Tim tidak bisa memakai izin milik Budi',
+  $q$ select public.pasang_akun_baru((select teks from tests.nilai where nama = 'izin_budi')::uuid, tests.id('baru_budi')) $q$);
+
+select tests.masuk_sebagai('budi');
+select tests.harus_gagal('Pasang akun: izin tidak bisa dipasang ke akun yang tidak dibuat dengannya',
+  $q$ select public.pasang_akun_baru((select teks from tests.nilai where nama = 'izin_budi')::uuid, tests.id('baru_liar')) $q$);
+select tests.harus_berhasil('Pasang akun: Budi memasang akun baru sebagai anggota kelompoknya',
+  $q$ select tests.simpan('anggota_baru', public.pasang_akun_baru((select teks from tests.nilai where nama = 'izin_budi')::uuid, tests.id('baru_budi'))::text) $q$);
+select tests.harus_gagal('Pasang akun: izin tidak bisa dipakai dua kali',
+  $q$ select public.pasang_akun_baru((select teks from tests.nilai where nama = 'izin_budi')::uuid, tests.id('baru_budi')) $q$);
+select tests.keluar();
+select tests.periksa('Pasang akun: profil anggota dibuat di Kelompok A1 dan tersambung ke akun',
+  exists (select 1 from public.akun ak join public.anggota a on a.id = ak.anggota_id
+          where ak.id = tests.id('baru_budi') and a.kelompok_id = tests.id('kel_a1')
+            and a.nama_lengkap = 'Anggota Baru'
+            and a.id::text = (select teks from tests.nilai where nama = 'anggota_baru')));
+select tests.periksa('Pasang akun: pembuatan akun tercatat di log beserta pembuatnya',
+  exists (select 1 from public.log_aktivitas where tindakan = 'buat_akun'
+          and akun_id = tests.id('budi') and detail ->> 'akun_id' = tests.id('baru_budi')::text));
+
+select tests.masuk_sebagai('ketua_a');
+select tests.harus_berhasil('Pasang akun: Ketua Tim memasang akun baru sebagai Pemimpin Kelompok A1',
+  $q$ select public.pasang_akun_baru((select teks from tests.nilai where nama = 'izin_ketua')::uuid, tests.id('baru_ketua')) $q$);
+select tests.keluar();
+select tests.periksa('Pasang akun: akun baru menjadi Pemimpin Kelompok A1',
+  exists (select 1 from public.penugasan_peran where akun_id = tests.id('baru_ketua')
+          and peran = 'pemimpin' and jabatan = 'pemimpin' and kelompok_id = tests.id('kel_a1')));
+
+-- Izin kedaluwarsa (lebih dari 15 menit).
+update internal.izin_buat_akun set dibuat_pada = now() - interval '20 minutes'
+ where id = (select teks from tests.nilai where nama = 'izin_admin')::uuid;
+select tests.masuk_sebagai('admin');
+select tests.harus_gagal('Pasang akun: izin yang sudah lewat 15 menit ditolak',
+  $q$ select public.pasang_akun_baru((select teks from tests.nilai where nama = 'izin_admin')::uuid, tests.id('baru_admin')) $q$);
+
+-- Menghapus akun.
+select tests.masuk_sebagai('budi');
+select tests.harus_gagal('Hapus akun: Pemimpin tidak bisa menghapus akun',
+  $q$ select public.hapus_akun(tests.id('u_cici'), 'U_Cici') $q$);
+select tests.masuk_sebagai('ketua_a');
+select tests.harus_gagal('Hapus akun: Ketua Tim tidak bisa menghapus akun',
+  $q$ select public.hapus_akun(tests.id('u_cici'), 'U_Cici') $q$);
+select tests.masuk_sebagai('admin');
+select tests.harus_gagal('Hapus akun: Admin tidak bisa menghapus akunnya sendiri',
+  $q$ select public.hapus_akun(tests.id('admin'), 'Admin') $q$);
+select tests.harus_gagal('Hapus akun: nama yang diketik salah ditolak',
+  $q$ select public.hapus_akun(tests.id('u_cici'), 'Cici salah') $q$);
+select tests.harus_berhasil('Hapus akun: Admin menghapus akun Cici (profil tetap)',
+  $q$ select public.hapus_akun(tests.id('u_cici'), (select nama_tampilan from public.akun where id = tests.id('u_cici'))) $q$);
+select tests.harus_berhasil('Hapus akun: Admin menghapus akun anggota baru beserta profilnya',
+  $q$ select public.hapus_akun(tests.id('baru_budi'), 'Anggota Baru', true) $q$);
+select tests.harus_berhasil('Hapus akun: Admin menghapus akun Pemimpin baru',
+  $q$ select public.hapus_akun(tests.id('baru_ketua'), 'Pemimpin Baru', true) $q$);
+select tests.keluar();
+select tests.periksa('Hapus akun: akun login dan baris akun Cici sudah hilang',
+  not exists (select 1 from auth.users where id = tests.id('u_cici'))
+  and not exists (select 1 from public.akun where id = tests.id('u_cici')));
+select tests.periksa('Hapus akun: profil anggota Cici tetap ada (tanpa akun)',
+  exists (select 1 from public.anggota where id = tests.id('cici')));
+select tests.periksa('Hapus akun: profil anggota baru ikut terhapus bila dipilih',
+  not exists (select 1 from public.anggota where id::text = (select teks from tests.nilai where nama = 'anggota_baru')));
+select tests.periksa('Hapus akun: peran Pemimpin akun yang dihapus ikut hilang',
+  not exists (select 1 from public.penugasan_peran where akun_id = tests.id('baru_ketua')));
+select tests.masuk_sebagai('budi');
+select tests.harus_berhasil('Penjaga persetujuan: Budi mencoba mengosongkan pencatat persetujuan Ani',
+  $q$ update public.anggota set persetujuan_dicatat_akun = null where id = tests.id('andi') $q$);
+select tests.keluar();
+select tests.periksa('Penjaga persetujuan: pencatat yang akunnya masih ada tidak bisa dikosongkan',
+  (select persetujuan_dicatat_akun is not null from public.anggota where id = tests.id('ani')));
+select tests.periksa('Hapus akun: pencatat persetujuan Cici dikosongkan karena akunnya dihapus',
+  (select persetujuan_dicatat_akun is null and persetujuan_pada is not null from public.anggota where id = tests.id('cici')));
+select tests.periksa('Hapus akun: tercatat di log',
+  (select count(*) from public.log_aktivitas where tindakan = 'hapus_akun' and akun_id = tests.id('admin')) = 3);
+
+
+-- =====================================================================
 -- RINGKASAN
 -- =====================================================================
 select no, case when lulus then 'LULUS' else 'GAGAL' end as hasil, nama, info
