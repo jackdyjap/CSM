@@ -188,3 +188,19 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - Alamat itu hanya menerima permintaan dengan kunci rahasia **`CRON_SECRET`** (pengaturan Vercel). Tanpa kunci → ditolak.
     - **Pengaman**: database hanya memberikan berkas yang sudah tidak dipakai data mana pun; berkas di folder yang tidak dikenal tidak pernah dihapus. Berkas yang gagal dihapus tetap di antrean dan dicoba lagi.
     - Halaman Admin → Tim & kelompok menampilkan jumlah berkas di antrean dan tombol **Hapus sekarang**. Tercatat di log.
+
+## Diputuskan 19 November 2026
+
+41. **Admin bisa menghapus akun** (Akun & peran → *Hapus akun*; loket `hapus_akun`, migrasi `…2600`).
+    - Hanya Admin, setelah **mengetik nama akun persis**. Admin tidak bisa menghapus akunnya sendiri.
+    - Akun login, semua perannya, profil staf, dan tautan atur ulangnya ikut terhapus; orangnya tidak bisa masuk lagi.
+    - Admin **memilih** lewat kotak centang apakah **profil anggotanya ikut dihapus** (beserta riwayat hadir, proyek, dan catatan). Bila tidak dicentang, profilnya tetap ada sebagai **anggota tanpa akun**.
+    - Tercatat di log (`hapus_akun`). "Siapa yang mencatat persetujuan data" di profil anggota dikosongkan bila akun pencatatnya dihapus (tanggal persetujuannya tetap).
+42. **Pengurus bisa membuat akun baru langsung dengan tujuannya** (mengubah keputusan 8 dan bagian 2 spesifikasi, yang sebelumnya hanya mengizinkan undangan atau Admin; migrasi `…2600`).
+    - **Pemimpin/Wakil**: akun anggota untuk **kelompoknya sendiri**.
+    - **Ketua Tim**: akun **anggota, Pemimpin, atau Wakil** untuk kelompok di **timnya**.
+    - **Admin**: semua di atas untuk kelompok mana pun, **Ketua Tim** untuk tim mana pun, **Admin**, atau **tanpa tujuan dulu**.
+    - Tombol **"+ Buat akun baru"** di halaman kelompok; formulir Admin di Akun & peran. Isiannya: nama, cara masuk (minimal satu), dan **kata sandi sementara** yang wajib diganti saat login pertama (keputusan 27).
+    - Akun anggota langsung mendapat profil anggota dengan nama akunnya. Data pribadinya tetap baru bisa diisi setelah persetujuan data.
+    - Hak diperiksa database dua kali (`izin_buat_akun` sebelum akun dibuat, `pasang_akun_baru` sesudahnya). Kode izin berlaku 15 menit, sekali pakai, dan hanya untuk akun yang dibuat dengannya. Bila pemasangan gagal, akun yang baru dibuat dibatalkan. Tercatat di log (`buat_akun`) beserta pembuatnya.
+    - Tautan undangan tetap bisa dipakai seperti sebelumnya.

@@ -143,6 +143,7 @@ export default async function HalamanKelompok({ params, searchParams }: PageProp
               <TautanTombol href={`/kelompok/${id}/kartu`}>Cetak kartu QR</TautanTombol>
             </>
           ) : null}
+          <TautanTombol href={`/kelompok/${id}/akun-baru`}>+ Buat akun baru</TautanTombol>
           <TautanTombol href={`/kelompok/${id}/masukkan-akun`}>+ Masukkan akun yang sudah ada</TautanTombol>
           {jumlahBelumLengkap > 0 || hanyaBelumLengkap ? (
             <TautanTombol href={hanyaBelumLengkap ? `/kelompok/${id}` : `/kelompok/${id}?belum=1`}>

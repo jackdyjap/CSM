@@ -1,9 +1,10 @@
 import { FormAksi } from "@/components/form-aksi";
 import { Isian, Judul, Kotak, Lipatan, Pilihan, TautanTombol } from "@/components/ui";
+import { FormBuatAkun } from "@/components/form-buat-akun";
 import { IsianLogin } from "@/components/isian-login";
-import { PANJANG_SANDI_MINIMAL, tampilHp } from "@/lib/identitas";
+import { tampilHp } from "@/lib/identitas";
 import { wajibAdmin } from "@/lib/sesi";
-import { beriPeran, buatAkun, buatTautanAturUlang, hapusPeran, ubahLoginAkun, ubahNamaAkun } from "../aksi";
+import { beriPeran, buatTautanAturUlang, hapusAkun, hapusPeran, ubahLoginAkun, ubahNamaAkun } from "../aksi";
 
 const NAMA_PERAN = { admin: "Admin", ketua_tim: "Ketua Tim", pemimpin: "Pemimpin" } as const;
 
@@ -26,7 +27,8 @@ type BarisAkun = {
 type BarisKelompok = { id: string; nama: string; tim: { nama: string } | null };
 
 export default async function HalamanAkun() {
-  const { supabase } = await wajibAdmin();
+  const { supabase, peran } = await wajibAdmin();
+  const saya = peran.akun_id;
 
   const [{ data: dataAkun }, { data: tim }, { data: dataKelompok }] = await Promise.all([
     supabase
@@ -50,23 +52,16 @@ export default async function HalamanAkun() {
         <TautanTombol href="/admin">Tim &amp; kelompok</TautanTombol>
       </div>
 
-      <Kotak judul="Buat akun pemimpin / staf">
+      <Kotak judul="Buat akun baru">
         <p className="mb-3 text-sm opacity-70">
-          Akun anggota sebaiknya dibuat lewat tautan undangan dari pemimpin kelompok.
+          Akun langsung dijadikan anggota, Pemimpin, atau Wakil kelompok yang dipilih, Ketua Tim untuk tim yang
+          dipilih, atau Admin. Peran lain bisa ditambah lewat <em>Beri peran</em> di bawah.
         </p>
-        <FormAksi aksi={buatAkun} tombol="Buat akun">
-          <Isian label="Nama" name="nama" required />
-          <IsianLogin />
-          <Isian
-            label="Kata sandi sementara"
-            name="sandi"
-            type="text"
-            minLength={PANJANG_SANDI_MINIMAL}
-            autoComplete="off"
-            keterangan={`Minimal ${PANJANG_SANDI_MINIMAL} karakter. Sampaikan secara pribadi.`}
-            required
-          />
-        </FormAksi>
+        <FormBuatAkun
+          tujuan={["anggota", "pemimpin", "wakil", "ketua_tim", "admin", "tanpa"]}
+          kelompok={kelompok.map((k) => ({ id: k.id, nama: k.nama, tim_nama: k.tim?.nama }))}
+          tim={tim ?? []}
+        />
       </Kotak>
 
       <Kotak judul="Beri peran">
@@ -159,6 +154,35 @@ export default async function HalamanAkun() {
                   <Isian label="Nama tampilan" name="nama" defaultValue={a.nama_tampilan} required />
                 </FormAksi>
               </Lipatan>
+              {a.id !== saya ? (
+                <Lipatan judul="Hapus akun">
+                  <FormAksi
+                    aksi={hapusAkun.bind(null, a.id)}
+                    tombol="Hapus akun ini"
+                    jenisTombol="bahaya"
+                    konfirmasi={`Hapus akun ${a.nama_tampilan}? Tindakan ini tidak bisa dibatalkan.`}
+                  >
+                    <p className="mb-3 text-sm opacity-70">
+                      Akun login dan semua perannya dihapus; orang ini tidak bisa masuk lagi.
+                    </p>
+                    {a.anggota_id ? (
+                      <label className="mb-3 flex items-start gap-3">
+                        <input type="checkbox" name="hapus_profil" value="ya" className="mt-1 h-5 w-5 flex-none" />
+                        <span className="text-sm">
+                          Hapus juga profil anggotanya (riwayat hadir, proyek, dan catatan ikut terhapus). Bila tidak
+                          dicentang, profilnya tetap ada sebagai anggota tanpa akun.
+                        </span>
+                      </label>
+                    ) : null}
+                    <Isian
+                      label={`Ketik nama akun persis untuk memastikan: ${a.nama_tampilan}`}
+                      name="konfirmasi"
+                      autoComplete="off"
+                      required
+                    />
+                  </FormAksi>
+                </Lipatan>
+              ) : null}
             </li>
           ))}
         </ul>

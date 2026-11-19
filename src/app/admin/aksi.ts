@@ -5,12 +5,10 @@ import { redirect } from "next/navigation";
 import { alamatSitus } from "@/lib/alamat";
 import { pesanGalat } from "@/lib/galat";
 import type { HasilAksi } from "@/lib/hasil";
-import { buatAkunLogin } from "@/lib/buat-akun";
-import { bacaDataLogin, PANJANG_SANDI_MINIMAL, tampilHp } from "@/lib/identitas";
+import { bacaDataLogin } from "@/lib/identitas";
 import { jalankanPenghapusBerkas } from "@/lib/hapus-berkas";
 import { simpanLogin } from "@/lib/login-server";
 import { wajibAdmin } from "@/lib/sesi";
-import { buatClientAdmin } from "@/lib/supabase/admin";
 
 const teks = (fd: FormData, nama: string) => String(fd.get(nama) ?? "").trim();
 
@@ -40,29 +38,6 @@ export async function tambahKelompok(_: HasilAksi, fd: FormData): Promise<HasilA
 }
 
 // ---------------------------------------------------------------- Akun & peran
-
-export async function buatAkun(_: HasilAksi, fd: FormData): Promise<HasilAksi> {
-  await wajibAdmin();
-  const nama = teks(fd, "nama");
-  const login = bacaDataLogin(fd);
-  const sandi = String(fd.get("sandi") ?? "");
-
-  if (!nama) return { galat: "Nama belum diisi." };
-  if (sandi.length < PANJANG_SANDI_MINIMAL) {
-    return { galat: `Kata sandi minimal ${PANJANG_SANDI_MINIMAL} karakter.` };
-  }
-
-  const dibuat = await buatAkunLogin({ nama, login, sandi });
-  if ("galat" in dibuat) return { galat: dibuat.galat };
-  // Kata sandi dari Admin = sementara; wajib diganti saat login pertama (keputusan 27).
-  await buatClientAdmin().rpc("layanan_tandai_sandi", { p_akun: dibuat.akunId, p_sementara: true });
-
-  const caraMasuk = [dibuat.rapi.nama_pengguna, dibuat.rapi.email, tampilHp(dibuat.rapi.nomor_hp)].filter(Boolean).join(" / ");
-  revalidatePath("/admin/akun");
-  return {
-    sukses: `Akun ${nama} dibuat. Masuk dengan ${caraMasuk}. Sampaikan kata sandi sementaranya secara pribadi (wajib diganti saat login pertama), lalu beri perannya di bawah.`,
-  };
-}
 
 /** Admin mengubah nama pengguna, email, dan nomor HP sebuah akun (keputusan 25). */
 export async function ubahLoginAkun(akunId: string, _: HasilAksi, fd: FormData): Promise<HasilAksi> {
@@ -183,6 +158,22 @@ export async function hapusKelompokTotal(kelompokId: string, _: HasilAksi, fd: F
   if (error) return { galat: pesanGalat(error) };
   revalidatePath("/admin");
   redirect("/admin");
+}
+
+/**
+ * Menghapus akun (keputusan 41): khusus Admin, setelah mengetik nama akun persis.
+ * Admin memilih apakah profil anggotanya ikut dihapus. Diperiksa database.
+ */
+export async function hapusAkun(akunId: string, _: HasilAksi, fd: FormData): Promise<HasilAksi> {
+  const { supabase } = await wajibAdmin();
+  const { error } = await supabase.rpc("hapus_akun", {
+    p_akun: akunId,
+    p_konfirmasi: teks(fd, "konfirmasi"),
+    p_hapus_profil: fd.get("hapus_profil") === "ya",
+  });
+  if (error) return { galat: pesanGalat(error) };
+  revalidatePath("/admin/akun");
+  return { sukses: "Akun dihapus." };
 }
 
 export async function ubahNamaAkun(akunId: string, _: HasilAksi, fd: FormData): Promise<HasilAksi> {

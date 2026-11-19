@@ -13,17 +13,23 @@ type Rapi = { nama_pengguna: string | null; email: string | null; nomor_hp: stri
  *
  * anggotaId = profil yang akan disambungkan (undangan untuk profil yang sudah
  * dibuat pemimpin), supaya nomor HP di profil itu boleh dipakai.
+ *
+ * izin = kode izin dari izin_buat_akun (akun dibuat pengurus, keputusan 42),
+ * disimpan di data akun supaya database bisa memastikan akun ini memang
+ * dibuat dengan izin itu.
  */
 export async function buatAkunLogin({
   nama,
   login,
   sandi,
   anggotaId = null,
+  izin = null,
 }: {
   nama: string;
   login: DataLogin;
   sandi: string;
   anggotaId?: string | null;
+  izin?: string | null;
 }): Promise<{ galat: string } | { akunId: string; alamat: string; rapi: Rapi }> {
   if (!adaDataLogin(login)) return { galat: PESAN_LOGIN_KOSONG };
 
@@ -43,7 +49,13 @@ export async function buatAkunLogin({
       email: alamat,
       password: sandi,
       email_confirm: true,
-      user_metadata: { nama, nama_pengguna: rapi.nama_pengguna, email: rapi.email, nomor_hp: rapi.nomor_hp },
+      user_metadata: {
+        nama,
+        nama_pengguna: rapi.nama_pengguna,
+        email: rapi.email,
+        nomor_hp: rapi.nomor_hp,
+        ...(izin ? { izin } : {}),
+      },
     });
 
   let alamat = alamatAuthBaru(rapi);
