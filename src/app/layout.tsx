@@ -3,7 +3,7 @@ import { PelacakRiwayat } from "@/components/pelacak-riwayat";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CSM — Absensi Kelompok",
+  title: "Absensi CSM",
   description: "Absensi dan pendataan anggota kelompok kecil.",
 };
 

@@ -43,6 +43,10 @@ export function FormAksi({
   const router = useRouter();
 
   useEffect(() => {
+    if (hasil.lanjut) window.location.assign(hasil.lanjut);
+  }, [hasil]);
+
+  useEffect(() => {
     if (!kembali || !hasil.sukses || hasil.tautan) return;
     // Pesan "tersimpan" sempat terbaca sebentar, lalu kembali.
     const waktu = setTimeout(() => {

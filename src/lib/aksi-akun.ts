@@ -5,7 +5,6 @@
 // Hak akses SELALU diperiksa database; pemeriksaan di sini untuk pesan yang jelas.
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { pesanGalat } from "@/lib/galat";
 import type { HasilAksi } from "@/lib/hasil";
 import { PANJANG_SANDI_MINIMAL } from "@/lib/identitas";
@@ -65,9 +64,12 @@ export async function ubahNamaSaya(_: HasilAksi, fd: FormData): Promise<HasilAks
 export async function selesaiAturProfil(): Promise<HasilAksi> {
   const { supabase } = await wajibMasuk();
   const { error } = await supabase.rpc("selesai_atur_profil");
-  if (error) return { galat: pesanGalat(error) };
-  revalidatePath("/", "layout");
-  redirect("/beranda");
+  if (error) {
+    console.error("selesai_atur_profil gagal:", error);
+    return { galat: pesanGalat(error) };
+  }
+  // Beranda dibuka dengan muat ulang penuh (bukan redirect di dalam aksi).
+  return { sukses: "Tersimpan. Membuka Beranda…", lanjut: "/beranda" };
 }
 
 // ---------------------------------------------------------------- Profil staf
