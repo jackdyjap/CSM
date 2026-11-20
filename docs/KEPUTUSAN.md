@@ -205,3 +205,12 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - Hak diperiksa database dua kali (`izin_buat_akun` sebelum akun dibuat, `pasang_akun_baru` sesudahnya). Kode izin berlaku 15 menit, sekali pakai, dan hanya untuk akun yang dibuat dengannya. Bila pemasangan gagal, akun yang baru dibuat dibatalkan. Tercatat di log (`buat_akun`) beserta pembuatnya.
     - Tautan undangan tetap bisa dipakai seperti sebelumnya.
 43. **Laporan demografi: wilayah cukup sampai provinsi** (mengubah daftar dimensi di keputusan 24). Pilihan Kota/Kabupaten, Kecamatan, dan Kelurahan/Desa dihapus dari laporan dan ekspor Excel; tautan lama ke pilihan itu menampilkan laporan Gender. **Isian profil tidak berubah**: wilayah tetap diisi sampai kelurahan dan tetap menjadi syarat profil lengkap (keputusan 8). Database tidak diubah.
+
+## Diputuskan 20 November 2026
+
+44. **Nama aplikasi: "Absensi CSM".** Prototipe lama "Absensi Kelompok Kecil" (data hanya di peramban) dihapus; hanya ada satu aplikasi, yaitu absensi-csm.vercel.app.
+45. **Pesan galat yang jelas dan bisa dilacak.**
+    - Bila Supabase Auth menolak pembuatan akun (undangan atau dibuat pengurus), alasannya ditampilkan dengan bahasa sederhana (mis. kata sandi terlalu lemah, perlu mengisi email) dan alasan aslinya dicatat di Logs Vercel.
+    - Formulir pendaftaran lewat undangan tidak dikosongkan bila gagal.
+    - "Selesai, ke Beranda" dan pendaftaran lewat undangan membuka halaman tujuan dengan muat ulang penuh (bukan pengalihan di dalam aksi).
+    - Halaman yang gagal dimuat menampilkan layar "Halaman belum bisa dibuka" berbahasa Indonesia dengan tombol Coba lagi, Ke Beranda, dan kode kesalahan untuk dicocokkan di Logs Vercel.

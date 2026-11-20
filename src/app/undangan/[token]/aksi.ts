@@ -1,6 +1,5 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { buatAkunLogin } from "@/lib/buat-akun";
 import type { HasilAksi } from "@/lib/hasil";
 import { bacaDataLogin, PANJANG_SANDI_MINIMAL } from "@/lib/identitas";
@@ -50,6 +49,11 @@ export async function daftarLewatUndangan(
 
   // 4. Langsung masuk.
   const supabase = await buatClientServer();
-  await supabase.auth.signInWithPassword({ email: dibuat.alamat, password: sandi });
-  redirect("/beranda");
+  const { error: galatMasuk } = await supabase.auth.signInWithPassword({ email: dibuat.alamat, password: sandi });
+  if (galatMasuk) {
+    console.error("Masuk setelah daftar gagal:", galatMasuk);
+    return { sukses: "Akun berhasil dibuat. Silakan masuk.", lanjut: "/masuk" };
+  }
+  // Login pertama: Atur profil dulu (keputusan 27).
+  return { sukses: "Akun berhasil dibuat. Membuka aplikasi…", lanjut: "/profil" };
 }

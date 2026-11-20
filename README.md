@@ -1,4 +1,4 @@
-# CSM — Sistem Absensi Kelompok Kecil
+# Absensi CSM — Sistem Absensi Kelompok Kecil
 
 Aplikasi web (nyaman dibuka di HP) untuk mendata anggota kelompok kecil, mencatat kehadiran dan persembahan mingguan, membantu pemimpin menindaklanjuti anggota, dan memberi tim gambaran tentang kelompok di bawahnya.
 

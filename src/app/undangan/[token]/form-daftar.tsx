@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { startTransition, useActionState, useEffect } from "react";
 import { IsianLogin } from "@/components/isian-login";
 import { IsianSandi } from "@/components/isian-sandi";
 import { Isian, Pesan, Tombol } from "@/components/ui";
@@ -14,9 +14,21 @@ export function FormDaftar({ token, namaAwal }: { token: string; namaAwal: strin
     {},
   );
 
+  useEffect(() => {
+    if (hasil.lanjut) window.location.assign(hasil.lanjut);
+  }, [hasil]);
+
   return (
-    <form action={aksi}>
+    <form
+      // Isian tidak dikosongkan bila gagal, supaya tidak perlu mengetik ulang.
+      onSubmit={(e) => {
+        e.preventDefault();
+        const data = new FormData(e.currentTarget);
+        startTransition(() => aksi(data));
+      }}
+    >
       {hasil.galat ? <Pesan jenis="galat">{hasil.galat}</Pesan> : null}
+      {hasil.sukses ? <Pesan jenis="sukses">{hasil.sukses}</Pesan> : null}
       <Isian label="Nama lengkap" name="nama" defaultValue={namaAwal} autoComplete="name" required />
       <IsianLogin keterangan="Cara masuk ke aplikasi: isi minimal satu. Nanti cukup masuk dengan salah satunya." />
       <IsianSandi
@@ -34,7 +46,7 @@ export function FormDaftar({ token, namaAwal }: { token: string; namaAwal: strin
         autoComplete="new-password"
         required
       />
-      <Tombol type="submit" disabled={sedangProses} className="w-full">
+      <Tombol type="submit" disabled={sedangProses || Boolean(hasil.lanjut)} className="w-full">
         {sedangProses ? "Sedang membuat akun…" : "Buat akun"}
       </Tombol>
     </form>

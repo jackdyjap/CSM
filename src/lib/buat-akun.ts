@@ -66,7 +66,37 @@ export async function buatAkunLogin({
     alamat = alamatAuthCadangan();
     hasil = await buat(alamat);
   }
-  if (hasil.error || !hasil.data.user) return { galat: "Akun gagal dibuat. Coba lagi." };
+  if (hasil.error || !hasil.data.user) {
+    // Alasan asli dicatat di Logs Vercel supaya bisa dilacak.
+    console.error("Supabase Auth menolak pembuatan akun:", {
+      kode: hasil.error?.code,
+      status: hasil.error?.status,
+      pesan: hasil.error?.message,
+      alamatPengganti: alamat.endsWith(".invalid"),
+    });
+    return { galat: pesanGagalBuat(hasil.error, alamat) };
+  }
 
   return { akunId: hasil.data.user.id, alamat, rapi };
+}
+
+/** Pesan yang jelas untuk penolakan dari Supabase Auth (bukan sekadar "Coba lagi"). */
+function pesanGagalBuat(galat: { code?: string; message?: string } | null, alamat: string): string {
+  const kode = galat?.code ?? "";
+  const pesan = galat?.message ?? "";
+  if (kode === "weak_password" || /password/i.test(pesan)) {
+    return "Kata sandi ditolak karena terlalu lemah. Pakai minimal 8 karakter campuran huruf dan angka (mis. Rembrant2026).";
+  }
+  if (kode === "email_address_invalid" || /email.*invalid|invalid.*email/i.test(pesan)) {
+    return alamat.endsWith(".invalid")
+      ? "Akun belum bisa dibuat hanya dengan nama pengguna atau nomor HP. Isi juga email Anda, lalu coba lagi."
+      : "Alamat email tidak diterima. Periksa penulisannya, atau pakai email lain.";
+  }
+  if (kode === "over_request_rate_limit" || /rate limit/i.test(pesan)) {
+    return "Terlalu banyak percobaan. Tunggu beberapa menit, lalu coba lagi.";
+  }
+  if (kode === "unexpected_failure" || /database error/i.test(pesan)) {
+    return "Akun gagal dibuat karena ada masalah di database. Hubungi pemimpin kelompok atau Admin.";
+  }
+  return "Akun gagal dibuat. Coba lagi beberapa saat lagi; bila tetap gagal, hubungi pemimpin kelompok.";
 }

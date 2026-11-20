@@ -6,7 +6,7 @@ import { hariIniWib } from "@/lib/profil";
 /** Berkas Excel laporan demografi: Ringkasan + tabel silang (jumlah dan persen). */
 export async function buatExcelLaporan(laporan: Laporan, pilihan: Pilihan, judul: string) {
   const wb = new ExcelJS.Workbook();
-  wb.creator = "Absensi Kelompok Kecil";
+  wb.creator = "Absensi CSM";
   wb.created = new Date();
   const tebal = { bold: true } as const;
 
@@ -58,7 +58,7 @@ export async function buatExcelLaporan(laporan: Laporan, pilihan: Pilihan, judul
 /** Berkas Excel Ringkasan: satu lembar per info (ringkasan + jumlah per kelompok). */
 export async function buatExcelRingkasan(bagian: { dimensi: Dimensi; laporan: Laporan }[], judul: string) {
   const wb = new ExcelJS.Workbook();
-  wb.creator = "Absensi Kelompok Kecil";
+  wb.creator = "Absensi CSM";
   wb.created = new Date();
   const tebal = { bold: true } as const;
 
