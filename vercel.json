@@ -1,4 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "crons": [{ "path": "/api/tugas/hapus-berkas", "schedule": "0 19 * * *" }]
+  "regions": [
+    "syd1"
+  ],
+  "crons": [
+    {
+      "path": "/api/tugas/hapus-berkas",
+      "schedule": "0 19 * * *"
+    }
+  ]
 }
