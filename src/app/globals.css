@@ -35,6 +35,21 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
+/*
+ * Sentuhan di HP: tanpa jeda menunggu ketuk-ganda (zoom), dan tanpa kilatan
+ * abu-abu bawaan; umpan balik tekan diberikan oleh kelas active: pada tombol.
+ */
+a,
+button,
+input,
+select,
+textarea,
+label,
+summary {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* Cetak kartu anggota (Fase 7): hanya kartu yang tercetak. */
 @page {
   size: A4;

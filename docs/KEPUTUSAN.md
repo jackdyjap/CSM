@@ -214,3 +214,4 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - Formulir pendaftaran lewat undangan tidak dikosongkan bila gagal.
     - "Selesai, ke Beranda" dan pendaftaran lewat undangan membuka halaman tujuan dengan muat ulang penuh (bukan pengalihan di dalam aksi).
     - Halaman yang gagal dimuat menampilkan layar "Halaman belum bisa dibuka" berbahasa Indonesia dengan tombol Coba lagi, Ke Beranda, dan kode kesalahan untuk dicocokkan di Logs Vercel.
+46. **Respons sentuhan lebih cepat terasa.** Tombol dan tautan-tombol langsung mengecil sedikit saat disentuh; jeda ketuk-ganda di HP dimatikan (`touch-action: manipulation`); saat pindah halaman langsung tampil "Memuat…" (`src/app/loading.tsx`); tombol Keluar menampilkan "Keluar…" selama diproses. Kecepatan server sendiri belum diubah: lokasi server Vercel sebaiknya disamakan dengan region database Supabase (belum dicek).
