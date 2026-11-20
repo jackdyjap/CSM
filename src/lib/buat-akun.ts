@@ -44,6 +44,17 @@ export async function buatAkunLogin({
   const rapi = (Array.isArray(data) ? data[0] : data) as Rapi | undefined;
   if (!rapi) return { galat: "Isian cara masuk belum bisa diperiksa. Coba lagi." };
 
+  // Undangan untuk profil yang sudah dibuat pemimpin, dengan nomor HP yang sama:
+  // nomor itu JANGAN ikut dikirim saat akun dibuat. Database menolaknya
+  // ("sudah terdaftar atas nama orang lain") karena akun belum tersambung ke
+  // profil. Setelah undangan dipakai dan akun tersambung, database mengisi
+  // nomor HP akun dari profil secara otomatis (penjaga jaga_login_akun).
+  let hpMetadata = rapi.nomor_hp;
+  if (anggotaId && rapi.nomor_hp) {
+    const { data: profil } = await admin.from("anggota").select("no_hp").eq("id", anggotaId).maybeSingle();
+    if (profil?.no_hp === rapi.nomor_hp) hpMetadata = null;
+  }
+
   const buat = (alamat: string) =>
     admin.auth.admin.createUser({
       email: alamat,
@@ -53,7 +64,7 @@ export async function buatAkunLogin({
         nama,
         nama_pengguna: rapi.nama_pengguna,
         email: rapi.email,
-        nomor_hp: rapi.nomor_hp,
+        nomor_hp: hpMetadata,
         ...(izin ? { izin } : {}),
       },
     });
