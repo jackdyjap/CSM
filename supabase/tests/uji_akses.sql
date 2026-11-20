@@ -2324,6 +2324,35 @@ select tests.periksa('Hapus akun: tercatat di log',
 
 
 -- =====================================================================
+-- DAFTAR LEWAT UNDANGAN UNTUK PROFIL YANG SUDAH PUNYA NOMOR HP
+-- (masalah uji coba 20 Nov: "Akun gagal dibuat karena ada masalah di database")
+-- =====================================================================
+insert into tests.ids values
+  ('jenny_profil', '66666666-0000-0000-0000-0000000000e1'),
+  ('jenny_akun_1', '66666666-0000-0000-0000-0000000000e2'),
+  ('jenny_akun_2', '66666666-0000-0000-0000-0000000000e3');
+insert into public.anggota (id, kelompok_id, nama_lengkap, no_hp, persetujuan_pada)
+values (tests.id('jenny_profil'), tests.id('kel_a1'), 'Jenny Uji', '628195857333', now());
+
+select tests.periksa('Undangan profil ber-HP: pemeriksaan awal meloloskan nomor HP profil itu sendiri',
+  (select nomor_hp from public.layanan_cek_login_baru('jenny.uji', 'jenny.uji@contoh.test', '08195857333',
+     tests.id('jenny_profil'))) = '628195857333');
+-- Cara lama (nomor HP ikut dikirim saat akun dibuat) memang ditolak database.
+select tests.harus_gagal('Undangan profil ber-HP: akun baru dengan nomor HP profil sebelum tersambung ditolak',
+  format($q$ insert into auth.users (id, email, raw_user_meta_data) values (%L, 'jenny.lama@contoh.test',
+     '{"nama":"Jenny Uji","nama_pengguna":"jenny.lama","email":"jenny.lama@contoh.test","nomor_hp":"628195857333"}') $q$,
+     tests.id('jenny_akun_1')));
+-- Cara baru (src/lib/buat-akun.ts): nomor HP profil tidak dikirim.
+select tests.harus_berhasil('Undangan profil ber-HP: akun baru tanpa nomor HP profil berhasil dibuat',
+  format($q$ insert into auth.users (id, email, raw_user_meta_data) values (%L, 'jenny.uji@contoh.test',
+     '{"nama":"Jenny Uji","nama_pengguna":"jenny.uji","email":"jenny.uji@contoh.test","nomor_hp":null}') $q$,
+     tests.id('jenny_akun_2')));
+update public.akun set anggota_id = tests.id('jenny_profil') where id = tests.id('jenny_akun_2');
+select tests.periksa('Undangan profil ber-HP: setelah tersambung, nomor HP akun terisi dari profil',
+  (select nomor_hp from public.akun where id = tests.id('jenny_akun_2')) = '628195857333');
+
+
+-- =====================================================================
 -- RINGKASAN
 -- =====================================================================
 select no, case when lulus then 'LULUS' else 'GAGAL' end as hasil, nama, info
