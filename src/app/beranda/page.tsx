@@ -1,4 +1,5 @@
-import { Judul, Kotak, Pesan, TautanTombol, Tombol } from "@/components/ui";
+import { TombolKirim } from "@/components/tombol-kirim";
+import { Judul, Kotak, Pesan, TautanTombol } from "@/components/ui";
 import { KotakProyekSaya } from "@/components/proyek-saya";
 import { keluar } from "@/lib/aksi-umum";
 import { wajibMasuk } from "@/lib/sesi";
@@ -107,9 +108,9 @@ export default async function HalamanBeranda() {
       <div className="flex flex-wrap gap-2">
         {peran.anggota ? null : <TautanTombol href="/profil">Atur profil</TautanTombol>}
         <form action={keluar}>
-          <Tombol type="submit" jenis="biasa">
+          <TombolKirim jenis="biasa" teksProses="Keluar…">
             Keluar
-          </Tombol>
+          </TombolKirim>
         </form>
       </div>
     </main>

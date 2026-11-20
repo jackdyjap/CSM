@@ -34,7 +34,7 @@ export function Tombol({
 }: ComponentProps<"button"> & { jenis?: keyof typeof gayaTombol }) {
   return (
     <button
-      className={`min-h-11 rounded-lg px-4 py-2 font-medium disabled:opacity-50 ${gayaTombol[jenis]} ${className}`}
+      className={`min-h-11 rounded-lg px-4 py-2 font-medium transition-transform duration-75 active:scale-[0.97] active:opacity-80 disabled:opacity-50 disabled:active:scale-100 ${gayaTombol[jenis]} ${className}`}
       {...props}
     />
   );
@@ -47,7 +47,7 @@ export function TautanTombol({
 }: ComponentProps<typeof Link> & { jenis?: keyof typeof gayaTombol }) {
   return (
     <Link
-      className={`inline-flex min-h-11 items-center rounded-lg px-4 py-2 font-medium ${gayaTombol[jenis]} ${className}`}
+      className={`inline-flex min-h-11 items-center rounded-lg px-4 py-2 font-medium transition-transform duration-75 active:scale-[0.97] active:opacity-80 ${gayaTombol[jenis]} ${className}`}
       {...props}
     />
   );
