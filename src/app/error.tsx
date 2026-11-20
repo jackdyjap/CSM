@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { Judul, Pesan, Tombol } from "@/components/ui";
 
 /**
@@ -9,7 +9,20 @@ import { Judul, Pesan, Tombol } from "@/components/ui";
  */
 export default function HalamanGalat({ error, retry }: { error: unknown; retry: () => void }) {
   const kode = error instanceof Error && "digest" in error ? String(error.digest ?? "") : "";
+  // Galat dari HP (bukan dari server) tidak punya kode dan tidak tercatat di Logs
+  // Vercel; pesannya tidak memuat data rahasia, jadi ditampilkan untuk dilaporkan.
+  const detail = kode
+    ? ""
+    : error instanceof Error
+      ? `${error.name}: ${error.message}`.slice(0, 300)
+      : String(error).slice(0, 300);
 
+  // Jenis peramban/HP, hanya dibaca di HP (kosong saat dibuat di server).
+  const peramban = useSyncExternalStore(
+    () => () => {},
+    () => navigator.userAgent,
+    () => "",
+  );
   useEffect(() => {
     console.error(error);
   }, [error]);
@@ -21,6 +34,12 @@ export default function HalamanGalat({ error, retry }: { error: unknown; retry: 
         Terjadi kesalahan saat memuat halaman ini. Coba lagi, atau kembali ke Beranda.
         {kode ? ` Bila terus terjadi, sampaikan kode ini kepada Admin: ${kode}` : ""}
       </Pesan>
+      {detail ? (
+        <p className="mt-3 rounded-lg bg-black/5 p-2 font-mono text-xs break-words opacity-80 dark:bg-white/10">
+          Detail untuk Admin: {detail}
+          {peramban ? ` · ${peramban}` : ""}
+        </p>
+      ) : null}
       <div className="mt-4 flex flex-wrap gap-2">
         <Tombol type="button" onClick={() => retry()}>
           Coba lagi
