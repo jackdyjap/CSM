@@ -216,3 +216,12 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - Halaman yang gagal dimuat menampilkan layar "Halaman belum bisa dibuka" berbahasa Indonesia dengan tombol Coba lagi, Ke Beranda, dan kode kesalahan untuk dicocokkan di Logs Vercel.
 46. **Respons sentuhan lebih cepat terasa.** Tombol dan tautan-tombol langsung mengecil sedikit saat disentuh; jeda ketuk-ganda di HP dimatikan (`touch-action: manipulation`); saat pindah halaman langsung tampil "Memuat…" (`src/app/loading.tsx`); tombol Keluar menampilkan "Keluar…" selama diproses. Server aplikasi Vercel dipindah ke **Sydney (`syd1`)**, sama dengan database Supabase proyek **CSM** (`ap-southeast-2`, Sydney), lewat `regions` di `vercel.json`, supaya setiap bolak-balik ke database tidak menyeberang benua.
 47. **Daftar lewat undangan untuk profil yang sudah punya nomor HP.** Bila pemimpin sudah membuat profil anggota beserta nomor HP-nya lalu mengirim undangan, dan anggota mendaftar dengan nomor yang sama, nomor itu **tidak** dikirim saat akun dibuat (`src/lib/buat-akun.ts`). Sebelumnya database menolaknya ("sudah terdaftar atas nama orang lain") karena akun belum tersambung ke profil, sehingga muncul "Akun gagal dibuat karena ada masalah di database". Setelah undangan dipakai, nomor HP akun terisi otomatis dari profil. Database tidak diubah; diuji di `supabase/tests/uji_akses.sql`.
+
+## Diputuskan 23 November 2026
+
+44. **Laporan demografi: grafik pie dan persen per kategori.**
+    - Pilihan baru **Bentuk grafik**: Batang (bawaan) atau Pie (donat, jumlah yang sudah mengisi di tengah). Berlaku untuk Ringkasan dan satu dimensi, juga saat dicetak.
+    - Setiap kategori selalu menampilkan **jumlah dan persen** (mis. "24 orang · 48%"), di batang maupun keterangan pie. Pilihan "Tampilkan" (jumlah/persen) kini hanya untuk tabel per kelompok dan diberi label **Tabel per kelompok**.
+    - Pie paling banyak **6 potongan**: bila kategori lebih banyak, 5 terbesar tampil dan sisanya digabung menjadi **Lainnya**, dengan rinciannya tetap ditulis di keterangan.
+    - Warna kategori: palet 6 warna yang lolos uji buta warna (alat dataviz) di mode terang dan gelap; "Lainnya" abu-abu. Untuk gender, status pernikahan, baptis, dan status jemaat, setiap kategori selalu berwarna sama di cakupan mana pun.
+    - Ekspor Excel tidak berubah. Tidak ada perubahan database.

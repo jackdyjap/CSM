@@ -58,6 +58,14 @@ const URUTAN: Partial<Record<Dimensi, Record<string, string>>> = {
   },
 };
 
+/** Daftar kunci kategori yang tetap untuk dimensi ini (null untuk dimensi bebas, mis. provinsi). */
+export function urutanTetap(dimensi: Dimensi): string[] | null {
+  const d = URUTAN[dimensi];
+  return d ? Object.keys(d) : null;
+}
+
+export type BentukGrafik = "batang" | "pie";
+
 export type BarisDb = {
   tim_nama: string;
   kelompok_id: string;
@@ -145,6 +153,8 @@ export type Pilihan = {
   cakupanId: string | null;
   hanyaAktif: boolean;
   tampil: "jumlah" | "persen";
+  /** Bentuk grafik: batang (bawaan) atau pie. */
+  grafik: BentukGrafik;
 };
 
 /** Membaca pilihan laporan dari parameter alamat (?d=&c=&id=&aktif=&t=). */
@@ -166,11 +176,12 @@ export function bacaPilihan(p: Record<string, string | string[] | undefined>): P
     cakupanId: cakupan === "semua" ? null : cakupanId,
     hanyaAktif: s("aktif") !== "0",
     tampil: s("t") === "persen" ? "persen" : "jumlah",
+    grafik: s("g") === "pie" ? "pie" : "batang",
   };
 }
 
 export function parameterAlamat(p: Pilihan, tambahan: Record<string, string> = {}) {
-  const q = new URLSearchParams({ d: p.ringkasan ? "ringkasan" : p.dimensi, c: p.cakupan, aktif: p.hanyaAktif ? "1" : "0", t: p.tampil, ...tambahan });
+  const q = new URLSearchParams({ d: p.ringkasan ? "ringkasan" : p.dimensi, c: p.cakupan, aktif: p.hanyaAktif ? "1" : "0", t: p.tampil, g: p.grafik, ...tambahan });
   if (p.cakupanId) q.set("id", p.cakupanId);
   return q.toString();
 }

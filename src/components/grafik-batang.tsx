@@ -2,18 +2,17 @@ import { formatPersen, type Kategori } from "@/lib/laporan";
 
 /**
  * Grafik batang horizontal satu seri (jumlah per kategori).
- * Batang <= 20px, ujung data membulat 4px dan pangkal persegi; nilai di ujung batang.
+ * Batang <= 20px, ujung data membulat 4px dan pangkal persegi; jumlah dan persen di ujung batang.
  * Satu seri tidak memerlukan legenda; judul kotak sudah menyebut isinya.
  * Tooltip saat disentuh/diarahkan; tabel silang di bawahnya menjadi tampilan tabel.
  */
-export function GrafikBatang({ kategori, tampil }: { kategori: Kategori[]; tampil: "jumlah" | "persen" }) {
-  const maks = Math.max(1, ...kategori.map((k) => (tampil === "jumlah" ? k.total : k.persen)));
+export function GrafikBatang({ kategori }: { kategori: Kategori[] }) {
+  const maks = Math.max(1, ...kategori.map((k) => k.total));
   return (
     <ul className="space-y-2" role="list">
       {kategori.map((k) => {
-        const nilai = tampil === "jumlah" ? k.total : k.persen;
-        const lebar = (nilai / maks) * 100;
-        const teks = tampil === "jumlah" ? `${k.total.toLocaleString("id-ID")}` : formatPersen(k.persen);
+        const lebar = (k.total / maks) * 100;
+        const teks = `${k.total.toLocaleString("id-ID")} · ${formatPersen(k.persen)}`;
         return (
           <li
             key={k.kunci}
@@ -26,7 +25,7 @@ export function GrafikBatang({ kategori, tampil }: { kategori: Kategori[]; tampi
               <span
                 aria-hidden
                 className="block h-5 rounded-r-[4px] bg-seri transition-opacity group-hover:opacity-80"
-                style={{ width: `max(2px, calc((100% - 4rem) * ${lebar / 100}))` }}
+                style={{ width: `max(2px, calc((100% - 6.5rem) * ${lebar / 100}))` }}
               />
               <span className="text-sm whitespace-nowrap tabular-nums">{teks}</span>
             </span>
