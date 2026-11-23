@@ -225,3 +225,7 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - Pie paling banyak **6 potongan**: bila kategori lebih banyak, 5 terbesar tampil dan sisanya digabung menjadi **Lainnya**, dengan rinciannya tetap ditulis di keterangan.
     - Warna kategori: palet 6 warna yang lolos uji buta warna (alat dataviz) di mode terang dan gelap; "Lainnya" abu-abu. Untuk gender, status pernikahan, baptis, dan status jemaat, setiap kategori selalu berwarna sama di cakupan mana pun.
     - Ekspor Excel tidak berubah. Tidak ada perubahan database.
+45. **Laporan proyek ketaatan: dikelompokkan per tim, dengan persen per kategori.**
+    - Tabel **Per tim dan kelompok** menggantikan tabel Per kelompok: baris tebal berisi total tiap tim, lalu kelompok-kelompoknya di bawahnya, dan baris **Semua tim** di akhir (bila lebih dari satu tim). Cakupan satu kelompok tetap satu baris.
+    - Setiap kategori (Selesai, Sedang, Belum, Tidak dikerjakan, Belum lapor) menampilkan **persen** dari jumlah penugasan di baris itu, dengan jumlahnya di bawah. Kolom **Penugasan** berisi jumlah penugasan dan jumlah proyek.
+    - Bagian Per proyek diurutkan per tim, lalu per kelompok. Tidak ada perubahan database.

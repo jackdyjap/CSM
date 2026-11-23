@@ -54,10 +54,14 @@ export type ProyekLaporan = {
 
 export type KelompokLaporan = { id: string; nama: string; tim: string; proyek: number; hitungan: Hitungan };
 
+/** Satu tim beserta total dan kelompok-kelompoknya (tampilan dikelompokkan per tim). */
+export type TimLaporan = { nama: string; proyek: number; hitungan: Hitungan; kelompok: KelompokLaporan[] };
+
 export function susunLaporanProyek(baris: BarisProyekDb[]) {
   const total = hitunganKosong();
   const proyek = new Map<string, ProyekLaporan>();
   const kelompok = new Map<string, KelompokLaporan & { idProyek: Set<string> }>();
+  const tim = new Map<string, { hitungan: Hitungan; idProyek: Set<string> }>();
 
   for (const b of baris) {
     const kat = kategori(b);
@@ -90,15 +94,39 @@ export function susunLaporanProyek(baris: BarisProyekDb[]) {
     k.idProyek.add(b.proyek_id);
     k.hitungan[kat] += 1;
     k.hitungan.total += 1;
+
+    let t = tim.get(b.tim_nama);
+    if (!t) {
+      t = { hitungan: hitunganKosong(), idProyek: new Set() };
+      tim.set(b.tim_nama, t);
+    }
+    t.idProyek.add(b.proyek_id);
+    t.hitungan[kat] += 1;
+    t.hitungan.total += 1;
   }
+
+  const daftarKelompok = [...kelompok.values()]
+    .map(({ idProyek, ...k }) => ({ ...k, proyek: idProyek.size }))
+    .sort((a, b) => a.tim.localeCompare(b.tim, "id") || a.nama.localeCompare(b.nama, "id"));
 
   return {
     total,
     jumlahProyek: proyek.size,
-    proyek: [...proyek.values()],
-    kelompok: [...kelompok.values()]
-      .map(({ idProyek, ...k }) => ({ ...k, proyek: idProyek.size }))
-      .sort((a, b) => a.tim.localeCompare(b.tim, "id") || a.nama.localeCompare(b.nama, "id")),
+    proyek: [...proyek.values()].sort(
+      (a, b) =>
+        a.tim.localeCompare(b.tim, "id") ||
+        a.kelompok.localeCompare(b.kelompok, "id") ||
+        a.diberikan_pada.localeCompare(b.diberikan_pada),
+    ),
+    kelompok: daftarKelompok,
+    tim: [...tim.entries()]
+      .sort(([a], [b]) => a.localeCompare(b, "id"))
+      .map(([nama, t]): TimLaporan => ({
+        nama,
+        proyek: t.idProyek.size,
+        hitungan: t.hitungan,
+        kelompok: daftarKelompok.filter((k) => k.tim === nama),
+      })),
   };
 }
 
