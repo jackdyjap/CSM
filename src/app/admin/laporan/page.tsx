@@ -1,7 +1,8 @@
 import { GrafikBatang } from "@/components/grafik-batang";
+import { GrafikPie } from "@/components/grafik-pie";
 import { TabelSilang } from "@/components/tabel-silang";
 import { Judul, Kotak, Pesan, Pilihan, TautanTombol, Tombol } from "@/components/ui";
-import { bacaPilihan, DIMENSI, formatPersen, NAMA_RINGKASAN, parameterAlamat, type Pilihan as PilihanLaporan } from "@/lib/laporan";
+import { bacaPilihan, DIMENSI, formatPersen, type Dimensi, type Kategori, NAMA_RINGKASAN, parameterAlamat, type Pilihan as PilihanLaporan } from "@/lib/laporan";
 import { ambilLaporan, ambilRingkasan, judulLaporan, namaCakupan } from "@/lib/laporan-server";
 import { hariIniWib } from "@/lib/profil";
 import { wajibAdmin } from "@/lib/sesi";
@@ -67,9 +68,13 @@ export default async function HalamanLaporan({ searchParams }: PageProps<"/admin
               <option value="1">Aktif saja</option>
               <option value="0">Semua (termasuk tidak aktif)</option>
             </Pilihan>
-            <Pilihan label="Tampilkan" name="t" defaultValue={p.tampil}>
+            <Pilihan label="Tabel per kelompok" name="t" defaultValue={p.tampil}>
               <option value="jumlah">Jumlah orang</option>
               <option value="persen">Persen</option>
+            </Pilihan>
+            <Pilihan label="Bentuk grafik" name="g" defaultValue={p.grafik}>
+              <option value="batang">Batang</option>
+              <option value="pie">Pie</option>
             </Pilihan>
             <Tombol type="submit" className="col-span-2">
               Tampilkan laporan
@@ -96,7 +101,7 @@ export default async function HalamanLaporan({ searchParams }: PageProps<"/admin
               {l.kategori.length === 0 ? (
                 <p className="opacity-70">Belum ada data.</p>
               ) : (
-                <GrafikBatang kategori={l.kategori} tampil={p.tampil} />
+                <Grafik kategori={l.kategori} dimensi={dimensi} bentuk={p.grafik} />
               )}
             </Kotak>
           ))}
@@ -115,7 +120,7 @@ export default async function HalamanLaporan({ searchParams }: PageProps<"/admin
             {laporan.kategori.length === 0 ? (
               <p className="opacity-70">Belum ada data untuk dimensi ini.</p>
             ) : (
-              <GrafikBatang kategori={laporan.kategori} tampil={p.tampil} />
+              <Grafik kategori={laporan.kategori} dimensi={p.dimensi} bentuk={p.grafik} />
             )}
             {laporan.belum > 0 ? (
               <p className="mt-3 text-sm opacity-70">
@@ -137,6 +142,11 @@ export default async function HalamanLaporan({ searchParams }: PageProps<"/admin
       ) : null}
     </main>
   );
+}
+
+/** Grafik sesuai pilihan: batang atau pie. Keduanya menampilkan jumlah dan persen per kategori. */
+function Grafik({ kategori, dimensi, bentuk }: { kategori: Kategori[]; dimensi: Dimensi; bentuk: "batang" | "pie" }) {
+  return bentuk === "pie" ? <GrafikPie kategori={kategori} dimensi={dimensi} /> : <GrafikBatang kategori={kategori} />;
 }
 
 /** Unduh Excel dan Cetak/PDF (tercatat di log). */

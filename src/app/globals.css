@@ -7,6 +7,15 @@
   /* Warna grafik (divalidasi alat dataviz: kontras >= 3:1 terhadap latar kartu). */
   --seri: #2a78d6;
   --seri-rgb: 42 120 214;
+  /* Grafik pie: warna kategori berurutan tetap (divalidasi alat dataviz, uji buta warna lolos). */
+  --kartu: #ffffff;
+  --kat-1: #2a78d6;
+  --kat-2: #eb6834;
+  --kat-3: #1baf7a;
+  --kat-4: #eda100;
+  --kat-5: #e87ba4;
+  --kat-6: #008300;
+  --kat-lain: #898781;
   color-scheme: light;
 }
 
@@ -17,6 +26,13 @@
     --utama: #6ea8ff;
     --seri: #3987e5;
     --seri-rgb: 57 135 229;
+    --kartu: #1d2024;
+    --kat-1: #3987e5;
+    --kat-2: #d95926;
+    --kat-3: #199e70;
+    --kat-4: #c98500;
+    --kat-5: #d55181;
+    --kat-6: #0ca30c;
     color-scheme: dark;
   }
 }

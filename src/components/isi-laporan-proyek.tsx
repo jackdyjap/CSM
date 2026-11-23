@@ -54,58 +54,11 @@ export function IsiLaporanProyek({
             <Ringkasan h={laporan.total} />
           </Kotak>
 
-          <Kotak judul="Per kelompok">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[34rem] text-sm">
-                <thead>
-                  <tr className="border-b border-black/20 text-left dark:border-white/20">
-                    <th className="py-1 pr-2">Kelompok</th>
-                    <th className="py-1 pr-2 text-right">Proyek</th>
-                    <th className="py-1 pr-2 text-right">Selesai</th>
-                    <th className="py-1 pr-2 text-right">Sedang</th>
-                    <th className="py-1 pr-2 text-right">Belum</th>
-                    <th className="py-1 pr-2 text-right">Tidak dik.</th>
-                    <th className="py-1 text-right">Belum lapor</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {laporan.kelompok.map((k) => (
-                    <tr
-                      key={k.id}
-                      className="border-b border-black/10 dark:border-white/10"
-                    >
-                      <td className="py-1 pr-2">
-                        {k.nama}
-                        <span className="block text-xs opacity-60">
-                          {k.tim}
-                        </span>
-                      </td>
-                      <td className="py-1 pr-2 text-right tabular-nums">
-                        {k.proyek}
-                      </td>
-                      <td className="py-1 pr-2 text-right font-semibold tabular-nums">
-                        {persenBulat(k.hitungan.selesai, k.hitungan.total)}%
-                        <span className="block text-xs font-normal opacity-60">
-                          {k.hitungan.selesai}/{k.hitungan.total}
-                        </span>
-                      </td>
-                      <td className="py-1 pr-2 text-right tabular-nums">
-                        {k.hitungan.sedang}
-                      </td>
-                      <td className="py-1 pr-2 text-right tabular-nums">
-                        {k.hitungan.belum}
-                      </td>
-                      <td className="py-1 pr-2 text-right tabular-nums">
-                        {k.hitungan.tidak_dikerjakan}
-                      </td>
-                      <td className="py-1 text-right tabular-nums">
-                        {k.hitungan.belum_dilaporkan}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <Kotak judul={cakupan === "kelompok" ? "Per kelompok" : "Per tim dan kelompok"}>
+            <TabelTimKelompok laporan={laporan} />
+            <p className="mt-2 text-xs opacity-70">
+              Persen dihitung dari jumlah penugasan di baris itu (proyek × anggota); angka kecil di bawah persen = jumlah penugasan.
+            </p>
           </Kotak>
 
           <h2 className="mb-3 text-lg font-semibold">Per proyek</h2>
@@ -183,6 +136,93 @@ export function IsiLaporanProyek({
         </span>
       </div>
     </>
+  );
+}
+
+const KOLOM: KategoriProyek[] = ["selesai", "sedang", "belum", "tidak_dikerjakan", "belum_dilaporkan"];
+const JUDUL_KOLOM: Record<KategoriProyek, string> = {
+  selesai: "Selesai",
+  sedang: "Sedang",
+  belum: "Belum",
+  tidak_dikerjakan: "Tidak dikerjakan",
+  belum_dilaporkan: "Belum lapor",
+};
+
+/** Satu baris tabel: nama, jumlah proyek, lalu persen + jumlah tiap kategori. */
+function BarisHitungan({
+  nama,
+  keterangan,
+  proyek,
+  h,
+  jenis,
+}: {
+  nama: string;
+  keterangan?: string;
+  proyek: number;
+  h: Hitungan;
+  jenis: "tim" | "kelompok";
+}) {
+  const tim = jenis === "tim";
+  return (
+    <tr
+      className={
+        tim
+          ? "border-b border-black/20 bg-black/[0.04] font-semibold dark:border-white/20 dark:bg-white/[0.06]"
+          : "border-b border-black/10 dark:border-white/10"
+      }
+    >
+      <td className={`py-1.5 pr-2 ${tim ? "pl-1" : "pl-4"}`}>
+        {nama}
+        {keterangan ? <span className="block text-xs font-normal opacity-60">{keterangan}</span> : null}
+      </td>
+      <td className="py-1.5 pr-2 text-right tabular-nums">
+        {h.total}
+        <span className="block text-xs font-normal opacity-60">{proyek} proyek</span>
+      </td>
+      {KOLOM.map((k) => (
+        <td key={k} className="py-1.5 pr-2 text-right tabular-nums last:pr-1">
+          <span className={k === "selesai" ? WARNA.selesai : undefined}>{persenBulat(h[k], h.total)}%</span>
+          <span className="block text-xs font-normal opacity-60">{h[k]}</span>
+        </td>
+      ))}
+    </tr>
+  );
+}
+
+/** Tabel dikelompokkan per tim: baris total tim, lalu kelompok-kelompoknya. */
+function TabelTimKelompok({ laporan }: { laporan: ReturnType<typeof susunLaporanProyek> }) {
+  const satuKelompok = laporan.kelompok.length === 1 && laporan.tim.length === 1;
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[30rem] text-sm">
+        <thead>
+          <tr className="border-b border-black/20 text-left align-bottom text-xs dark:border-white/20">
+            <th className="py-1 pr-2 pl-1">{satuKelompok ? "Kelompok" : "Tim / kelompok"}</th>
+            <th className="py-1 pr-2 text-right">Penugasan</th>
+            {KOLOM.map((k) => (
+              <th key={k} className="py-1 pr-2 text-right leading-tight last:pr-1">
+                {JUDUL_KOLOM[k]}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {satuKelompok
+            ? laporan.kelompok.map((k) => (
+                <BarisHitungan key={k.id} nama={k.nama} keterangan={k.tim} proyek={k.proyek} h={k.hitungan} jenis="tim" />
+              ))
+            : laporan.tim.map((t) => [
+                <BarisHitungan key={`tim-${t.nama}`} nama={`Tim ${t.nama}`} proyek={t.proyek} h={t.hitungan} jenis="tim" />,
+                ...t.kelompok.map((k) => (
+                  <BarisHitungan key={k.id} nama={k.nama} proyek={k.proyek} h={k.hitungan} jenis="kelompok" />
+                )),
+              ])}
+          {laporan.tim.length > 1 ? (
+            <BarisHitungan nama="Semua tim" proyek={laporan.jumlahProyek} h={laporan.total} jenis="tim" />
+          ) : null}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
