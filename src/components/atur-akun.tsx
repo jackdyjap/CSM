@@ -1,3 +1,4 @@
+import { pesanBacaGagal } from "@/lib/galat";
 import { FormAksi } from "@/components/form-aksi";
 import { IsianLahir } from "@/components/isian-lahir";
 import { IsianSandi } from "@/components/isian-sandi";
@@ -105,7 +106,7 @@ export async function ProfilStafUbah({
   nama: string;
   kembali?: string;
 }) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("profil_staf")
     .select(
       "gender, foto_path, tahun_lahir, provinsi_kode, kota_kode, status_nikah, pendidikan, pekerjaan, baptis",
@@ -113,6 +114,15 @@ export async function ProfilStafUbah({
     .eq("akun_id", akunId)
     .maybeSingle();
   const profil = data as ProfilStaf | null;
+
+  // Gagal dibaca ≠ belum setuju: jangan tampilkan kotak persetujuan lagi.
+  if (error) {
+    return (
+      <Kotak judul="Foto dan data pribadi">
+        <Pesan jenis="galat">{pesanBacaGagal(error, "Data pribadi")}</Pesan>
+      </Kotak>
+    );
+  }
 
   if (!profil) {
     return (

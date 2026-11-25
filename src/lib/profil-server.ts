@@ -1,4 +1,5 @@
 import "server-only";
+import { pesanBacaGagal } from "@/lib/galat";
 import type { buatClientServer } from "@/lib/supabase/server";
 import type { Wilayah } from "@/lib/aksi-profil";
 import { KOLOM_PROFIL, type Profil } from "@/lib/profil";
@@ -10,8 +11,17 @@ const UMUR_TAUTAN_FOTO = 60 * 60;
 
 /** Membaca satu profil. Null bila tidak ada atau tidak berhak dibaca (aturan akses). */
 export async function bacaProfil(supabase: Supabase, anggotaId: string) {
-  const { data } = await supabase.from("anggota").select(KOLOM_PROFIL).eq("id", anggotaId).maybeSingle();
-  return (data as Profil | null) ?? null;
+  return (await bacaProfilAman(supabase, anggotaId)).profil;
+}
+
+/**
+ * Seperti bacaProfil, tetapi membedakan "tidak ada / tidak berhak" (profil null,
+ * galat null) dari "gagal dibaca" (galat berisi pesan database), supaya
+ * kerusakan tidak tersamar sebagai halaman kosong.
+ */
+export async function bacaProfilAman(supabase: Supabase, anggotaId: string) {
+  const { data, error } = await supabase.from("anggota").select(KOLOM_PROFIL).eq("id", anggotaId).maybeSingle();
+  return { profil: (data as Profil | null) ?? null, galat: error ? pesanBacaGagal(error, "Profil") : null };
 }
 
 /** Tautan sementara (1 jam) untuk foto di penyimpanan privat. */
