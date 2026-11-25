@@ -7,7 +7,11 @@ import { wajibMasuk } from "@/lib/sesi";
 export default async function HalamanBeranda() {
   const { supabase, peran } = await wajibMasuk();
   const penerimaMasukan = peran.admin || peran.ketua_tim.length > 0 || peran.pemimpin.length > 0;
-  const { data: masukanBaru } = penerimaMasukan ? await supabase.rpc("jumlah_masukan_baru") : { data: 0 };
+  const [{ data: masukanBaru }, { count: jumlahTraining }] = await Promise.all([
+    penerimaMasukan ? supabase.rpc("jumlah_masukan_baru") : Promise.resolve({ data: 0 }),
+    // Aturan akses database hanya menghitung bahan training yang ditujukan untuk saya (keputusan 54).
+    supabase.from("bahan_training").select("id", { count: "exact", head: true }),
+  ]);
   const tanpaPeran =
     !peran.admin && peran.ketua_tim.length === 0 && peran.pemimpin.length === 0 && !peran.anggota;
 
@@ -29,6 +33,7 @@ export default async function HalamanBeranda() {
             <TautanTombol href="/admin/laporan">Laporan demografi</TautanTombol>
             <TautanTombol href="/admin/laporan-proyek">Laporan proyek ketaatan</TautanTombol>
             <TautanTombol href="/admin/bahan">Bahan diskusi</TautanTombol>
+            <TautanTombol href="/admin/training">Bahan training</TautanTombol>
           </div>
         </Kotak>
       ) : null}
@@ -90,6 +95,15 @@ export default async function HalamanBeranda() {
         <Kotak judul="Bahan diskusi">
           <p className="mb-3 text-sm opacity-70">Bahan diskusi PDF dari Admin untuk pengurus.</p>
           <TautanTombol href="/bahan">Buka bahan diskusi</TautanTombol>
+        </Kotak>
+      ) : null}
+
+      {!peran.admin && (jumlahTraining ?? 0) > 0 ? (
+        <Kotak judul="Bahan training">
+          <p className="mb-3 text-sm opacity-70">
+            {jumlahTraining} bahan training (PDF dan video) untuk Anda, dibuka di dalam aplikasi.
+          </p>
+          <TautanTombol href="/training">Buka bahan training</TautanTombol>
         </Kotak>
       ) : null}
 
