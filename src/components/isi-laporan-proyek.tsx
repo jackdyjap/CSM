@@ -1,5 +1,6 @@
 import { TombolPdf } from "@/app/admin/laporan/tombol-pdf";
 import { Kotak } from "@/components/ui";
+import { TombolBukaSemua } from "@/components/tombol-buka-semua";
 import {
   KATEGORI_PROYEK,
   kategori,
@@ -61,64 +62,100 @@ export function IsiLaporanProyek({
             </p>
           </Kotak>
 
-          <h2 className="mb-3 text-lg font-semibold">Per proyek</h2>
-          {laporan.proyek.map((p) => (
-            <Kotak key={p.id} judul={p.judul}>
-              <p className="text-xs opacity-70">
-                {p.kelompok} · {p.tim} · diberikan{" "}
-                {tanggalPanjang(p.diberikan_pada)}
-                {p.tenggat ? ` · tenggat ${tanggalPanjang(p.tenggat)}` : ""}
+          <Kotak judul="Per proyek">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <p className="flex-1 text-sm opacity-70">
+                Ketuk <strong>Lihat</strong> pada kelompok untuk melihat pelaksanaan setiap proyek per anggota.
               </p>
-              <p className="mb-2 text-sm">
-                Selesai <strong>{p.hitungan.selesai}</strong> dari{" "}
-                {p.hitungan.total} (
-                {persenBulat(p.hitungan.selesai, p.hitungan.total)}%)
-              </p>
-              <ul className="divide-y divide-black/10 text-sm dark:divide-white/10">
-                {p.anggota.map((a) => {
-                  const k = kategori(a);
-                  return (
-                    <li key={a.anggota_id} className="py-1.5">
-                      <span className="font-medium">{a.anggota_nama}</span>
-                      {a.anggota_aktif ? (
-                        ""
-                      ) : (
-                        <span className="text-xs opacity-60">
-                          {" "}
-                          (tidak aktif)
-                        </span>
-                      )}
-                      {" · "}
-                      <span className={`font-semibold ${WARNA[k]}`}>
-                        {KATEGORI_PROYEK[k]}
-                      </span>
-                      {a.dilaporkan && !a.dilaporkan_sendiri ? (
-                        <span className="text-xs opacity-60">
-                          {" "}
-                          (diisi pemimpin)
-                        </span>
-                      ) : null}
-                      {a.hasil ? (
-                        <p className="mt-0.5 whitespace-pre-line opacity-90">
-                          Hasil: {a.hasil}
+              <TombolBukaSemua />
+            </div>
+            <div className="space-y-4">
+              {laporan.tim.map((t) => (
+                <div key={t.nama}>
+                  <h3 className="mb-1 border-b border-black/15 pb-1 font-semibold dark:border-white/15">Tim {t.nama}</h3>
+                  {t.kelompok.map((k) => {
+                    const daftar = laporan.proyek.filter((p) => p.kelompok_id === k.id);
+                    return (
+                      <details key={k.id} className="rincian-proyek group border-b border-black/10 dark:border-white/10">
+                        <summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 py-2 pl-3">
+                          <span className="min-w-0 flex-1">
+                            <span className="block font-medium">Kelompok {k.nama}</span>
+                            <span className="block text-xs opacity-70">
+                              {k.proyek} proyek · {persenBulat(k.hitungan.selesai, k.hitungan.total)}% selesai
+                            </span>
+                          </span>
+                          <span className="inline-flex min-h-10 flex-none items-center rounded-lg border border-black/15 px-3 text-sm font-medium dark:border-white/20">
+                            <span className="group-open:hidden">Lihat ▾</span>
+                            <span className="hidden group-open:inline">Tutup ▴</span>
+                          </span>
+                        </summary>
+                        <div className="space-y-4 pb-3 pl-3">
+                          {daftar.map((p) => (
+                            <div key={p.id} className="rounded-lg border border-black/10 p-3 dark:border-white/10">
+                              <h4 className="font-semibold">{p.judul}</h4>
+                        <p className="text-xs opacity-70">
+                          Diberikan{" "}
+                          {tanggalPanjang(p.diberikan_pada)}
+                          {p.tenggat ? ` · tenggat ${tanggalPanjang(p.tenggat)}` : ""}
                         </p>
-                      ) : null}
-                      {a.alasan ? (
-                        <p className="mt-0.5 whitespace-pre-line opacity-90">
-                          Alasan: {a.alasan}
+                        <p className="mb-2 text-sm">
+                          Selesai <strong>{p.hitungan.selesai}</strong> dari{" "}
+                          {p.hitungan.total} (
+                          {persenBulat(p.hitungan.selesai, p.hitungan.total)}%)
                         </p>
-                      ) : null}
-                      {a.keterangan ? (
-                        <p className="mt-0.5 text-xs opacity-70">
-                          Catatan pemimpin: {a.keterangan}
-                        </p>
-                      ) : null}
-                    </li>
-                  );
-                })}
-              </ul>
-            </Kotak>
-          ))}
+                        <ul className="divide-y divide-black/10 text-sm dark:divide-white/10">
+                          {p.anggota.map((a) => {
+                            const k = kategori(a);
+                            return (
+                              <li key={a.anggota_id} className="py-1.5">
+                                <span className="font-medium">{a.anggota_nama}</span>
+                                {a.anggota_aktif ? (
+                                  ""
+                                ) : (
+                                  <span className="text-xs opacity-60">
+                                    {" "}
+                                    (tidak aktif)
+                                  </span>
+                                )}
+                                {" · "}
+                                <span className={`font-semibold ${WARNA[k]}`}>
+                                  {KATEGORI_PROYEK[k]}
+                                </span>
+                                {a.dilaporkan && !a.dilaporkan_sendiri ? (
+                                  <span className="text-xs opacity-60">
+                                    {" "}
+                                    (diisi pemimpin)
+                                  </span>
+                                ) : null}
+                                {a.hasil ? (
+                                  <p className="mt-0.5 whitespace-pre-line opacity-90">
+                                    Hasil: {a.hasil}
+                                  </p>
+                                ) : null}
+                                {a.alasan ? (
+                                  <p className="mt-0.5 whitespace-pre-line opacity-90">
+                                    Alasan: {a.alasan}
+                                  </p>
+                                ) : null}
+                                {a.keterangan ? (
+                                  <p className="mt-0.5 text-xs opacity-70">
+                                    Catatan pemimpin: {a.keterangan}
+                                  </p>
+                                ) : null}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </Kotak>
         </>
       )}
 
