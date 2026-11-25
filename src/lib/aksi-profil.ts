@@ -5,15 +5,17 @@ import { redirect } from "next/navigation";
 import { pesanGalat } from "@/lib/galat";
 import type { HasilAksi } from "@/lib/hasil";
 import {
-  hitungUsia,
+  BATAS_USIA_WALI,
   PILIHAN_GENDER,
   PILIHAN_NIKAH,
   PILIHAN_PEKERJAAN,
   PILIHAN_PENDIDIKAN,
   PILIHAN_STATUS_JEMAAT,
-  USIA_DEWASA,
+  TAHUN_LAHIR_MIN,
+  tahunIni,
+  usiaDariTahun,
 } from "@/lib/profil";
-import { baptis as bacaBaptis } from "@/lib/isian";
+import { baptis as bacaBaptis, tahunLahir as bacaTahunLahir } from "@/lib/isian";
 import { bolehKelola, wajibMasuk } from "@/lib/sesi";
 
 // Hak akses SELALU diperiksa database (aturan akses + penjaga jaga_anggota).
@@ -92,25 +94,15 @@ export async function simpanProfil(anggotaId: string, _: HasilAksi, fd: FormData
   const nama = teks(fd, "nama_lengkap");
   if (!nama) return { galat: "Nama lengkap wajib diisi." };
 
-  const tanggalLahir = teks(fd, "tanggal_lahir");
-  if (tanggalLahir && !/^\d{4}-\d{2}-\d{2}$/.test(tanggalLahir)) {
-    return { galat: "Tanggal lahir tidak sah." };
-  }
-  const usia = tanggalLahir ? hitungUsia(tanggalLahir) : null;
-  if (usia !== null && (usia < 0 || usia > 120)) {
-    return { galat: "Tanggal lahir tidak masuk akal. Periksa kembali tahunnya." };
-  }
-  const perluWali = usia !== null && usia < USIA_DEWASA;
-  const waliNama = perluWali ? teks(fd, "wali_nama") : null;
-  if (perluWali && !waliNama) {
-    return { galat: "Anggota di bawah 18 tahun memerlukan persetujuan orang tua/wali. Isi nama wali." };
-  }
+  const tahun = bacaTahunLahir(fd);
+  if (tahun === "salah") return { galat: `Tahun lahir harus 4 angka antara ${TAHUN_LAHIR_MIN} dan ${tahunIni()}.` };
+  // Isian wali hanya untuk usia 18 tahun ke bawah, dan tidak wajib (keputusan 50).
+  const usia = usiaDariTahun(tahun);
+  const bolehWali = usia !== null && usia <= BATAS_USIA_WALI;
 
-  // Wilayah: simpan sampai tingkat terdalam yang dipilih, tanpa celah.
+  // Wilayah: provinsi lalu kota/kabupaten, tanpa celah.
   const provinsi = teks(fd, "provinsi_kode");
   const kota = provinsi ? teks(fd, "kota_kode") : null;
-  const kecamatan = kota ? teks(fd, "kecamatan_kode") : null;
-  const kelurahan = kecamatan ? teks(fd, "kelurahan_kode") : null;
 
   const noHp = teks(fd, "no_hp");
   // Format dan keunikan nomor HP diperiksa database (keputusan 25).
@@ -123,20 +115,16 @@ export async function simpanProfil(anggotaId: string, _: HasilAksi, fd: FormData
     .update({
       nama_lengkap: nama,
       gender: pilihan(fd, "gender", PILIHAN_GENDER),
-      tempat_lahir: teks(fd, "tempat_lahir"),
-      tanggal_lahir: tanggalLahir,
-      alamat: teks(fd, "alamat"),
+      tahun_lahir: tahun,
       provinsi_kode: provinsi,
       kota_kode: kota,
-      kecamatan_kode: kecamatan,
-      kelurahan_kode: kelurahan,
       status_nikah: pilihan(fd, "status_nikah", PILIHAN_NIKAH),
       pendidikan: pilihan(fd, "pendidikan", PILIHAN_PENDIDIKAN),
       pekerjaan: pilihan(fd, "pekerjaan", PILIHAN_PEKERJAAN),
       baptis: bacaBaptis(fd),
       no_hp: noHp,
-      wali_nama: waliNama,
-      wali_hubungan: perluWali ? teks(fd, "wali_hubungan") : null,
+      wali_nama: bolehWali ? teks(fd, "wali_nama") : null,
+      wali_hubungan: bolehWali ? teks(fd, "wali_hubungan") : null,
     })
     .eq("id", anggotaId)
     .select("id");

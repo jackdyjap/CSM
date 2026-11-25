@@ -7,12 +7,11 @@ import { Pilihan } from "./ui";
 const TINGKAT = [
   { nama: "provinsi_kode", label: "Provinsi" },
   { nama: "kota_kode", label: "Kota/Kabupaten" },
-  { nama: "kecamatan_kode", label: "Kecamatan" },
-  { nama: "kelurahan_kode", label: "Kelurahan/Desa" },
 ] as const;
 
 /**
- * Empat menu pilihan wilayah yang saling bergantung.
+ * Dua menu pilihan wilayah yang saling bergantung: provinsi lalu kota/kabupaten
+ * (keputusan 50: tanpa kecamatan dan kelurahan).
  * Daftar tingkat berikutnya baru diambil setelah tingkat di atasnya dipilih,
  * supaya ringan di koneksi lambat.
  */
@@ -20,7 +19,7 @@ export function PilihWilayah({
   awal,
   daftarAwal,
 }: {
-  /** Kode yang sudah tersimpan, urut dari provinsi sampai kelurahan. */
+  /** Kode yang sudah tersimpan: [provinsi, kota/kabupaten]. */
   awal: (string | null)[];
   /** Daftar pilihan untuk tiap tingkat sesuai kode yang tersimpan. */
   daftarAwal: Wilayah[][];

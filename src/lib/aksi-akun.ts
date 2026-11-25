@@ -8,8 +8,15 @@ import { revalidatePath } from "next/cache";
 import { pesanGalat } from "@/lib/galat";
 import type { HasilAksi } from "@/lib/hasil";
 import { PANJANG_SANDI_MINIMAL } from "@/lib/identitas";
-import { baptis as bacaBaptis, pilihan, teks } from "@/lib/isian";
-import { PILIHAN_GENDER, PILIHAN_NIKAH, PILIHAN_PEKERJAAN, PILIHAN_PENDIDIKAN } from "@/lib/profil";
+import { baptis as bacaBaptis, pilihan, tahunLahir as bacaTahunLahir, teks } from "@/lib/isian";
+import {
+  PILIHAN_GENDER,
+  PILIHAN_NIKAH,
+  PILIHAN_PEKERJAAN,
+  PILIHAN_PENDIDIKAN,
+  TAHUN_LAHIR_MIN,
+  tahunIni,
+} from "@/lib/profil";
 import { wajibMasuk } from "@/lib/sesi";
 import { buatClientAdmin } from "@/lib/supabase/admin";
 
@@ -85,27 +92,21 @@ export async function catatPersetujuanStaf(_: HasilAksi, fd: FormData): Promise<
 }
 
 export async function simpanProfilStaf(_: HasilAksi, fd: FormData): Promise<HasilAksi> {
-  const tanggalLahir = teks(fd, "tanggal_lahir");
-  if (tanggalLahir && !/^\d{4}-\d{2}-\d{2}$/.test(tanggalLahir)) return { galat: "Tanggal lahir tidak sah." };
+  const tahun = bacaTahunLahir(fd);
+  if (tahun === "salah") return { galat: `Tahun lahir harus 4 angka antara ${TAHUN_LAHIR_MIN} dan ${tahunIni()}.` };
 
-  // Wilayah: simpan sampai tingkat terdalam yang dipilih, tanpa celah.
+  // Wilayah: provinsi lalu kota/kabupaten, tanpa celah (keputusan 50).
   const provinsi = teks(fd, "provinsi_kode");
   const kota = provinsi ? teks(fd, "kota_kode") : null;
-  const kecamatan = kota ? teks(fd, "kecamatan_kode") : null;
-  const kelurahan = kecamatan ? teks(fd, "kelurahan_kode") : null;
 
   const { supabase, peran } = await wajibMasuk();
   const { data, error } = await supabase
     .from("profil_staf")
     .update({
       gender: pilihan(fd, "gender", PILIHAN_GENDER),
-      tempat_lahir: teks(fd, "tempat_lahir"),
-      tanggal_lahir: tanggalLahir,
-      alamat: teks(fd, "alamat"),
+      tahun_lahir: tahun,
       provinsi_kode: provinsi,
       kota_kode: kota,
-      kecamatan_kode: kecamatan,
-      kelurahan_kode: kelurahan,
       status_nikah: pilihan(fd, "status_nikah", PILIHAN_NIKAH),
       pendidikan: pilihan(fd, "pendidikan", PILIHAN_PENDIDIKAN),
       pekerjaan: pilihan(fd, "pekerjaan", PILIHAN_PEKERJAAN),
