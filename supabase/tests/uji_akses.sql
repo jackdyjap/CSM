@@ -2379,6 +2379,108 @@ select tests.keluar();
 
 
 -- =====================================================================
+-- UJI 28 · BAHAN TRAINING (keputusan 54)
+-- =====================================================================
+select tests.keluar();
+insert into tests.ids values
+  ('tr_semua',   '77777777-0000-0000-0000-000000000001'),
+  ('tr_ketua',   '77777777-0000-0000-0000-000000000002'),
+  ('tr_pemimpin','77777777-0000-0000-0000-000000000003'),
+  ('tr_anggota', '77777777-0000-0000-0000-000000000004'),
+  ('tr_pdf',     '77777777-0000-0000-0000-000000000005'),
+  ('tr_u_pemimpin', '77777777-0000-0000-0000-0000000000a1'),
+  ('tr_u_kosong',   '77777777-0000-0000-0000-0000000000a2');
+-- Akun segar (peran akun lama sudah berubah di uji sebelumnya).
+insert into auth.users (id, email, raw_user_meta_data) values
+  (tests.id('tr_u_pemimpin'), 'tr_pemimpin@contoh.test', '{"nama":"Pemimpin Training"}'),
+  (tests.id('tr_u_kosong'),   'tr_kosong@contoh.test',   '{"nama":"Tanpa Peran Training"}');
+insert into public.penugasan_peran (akun_id, peran, kelompok_id, jabatan)
+  values (tests.id('tr_u_pemimpin'), 'pemimpin', tests.id('kel_a1'), 'pemimpin');
+
+select tests.masuk_sebagai('budi');
+select tests.harus_gagal('Training: Pemimpin tidak bisa menambah bahan',
+  $q$ insert into public.bahan_training (judul, jenis, video_id, untuk_semua) values ('X', 'video', 'dQw4w9WgXcQ', true) $q$);
+select tests.harus_gagal('Training: Pemimpin tidak bisa mengunggah berkas training',
+  $q$ insert into storage.objects (bucket_id, name) values ('bahan-training', 'x/x.pdf') $q$);
+
+select tests.masuk_sebagai('admin');
+select tests.harus_berhasil('Training: Admin menambah video untuk semua',
+  $q$ insert into public.bahan_training (id, judul, jenis, video_id, untuk_semua)
+      values (tests.id('tr_semua'), 'Video untuk semua', 'video', 'dQw4w9WgXcQ', true) $q$);
+select tests.harus_berhasil('Training: Admin menambah video khusus Ketua Tim',
+  $q$ insert into public.bahan_training (id, judul, jenis, video_id, untuk_ketua_tim)
+      values (tests.id('tr_ketua'), 'Khusus Ketua Tim', 'video', 'abcdefghijk', true) $q$);
+select tests.harus_berhasil('Training: Admin menambah video untuk Pemimpin dan Ketua Tim',
+  $q$ insert into public.bahan_training (id, judul, jenis, video_id, untuk_pemimpin, untuk_ketua_tim)
+      values (tests.id('tr_pemimpin'), 'Pemimpin dan Ketua', 'video', 'ABCDEFGHIJK', true, true) $q$);
+select tests.harus_berhasil('Training: Admin mengunggah PDF khusus Anggota',
+  $q$ insert into storage.objects (bucket_id, name) values ('bahan-training', tests.id('tr_anggota') || '/modul.pdf') $q$);
+select tests.harus_berhasil('Training: Admin mencatat PDF khusus Anggota',
+  $q$ insert into public.bahan_training (id, judul, jenis, lokasi, nama_berkas, ukuran, untuk_anggota)
+      values (tests.id('tr_anggota'), 'Modul anggota', 'pdf', tests.id('tr_anggota') || '/modul.pdf', 'modul.pdf', 1000, true) $q$);
+select tests.harus_gagal('Training: bahan tanpa peruntukan ditolak',
+  $q$ insert into public.bahan_training (judul, jenis, video_id) values ('X', 'video', 'dQw4w9WgXcQ') $q$);
+select tests.harus_gagal('Training: kode video yang tidak sah ditolak',
+  $q$ insert into public.bahan_training (judul, jenis, video_id, untuk_semua) values ('X', 'video', 'bukan video!', true) $q$);
+select tests.harus_gagal('Training: PDF di folder bahan lain ditolak',
+  $q$ insert into public.bahan_training (id, judul, jenis, lokasi, nama_berkas, ukuran, untuk_semua)
+      values (tests.id('tr_pdf'), 'X', 'pdf', tests.id('tr_anggota') || '/lain.pdf', 'lain.pdf', 10, true) $q$);
+select tests.harus_gagal('Training: PDF lebih dari 10 MB ditolak',
+  $q$ insert into public.bahan_training (id, judul, jenis, lokasi, nama_berkas, ukuran, untuk_semua)
+      values (tests.id('tr_pdf'), 'X', 'pdf', tests.id('tr_pdf') || '/a.pdf', 'a.pdf', 20000000, true) $q$);
+select tests.periksa('Training: "Semua" mengosongkan pilihan per peran',
+  (select not (untuk_ketua_tim or untuk_pemimpin or untuk_anggota) from public.bahan_training where id = tests.id('tr_semua')));
+select tests.periksa('Training: Admin melihat keempat bahan',
+  (select count(*) from public.bahan_training) = 4);
+
+select tests.masuk_sebagai('u_andi');
+select tests.periksa('Training: Anggota melihat bahan untuk semua dan untuk anggota saja (2)',
+  (select array_agg(id order by id) from public.bahan_training) = array[tests.id('tr_semua'), tests.id('tr_anggota')]);
+select tests.periksa('Training: Anggota bisa membaca berkas PDF untuk anggota',
+  exists (select 1 from storage.objects where bucket_id = 'bahan-training' and name = tests.id('tr_anggota') || '/modul.pdf'));
+select tests.periksa('Training: Anggota tidak bisa mengubah bahan (0 baris)',
+  tests.baris_terkena($q$ update public.bahan_training set judul = 'x' where id = tests.id('tr_semua') $q$) = 0);
+
+select tests.masuk_sebagai('ketua_b');
+select tests.periksa('Training: Ketua Tim melihat bahan untuk semua dan Ketua Tim (3)',
+  (select count(*) from public.bahan_training) = 3
+  and not exists (select 1 from public.bahan_training where id = tests.id('tr_anggota')));
+select tests.periksa('Training: Ketua Tim tidak bisa membaca berkas PDF khusus anggota',
+  not exists (select 1 from storage.objects where bucket_id = 'bahan-training'));
+
+select tests.masuk_sebagai('tr_u_pemimpin');
+select tests.periksa('Training: Pemimpin melihat bahan untuk semua dan Pemimpin (2)',
+  (select array_agg(id order by id) from public.bahan_training) = array[tests.id('tr_semua'), tests.id('tr_pemimpin')]);
+
+select tests.masuk_sebagai('tr_u_kosong');
+select tests.periksa('Training: akun tanpa peran hanya melihat bahan untuk semua',
+  (select array_agg(id) from public.bahan_training) = array[tests.id('tr_semua')]);
+
+select tests.masuk_sebagai_tamu();
+select tests.harus_gagal('Training: tamu tidak bisa membaca bahan',
+  $q$ select * from public.bahan_training $q$);
+
+select tests.masuk_sebagai('admin');
+select tests.harus_berhasil('Training: Admin mengubah peruntukan (anggota -> anggota + pemimpin)',
+  $q$ update public.bahan_training set untuk_pemimpin = true where id = tests.id('tr_anggota') $q$);
+select tests.harus_berhasil('Training: Admin mencoba mengganti berkas lewat ubah data',
+  $q$ update public.bahan_training set lokasi = tests.id('tr_anggota') || '/lain.pdf', jenis = 'video' where id = tests.id('tr_anggota') $q$);
+select tests.periksa('Training: berkas dan jenis tidak ikut berubah',
+  (select jenis = 'pdf' and lokasi = tests.id('tr_anggota') || '/modul.pdf' from public.bahan_training where id = tests.id('tr_anggota')));
+select tests.harus_berhasil('Training: Admin menghapus PDF',
+  $q$ delete from public.bahan_training where id = tests.id('tr_anggota') $q$);
+select tests.keluar();
+select tests.periksa('Training: PDF yang dihapus masuk antrean hapus (folder bahan-training)',
+  exists (select 1 from internal.antrean_hapus_foto
+          where bucket = 'bahan-training' and foto_path = tests.id('tr_anggota') || '/modul.pdf'));
+select tests.periksa('Training: penghapus berkas mengenal folder bahan-training',
+  not internal.berkas_masih_dipakai('bahan-training', tests.id('tr_anggota') || '/modul.pdf'));
+select tests.periksa('Training: unggah dan hapus tercatat di log',
+  exists (select 1 from public.log_aktivitas where tindakan = 'unggah_bahan_training')
+  and exists (select 1 from public.log_aktivitas where tindakan = 'hapus_bahan_training'));
+
+
+-- =====================================================================
 -- RINGKASAN
 -- =====================================================================
 select no, case when lulus then 'LULUS' else 'GAGAL' end as hasil, nama, info

@@ -255,3 +255,13 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - Bila profil anggota atau data pribadi staf **gagal dibaca** (mis. migrasi database belum dijalankan), halaman menampilkan pesan galat beserta kode dan pesan asli database untuk dilaporkan ke Admin. Sebelumnya profil staf menampilkan kotak persetujuan lagi, dan profil anggota diam-diam kembali ke Beranda.
     - **Setuju dan isi profil** yang diketuk padahal persetujuan sudah tercatat dianggap berhasil dan langsung membuka isian (bukan "Data yang sama sudah ada").
     - Pelajaran 25 November: `susulan_migrasi.sql` harus selalu diambil dari cabang `main`; tautan ke cabang lain bisa memuat versi lama tanpa migrasi terbaru.
+
+## Diputuskan 26 November 2026
+
+54. **Bahan training (PDF atau video YouTube) dengan peruntukan per peran** (migrasi `…2800`).
+    - **Admin** (Beranda → Bahan training) menambah bahan berupa **PDF** (maks 10 MB, folder privat `bahan-training`) atau **video YouTube** (tautan video "Tidak publik"; yang disimpan hanya kode videonya), lalu mengubah judul/keterangan/peruntukan atau menghapusnya. Berkas PDF yang dihapus ikut dibersihkan penghapus berkas malam.
+    - **Peruntukan**: **Semua**, atau satu/lebih dari **Ketua Tim**, **Pemimpin/Wakil kelompok**, **Anggota** (akun yang punya profil anggota). Peran ganda = gabungan. Diperiksa database dan aturan penyimpanan.
+    - **Pengguna** melihat kotak **Bahan training** di Beranda bila ada bahan untuknya; daftar dengan **pencarian**. Admin juga punya pencarian di daftar bahannya.
+    - **Hanya dibaca di aplikasi**: PDF ditampilkan halaman demi halaman (pdf.js 4.10.38, Apache-2.0) tanpa tombol unduh/cetak, tautan berkas berlaku 5 menit; video diputar lewat pemutar YouTube (youtube-nocookie) di dalam aplikasi.
+    - **Batas yang disadari**: tautan video YouTube "Tidak publik" tetap bisa dibagikan oleh siapa pun yang mengetahuinya (tombol bawaan pemutar YouTube); tangkapan/rekaman layar tidak bisa dicegah.
+    - Unggah dan hapus tercatat di log.
