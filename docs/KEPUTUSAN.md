@@ -247,3 +247,7 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - **Kotak pencarian** menyaring langsung saat mengetik: nama, nama pengguna, email, nomor HP, tim, kelompok, atau peran.
     - **Pilih** membuka halaman detail akun (`/admin/akun/[id]`): peran (Cabut, Beri peran), tautan atur ulang kata sandi, ubah cara masuk, ubah nama akun, dan hapus akun. Setelah akun dihapus, kembali ke daftar.
     - Kotak **Buat akun baru** dan **Beri peran** di halaman daftar dilipat.
+52. **Laporan proyek ketaatan: bagian "Per proyek" berupa list per tim → kelompok** (tanpa perubahan database).
+    - Tampilan awal hanya list kelompok (dikelompokkan per tim, A→Z) dengan jumlah proyek dan persen selesai.
+    - **Lihat** membuka rincian kelompok itu di tempat: setiap proyek (tanggal diberikan, tenggat, selesai X dari Y) dan pelaksanaannya per anggota (status, hasil/alasan, catatan pemimpin). **Tutup** menutupnya lagi.
+    - Tombol **Buka semua / Tutup semua**; Cetak / simpan PDF mencetak rincian yang sedang terbuka.

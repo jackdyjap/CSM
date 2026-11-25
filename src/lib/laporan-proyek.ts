@@ -45,6 +45,7 @@ export type ProyekLaporan = {
   id: string;
   judul: string;
   tim: string;
+  kelompok_id: string;
   kelompok: string;
   diberikan_pada: string;
   tenggat: string | null;
@@ -74,6 +75,7 @@ export function susunLaporanProyek(baris: BarisProyekDb[]) {
         id: b.proyek_id,
         judul: b.judul,
         tim: b.tim_nama,
+        kelompok_id: b.kelompok_id,
         kelompok: b.kelompok_nama,
         diberikan_pada: b.diberikan_pada,
         tenggat: b.tenggat,
