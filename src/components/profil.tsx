@@ -1,7 +1,7 @@
 import { catatPersetujuan, hapusFoto, simpanProfil, unggahFoto } from "@/lib/aksi-profil";
 import { tampilHp } from "@/lib/identitas";
 import {
-  hitungUsia,
+  usiaDariTahun,
   isianKosong,
   kunciBaptis,
   PILIHAN_BAPTIS,
@@ -17,7 +17,7 @@ import type { buatClientServer } from "@/lib/supabase/server";
 import { FormAksi } from "./form-aksi";
 import { IsianLahir } from "./isian-lahir";
 import { PilihWilayah } from "./pilih-wilayah";
-import { Isian, IsianPanjang, Kotak, Pesan, Pilihan } from "./ui";
+import { Isian, Kotak, Pesan, Pilihan } from "./ui";
 import { UnggahFoto } from "./unggah-foto";
 
 type Supabase = Awaited<ReturnType<typeof buatClientServer>>;
@@ -120,20 +120,13 @@ export async function ProfilUbah({
         <FormAksi aksi={simpanProfil.bind(null, profil.id)} tombol="Simpan profil" tanpaReset kembali={kembali}>
           <Isian label="Nama lengkap" name="nama_lengkap" defaultValue={profil.nama_lengkap} required />
           <PilihanEnum label="Gender" name="gender" daftar={PILIHAN_GENDER} nilai={profil.gender} />
-          <Isian label="Tempat lahir" name="tempat_lahir" defaultValue={profil.tempat_lahir ?? ""} />
           <IsianLahir
-            tanggalAwal={profil.tanggal_lahir}
+            tahunAwal={profil.tahun_lahir}
             waliNamaAwal={profil.wali_nama}
             waliHubunganAwal={profil.wali_hubungan}
           />
-          <IsianPanjang
-            label="Alamat lengkap"
-            name="alamat"
-            defaultValue={profil.alamat ?? ""}
-            placeholder="Nama jalan, nomor rumah, RT/RW"
-          />
           <PilihWilayah
-            awal={[profil.provinsi_kode, profil.kota_kode, profil.kecamatan_kode, profil.kelurahan_kode]}
+            awal={[profil.provinsi_kode, profil.kota_kode]}
             daftarAwal={wilayah}
           />
           <PilihanEnum label="Status pernikahan" name="status_nikah" daftar={PILIHAN_NIKAH} nilai={profil.status_nikah} />
@@ -188,12 +181,11 @@ export async function ProfilBaca({ supabase, profil }: { supabase: Supabase; pro
     tautanFoto(supabase, profil.foto_path),
     namaWilayah(supabase, profil),
   ]);
-  const usia = profil.tanggal_lahir ? hitungUsia(profil.tanggal_lahir) : null;
+  const usia = usiaDariTahun(profil.tahun_lahir);
   const baris: [string, string | null][] = [
     ["Gender", profil.gender ? PILIHAN_GENDER[profil.gender] : null],
-    ["Tempat, tanggal lahir", [profil.tempat_lahir, profil.tanggal_lahir].filter(Boolean).join(", ") || null],
-    ["Usia", usia !== null ? `${usia} tahun` : null],
-    ["Alamat", profil.alamat],
+    ["Tahun lahir", profil.tahun_lahir ? String(profil.tahun_lahir) : null],
+    ["Usia", usia !== null ? `sekitar ${usia} tahun` : null],
     ["Wilayah", wilayah],
     ["Status pernikahan", profil.status_nikah ? PILIHAN_NIKAH[profil.status_nikah] : null],
     ["Pendidikan terakhir", profil.pendidikan ? PILIHAN_PENDIDIKAN[profil.pendidikan] : null],

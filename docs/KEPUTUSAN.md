@@ -229,3 +229,14 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - Tabel **Per tim dan kelompok** menggantikan tabel Per kelompok: baris tebal berisi total tiap tim, lalu kelompok-kelompoknya di bawahnya, dan baris **Semua tim** di akhir (bila lebih dari satu tim). Cakupan satu kelompok tetap satu baris.
     - Setiap kategori (Selesai, Sedang, Belum, Tidak dikerjakan, Belum lapor) menampilkan **persen** dari jumlah penugasan di baris itu, dengan jumlahnya di bawah. Kolom **Penugasan** berisi jumlah penugasan dan jumlah proyek.
     - Bagian Per proyek diurutkan per tim, lalu per kelompok. Tidak ada perubahan database.
+
+## Diputuskan 25 November 2026
+
+46. **Mengurangi data sensitif di profil** (migrasi `…2700`; mengubah keputusan 8, 29, dan aturan wali Fase 1).
+    - **Tahun lahir** menggantikan tempat dan tanggal lahir. Usia dihitung kira-kira: tahun ini − tahun lahir. Tahun lahir 1900 sampai tahun ini.
+    - Wilayah cukup **Provinsi** dan **Kota/Kabupaten**. Alamat lengkap, kecamatan, dan kelurahan tidak diisi lagi.
+    - Berlaku untuk profil anggota dan profil staf.
+    - **Data lama dihapus permanen** saat migrasi dijalankan: tanggal lahir menjadi tahun saja; tempat lahir, alamat, kecamatan, dan kelurahan dikosongkan lalu kolomnya dihapus. Provinsi dan kota/kabupaten tetap. Tercatat di log (`hapus_data_sensitif`). Cadangan Supabase lama masih memuat data itu sampai kedaluwarsa.
+    - **Profil lengkap** = nama, gender, foto, tahun lahir, provinsi + kota/kabupaten, status pernikahan, pendidikan, pekerjaan, baptis (nomor HP tetap tidak wajib).
+    - **Nama orang tua/wali tidak wajib.** Isiannya tampil untuk anggota berusia 18 tahun ke bawah. Pengingat: menurut UU PDP Pasal 25, data anak diproses dengan persetujuan orang tua/wali; pemimpin tetap memastikan persetujuan itu walau namanya tidak dicatat.
+    - Laporan demografi: rentang usia dan generasi dihitung dari tahun lahir; dimensi kecamatan/kelurahan dihapus dari database.

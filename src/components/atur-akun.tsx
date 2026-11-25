@@ -3,7 +3,7 @@ import { IsianLahir } from "@/components/isian-lahir";
 import { IsianSandi } from "@/components/isian-sandi";
 import { PilihWilayah } from "@/components/pilih-wilayah";
 import { PilihanEnum } from "@/components/profil";
-import { Isian, IsianPanjang, Kotak, Pesan } from "@/components/ui";
+import { Isian, Kotak, Pesan } from "@/components/ui";
 import { UnggahFoto } from "@/components/unggah-foto";
 import {
   catatPersetujuanStaf,
@@ -89,8 +89,8 @@ export function KotakSelesai({ sandiSementara }: { sandiSementara: boolean }) {
 
 type ProfilStaf = Pick<
   Profil,
-  | "gender" | "foto_path" | "tempat_lahir" | "tanggal_lahir" | "alamat" | "provinsi_kode" | "kota_kode"
-  | "kecamatan_kode" | "kelurahan_kode" | "status_nikah" | "pendidikan" | "pekerjaan" | "baptis"
+  | "gender" | "foto_path" | "tahun_lahir" | "provinsi_kode" | "kota_kode"
+  | "status_nikah" | "pendidikan" | "pekerjaan" | "baptis"
 >;
 
 /** Foto dan data pribadi Admin/Ketua Tim/Pemimpin yang bukan anggota kelompok. */
@@ -108,8 +108,7 @@ export async function ProfilStafUbah({
   const { data } = await supabase
     .from("profil_staf")
     .select(
-      "gender, foto_path, tempat_lahir, tanggal_lahir, alamat, provinsi_kode, kota_kode, kecamatan_kode, " +
-        "kelurahan_kode, status_nikah, pendidikan, pekerjaan, baptis",
+      "gender, foto_path, tahun_lahir, provinsi_kode, kota_kode, status_nikah, pendidikan, pekerjaan, baptis",
     )
     .eq("akun_id", akunId)
     .maybeSingle();
@@ -120,8 +119,8 @@ export async function ProfilStafUbah({
       <Kotak judul="Foto dan data pribadi">
         <div className="mb-3 space-y-2 text-sm">
           <p>
-            Foto dan data pribadi (gender, tempat dan tanggal lahir, alamat, status pernikahan, pendidikan,
-            pekerjaan) membantu pengurus mengenal para pemimpin.
+            Foto dan data pribadi (gender, tahun lahir, provinsi dan kota/kabupaten, status pernikahan,
+            pendidikan, pekerjaan) membantu pengurus mengenal para pemimpin.
           </p>
           <p>
             Data ini hanya dapat dilihat oleh Anda sendiri dan Admin, disimpan secara privat, dan tidak masuk
@@ -148,16 +147,9 @@ export async function ProfilStafUbah({
       <Kotak judul="Data pribadi">
         <FormAksi aksi={simpanProfilStaf} tombol="Simpan data pribadi" tanpaReset kembali={kembali}>
           <PilihanEnum label="Gender" name="gender" daftar={PILIHAN_GENDER} nilai={profil.gender} />
-          <Isian label="Tempat lahir" name="tempat_lahir" defaultValue={profil.tempat_lahir ?? ""} />
-          <IsianLahir tanggalAwal={profil.tanggal_lahir} waliNamaAwal={null} waliHubunganAwal={null} />
-          <IsianPanjang
-            label="Alamat lengkap"
-            name="alamat"
-            defaultValue={profil.alamat ?? ""}
-            placeholder="Nama jalan, nomor rumah, RT/RW"
-          />
+          <IsianLahir tahunAwal={profil.tahun_lahir} denganWali={false} />
           <PilihWilayah
-            awal={[profil.provinsi_kode, profil.kota_kode, profil.kecamatan_kode, profil.kelurahan_kode]}
+            awal={[profil.provinsi_kode, profil.kota_kode]}
             daftarAwal={wilayah}
           />
           <PilihanEnum label="Status pernikahan" name="status_nikah" daftar={PILIHAN_NIKAH} nilai={profil.status_nikah} />

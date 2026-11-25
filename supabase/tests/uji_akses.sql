@@ -145,12 +145,12 @@ insert into public.penugasan_peran (akun_id, peran, tim_id, kelompok_id, jabatan
   (tests.id('sari'),    'pemimpin',  null,              tests.id('kel_a1'), 'wakil'),
   (tests.id('dewi'),    'pemimpin',  null,              tests.id('kel_b1'), 'pemimpin');
 
-insert into public.anggota (id, kelompok_id, nama_lengkap, persetujuan_pada, gender, tanggal_lahir, pendidikan, foto_path) values
-  (tests.id('andi'), tests.id('kel_a1'), 'Andi', now(), 'laki_laki', '1990-01-01', 's1',     tests.id('andi') || '/foto.jpg'),
+insert into public.anggota (id, kelompok_id, nama_lengkap, persetujuan_pada, gender, tahun_lahir, pendidikan, foto_path) values
+  (tests.id('andi'), tests.id('kel_a1'), 'Andi', now(), 'laki_laki', 1990,         's1',     tests.id('andi') || '/foto.jpg'),
   (tests.id('ani'),  tests.id('kel_a1'), 'Ani',  null,  null,        null,         null,     null),
   (tests.id('cici'), tests.id('kel_a1'), 'Cici', null,  null,        null,         null,     null),
-  (tests.id('asep'), tests.id('kel_a2'), 'Asep', now(), 'laki_laki', '1985-05-05', 'sma_smk', null),
-  (tests.id('bima'), tests.id('kel_b1'), 'Bima', now(), 'laki_laki', '1992-02-02', 'd3',     tests.id('bima') || '/foto.jpg');
+  (tests.id('asep'), tests.id('kel_a2'), 'Asep', now(), 'laki_laki', 1985,         'sma_smk', null),
+  (tests.id('bima'), tests.id('kel_b1'), 'Bima', now(), 'laki_laki', 1992,         'd3',     tests.id('bima') || '/foto.jpg');
 
 -- Anggota yang sudah tidak aktif 13 bulan (harus terhapus otomatis).
 insert into public.anggota (id, kelompok_id, nama_lengkap, persetujuan_pada, foto_path, aktif, dinonaktifkan_pada)
@@ -212,7 +212,7 @@ select tests.periksa('Budi: tidak bisa membuka profil Bima (B1) walau tahu id-ny
 select tests.periksa('Budi: tidak melihat pertemuan B1',
   (select count(*) from public.pertemuan where kelompok_id = tests.id('kel_b1')) = 0);
 select tests.periksa('Budi: tidak bisa mengubah profil Bima (0 baris)',
-  tests.baris_terkena($q$ update public.anggota set alamat = 'x' where id = tests.id('bima') $q$) = 0);
+  tests.baris_terkena($q$ update public.anggota set tahun_lahir = 1990 where id = tests.id('bima') $q$) = 0);
 select tests.periksa('Budi: tidak bisa menghapus profil Bima (0 baris)',
   tests.baris_terkena($q$ delete from public.anggota where id = tests.id('bima') $q$) = 0);
 select tests.harus_gagal('Budi: tidak bisa menambah anggota ke kelompok B1',
@@ -222,24 +222,27 @@ select tests.harus_gagal('Budi: tidak bisa memindahkan Andi ke kelompok B1',
 select tests.harus_berhasil('Budi: bisa menambah anggota baru di A1',
   $q$ insert into public.anggota (kelompok_id, nama_lengkap) values (tests.id('kel_a1'), 'Anggota Baru') $q$);
 select tests.harus_gagal('Budi: tidak bisa mengisi data pribadi Ani sebelum ada persetujuan',
-  $q$ update public.anggota set alamat = 'Jl. Mawar 1' where id = tests.id('ani') $q$);
-select tests.harus_berhasil('Budi: bisa mencatat persetujuan Ani sekaligus mengisi alamat',
-  $q$ update public.anggota set persetujuan_pada = now(), alamat = 'Jl. Mawar 1' where id = tests.id('ani') $q$);
+  $q$ update public.anggota set tahun_lahir = 1990 where id = tests.id('ani') $q$);
+select tests.harus_berhasil('Budi: bisa mencatat persetujuan Ani sekaligus mengisi tahun lahir',
+  $q$ update public.anggota set persetujuan_pada = now(), tahun_lahir = 1990 where id = tests.id('ani') $q$);
 select tests.periksa('Budi: persetujuan Ani tercatat "pemimpin" oleh akun Budi',
   (select persetujuan_dicatat_oleh = 'pemimpin' and persetujuan_dicatat_akun = tests.id('budi')
    from public.anggota where id = tests.id('ani')));
-select tests.harus_gagal('Budi: anggota < 18 tahun tanpa wali ditolak',
-  $q$ insert into public.anggota (kelompok_id, nama_lengkap, persetujuan_pada, tanggal_lahir)
-      values (tests.id('kel_a1'), 'Remaja', now(), bantu.hari_ini_wib() - 365 * 15) $q$);
-select tests.harus_berhasil('Budi: anggota < 18 tahun dengan wali diterima',
-  $q$ insert into public.anggota (kelompok_id, nama_lengkap, persetujuan_pada, tanggal_lahir, wali_nama, wali_hubungan)
-      values (tests.id('kel_a1'), 'Remaja', now(), bantu.hari_ini_wib() - 365 * 15, 'Ibu Remaja', 'ibu') $q$);
+select tests.harus_berhasil('Budi: anggota <= 18 tahun tanpa wali diterima (wali tidak wajib, keputusan 46)',
+  $q$ insert into public.anggota (kelompok_id, nama_lengkap, persetujuan_pada, tahun_lahir)
+      values (tests.id('kel_a1'), 'Remaja', now(), extract(year from bantu.hari_ini_wib())::int - 15) $q$);
+select tests.harus_berhasil('Budi: anggota <= 18 tahun dengan wali diterima',
+  $q$ insert into public.anggota (kelompok_id, nama_lengkap, persetujuan_pada, tahun_lahir, wali_nama, wali_hubungan)
+      values (tests.id('kel_a1'), 'Remaja', now(), extract(year from bantu.hari_ini_wib())::int - 15, 'Ibu Remaja', 'ibu') $q$);
+select tests.harus_gagal('Budi: tahun lahir di masa depan ditolak',
+  $q$ update public.anggota set tahun_lahir = extract(year from bantu.hari_ini_wib())::int + 1 where id = tests.id('andi') $q$);
+select tests.harus_gagal('Budi: tahun lahir sebelum 1900 ditolak',
+  $q$ update public.anggota set tahun_lahir = 1850 where id = tests.id('andi') $q$);
 
 select tests.harus_gagal('Budi: pilihan wilayah yang tidak nyambung ditolak (kota Bandung di provinsi DKI)',
   $q$ update public.anggota set provinsi_kode = '31', kota_kode = '32.73' where id = tests.id('andi') $q$);
 select tests.harus_berhasil('Budi: pilihan wilayah yang nyambung diterima',
-  $q$ update public.anggota set provinsi_kode = '31', kota_kode = '31.71', kecamatan_kode = '31.71.01'
-      where id = tests.id('andi') $q$);
+  $q$ update public.anggota set provinsi_kode = '31', kota_kode = '31.71' where id = tests.id('andi') $q$);
 
 -- Catatan khusus
 select tests.harus_gagal('Budi: tidak bisa membaca tabel catatan secara langsung',
@@ -322,9 +325,9 @@ select tests.periksa('Andi: hanya melihat kelompoknya sendiri',
 select tests.periksa('Andi: tidak melihat data pertemuan/persembahan',
   (select count(*) from public.pertemuan) = 0);
 select tests.periksa('Andi: bisa mengubah alamatnya sendiri',
-  tests.baris_terkena($q$ update public.anggota set alamat = 'Jl. Melati 2' where id = tests.id('andi') $q$) = 1);
+  tests.baris_terkena($q$ update public.anggota set tahun_lahir = 1990 where id = tests.id('andi') $q$) = 1);
 select tests.periksa('Andi: tidak bisa mengubah profil Ani (0 baris)',
-  tests.baris_terkena($q$ update public.anggota set alamat = 'x' where id = tests.id('ani') $q$) = 0);
+  tests.baris_terkena($q$ update public.anggota set tahun_lahir = 1990 where id = tests.id('ani') $q$) = 0);
 select tests.harus_gagal('Andi: tidak bisa memindahkan dirinya ke kelompok lain',
   $q$ update public.anggota set kelompok_id = tests.id('kel_a2') where id = tests.id('andi') $q$);
 select tests.harus_gagal('Andi: tidak bisa mengubah status aktifnya',
@@ -399,7 +402,7 @@ select tests.periksa('Ketua A: tidak melihat pertemuan B1',
 select tests.periksa('Ketua A: melihat kehadiran A1',
   (select count(*) from public.kehadiran where kelompok_id = tests.id('kel_a1')) >= 2);
 select tests.periksa('Ketua A: hanya membaca A1, tidak bisa mengubah profil Andi (0 baris)',
-  tests.baris_terkena($q$ update public.anggota set alamat = 'x' where id = tests.id('andi') $q$) = 0);
+  tests.baris_terkena($q$ update public.anggota set tahun_lahir = 1990 where id = tests.id('andi') $q$) = 0);
 select tests.harus_gagal('Ketua A: tidak bisa membuat pertemuan untuk A1',
   $q$ insert into public.pertemuan (kelompok_id, tanggal) values (tests.id('kel_a1'), bantu.hari_ini_wib() + 7) $q$);
 select tests.periksa('Ketua A: bisa membaca catatan Andi (A1)',
@@ -449,7 +452,7 @@ select tests.periksa('Admin: melihat anggota semua tim',
 select tests.periksa('Admin: bisa membaca catatan Bima',
   (select count(*) from public.baca_catatan(tests.id('bima'))) = 1);
 select tests.periksa('Admin: bisa mengubah profil anggota kelompok mana pun (keputusan 12)',
-  tests.baris_terkena($q$ update public.anggota set alamat = 'x' where id = tests.id('bima') $q$) = 1);
+  tests.baris_terkena($q$ update public.anggota set tahun_lahir = 1990 where id = tests.id('bima') $q$) = 1);
 select tests.harus_berhasil('Admin: bisa menulis catatan (keputusan 18)',
   $q$ select public.tulis_catatan(tests.id('bima'), 'umum', 'x') $q$);
 select tests.harus_berhasil('Admin: bisa membuat tim baru',
@@ -649,15 +652,14 @@ select tests.periksa('Log: pemakaian undangan dan tautan atur ulang tercatat',
 -- Cici (anggota, persetujuannya sudah tercatat di uji sebelumnya) mengisi profilnya sendiri.
 select tests.masuk_sebagai('u_cici');
 select tests.harus_berhasil('Cici: mengisi profil lengkap dengan wilayah bertingkat',
-  $q$ update public.anggota set nama_lengkap = 'Cici Lestari', gender = 'perempuan', tempat_lahir = 'Bogor',
-        tanggal_lahir = '1995-03-04', alamat = 'Jl. Kenanga 3', provinsi_kode = '32', kota_kode = '32.71',
-        kecamatan_kode = '32.71.01', kelurahan_kode = '32.71.01.1001', status_nikah = 'single',
+  $q$ update public.anggota set nama_lengkap = 'Cici Lestari', gender = 'perempuan',
+        tahun_lahir = 1995, provinsi_kode = '32', kota_kode = '32.71', status_nikah = 'single',
         pendidikan = 's1', pekerjaan = 'karyawan'
       where id = tests.id('cici') $q$);
 select tests.harus_gagal('Cici: tidak bisa menghapus persetujuan yang sudah tercatat',
   $q$ update public.anggota set persetujuan_pada = null where id = tests.id('cici') $q$);
 select tests.harus_gagal('Cici: wilayah yang tidak nyambung ditolak',
-  $q$ update public.anggota set kecamatan_kode = '31.71.01' where id = tests.id('cici') $q$);
+  $q$ update public.anggota set kota_kode = '31.71' where id = tests.id('cici') $q$);
 select tests.harus_berhasil('Cici: mengunggah foto ke foldernya sendiri',
   $q$ insert into storage.objects (bucket_id, name) values ('foto-anggota', tests.id('cici') || '/1.jpg') $q$);
 select tests.harus_berhasil('Cici: memasang foto dari foldernya sendiri',
@@ -675,12 +677,12 @@ select tests.masuk_sebagai('ketua_a');
 select tests.periksa('Ketua Tim A: membaca profil Cici',
   (select count(*) from public.anggota where id = tests.id('cici')) = 1);
 select tests.periksa('Ketua Tim A: tidak bisa mengubah profil anggota A1',
-  tests.baris_terkena($q$ update public.anggota set alamat = 'x' where id = tests.id('cici') $q$) = 0);
+  tests.baris_terkena($q$ update public.anggota set tahun_lahir = 1990 where id = tests.id('cici') $q$) = 0);
 select tests.harus_gagal('Ketua Tim A: tidak bisa mengunggah foto anggota A1',
   $q$ insert into storage.objects (bucket_id, name) values ('foto-anggota', tests.id('cici') || '/k.jpg') $q$);
 select tests.masuk_sebagai('admin');
 select tests.periksa('Admin: bisa mengubah profil anggota A1 (keputusan 12)',
-  tests.baris_terkena($q$ update public.anggota set alamat = 'x' where id = tests.id('cici') $q$) = 1);
+  tests.baris_terkena($q$ update public.anggota set tahun_lahir = 1990 where id = tests.id('cici') $q$) = 1);
 
 -- Pemimpin menambah anggota tanpa HP, sekaligus mencatat persetujuan.
 select tests.masuk_sebagai('sari');
@@ -822,10 +824,10 @@ select tests.masuk_sebagai('dewi');
 select tests.harus_berhasil('Dewi (pemimpin B1): tetap bisa menulis catatan',
   $q$ select public.tulis_catatan(tests.id('bima'), 'umum', 'Catatan Dewi') $q$);
 select tests.periksa('Dewi: tetap tidak bisa mengubah anggota kelompok A1',
-  tests.baris_terkena($q$ update public.anggota set alamat = 'y' where id = tests.id('ani') $q$) = 0);
+  tests.baris_terkena($q$ update public.anggota set tahun_lahir = 1990 where id = tests.id('ani') $q$) = 0);
 select tests.masuk_sebagai('ketua_b');
 select tests.periksa('Ketua Tim B: tetap tidak bisa mengubah anggota B1',
-  tests.baris_terkena($q$ update public.anggota set alamat = 'y' where id = tests.id('bima') $q$) = 0);
+  tests.baris_terkena($q$ update public.anggota set tahun_lahir = 1990 where id = tests.id('bima') $q$) = 0);
 select tests.harus_gagal('Ketua Tim B: tetap tidak bisa membuat pertemuan B1',
   $q$ insert into public.pertemuan (kelompok_id, tanggal) values (tests.id('kel_b1'), bantu.hari_ini_wib() - 6) $q$);
 select tests.harus_gagal('Ketua Tim B: tetap tidak bisa menulis catatan',
@@ -1342,7 +1344,7 @@ select tests.masuk_sebagai('admin');
 select tests.periksa('Laporan semua tim: jumlah = anggota aktif sebenarnya (tiap dimensi)',
   (select bool_and(n = (select teks::bigint from tests.nilai where nama = 'n_aktif_semua'))
      from (select d, (select sum(jumlah) from public.laporan_demografi(d)) as n
-             from unnest(array['gender','rentang_usia','pendidikan','status_nikah','pekerjaan','provinsi','kota','kecamatan','kelurahan']) as d) x));
+             from unnest(array['gender','rentang_usia','pendidikan','status_nikah','pekerjaan','provinsi','kota','baptis','status_jemaat','generasi']) as d) x));
 select tests.periksa('Laporan termasuk anggota tidak aktif: jumlah = semua anggota',
   (select sum(jumlah) from public.laporan_demografi('gender', 'semua', null, false))
    = (select teks::bigint from tests.nilai where nama = 'n_semua'));
@@ -1580,7 +1582,7 @@ select tests.periksa('Profil staf Budi: waktu persetujuan terisi otomatis',
 select tests.harus_gagal('Budi: tidak bisa membuat profil staf untuk Dewi',
   $q$ insert into public.profil_staf (akun_id) values (tests.id('dewi')) $q$);
 select tests.periksa('Budi: mengubah profil stafnya (1 baris)',
-  tests.baris_terkena($q$ update public.profil_staf set tempat_lahir = 'Medan', provinsi_kode = '12' where akun_id = tests.id('budi') $q$) = 1);
+  tests.baris_terkena($q$ update public.profil_staf set tahun_lahir = 1980, provinsi_kode = '12' where akun_id = tests.id('budi') $q$) = 1);
 select tests.harus_gagal('Budi: wilayah yang tidak nyambung ditolak',
   $q$ update public.profil_staf set kota_kode = '31.71' where akun_id = tests.id('budi') $q$);
 select tests.harus_gagal('Budi: foto di folder orang lain ditolak',
@@ -1610,11 +1612,11 @@ select tests.harus_gagal('Andi (punya profil anggota): tidak bisa membuat profil
 
 select tests.masuk_sebagai('admin');
 select tests.periksa('Admin: membaca profil staf Budi',
-  exists (select 1 from public.profil_staf where akun_id = tests.id('budi') and tempat_lahir = 'Medan'));
+  exists (select 1 from public.profil_staf where akun_id = tests.id('budi') and tahun_lahir = 1980));
 select tests.periksa('Admin: melihat foto staf Budi',
   exists (select 1 from storage.objects where name like 'staf/' || tests.id('budi') || '/%'));
 select tests.periksa('Admin: tidak bisa mengubah profil staf Budi (0 baris)',
-  tests.baris_terkena($q$ update public.profil_staf set alamat = 'x' where akun_id = tests.id('budi') $q$) = 0);
+  tests.baris_terkena($q$ update public.profil_staf set tahun_lahir = 1990 where akun_id = tests.id('budi') $q$) = 0);
 
 select tests.masuk_sebagai_tamu();
 select tests.harus_gagal('Tamu: tidak bisa membaca profil staf', $q$ select * from public.profil_staf $q$);
@@ -1761,7 +1763,7 @@ select tests.harus_gagal('Ketua Tim A: gender anggota tanpa persetujuan ditolak'
 select tests.harus_berhasil('Ketua Tim A: status jemaat boleh diatur walau persetujuan belum ada',
   $q$ select public.ubah_data_jemaat(tests.id('tanpa_setuju'), null, true, 'tamu') $q$);
 select tests.periksa('Ketua Tim A: tetap tidak bisa mengubah isian lain profil Andi (0 baris)',
-  tests.baris_terkena($q$ update public.anggota set alamat = 'x' where id = tests.id('andi') $q$) = 0);
+  tests.baris_terkena($q$ update public.anggota set tahun_lahir = 1990 where id = tests.id('andi') $q$) = 0);
 
 select tests.masuk_sebagai('ketua_b');
 select tests.harus_gagal('Ketua Tim B: tidak bisa mengatur anggota Tim A',
@@ -1811,13 +1813,13 @@ select tests.periksa('Perubahan data jemaat tercatat di log',
 -- =====================================================================
 select tests.keluar();
 select tests.periksa('Generasi: batas tahun lahir tepat (1945/1946, 1964/1965, 1980/1981, 1996/1997, 2012/2013, 2024/2025)',
-  internal.generasi('1945-12-31') = 'silent'  and internal.generasi('1946-01-01') = 'boomers'
-  and internal.generasi('1964-12-31') = 'boomers' and internal.generasi('1965-01-01') = 'x'
-  and internal.generasi('1980-12-31') = 'x'     and internal.generasi('1981-01-01') = 'y'
-  and internal.generasi('1996-12-31') = 'y'     and internal.generasi('1997-01-01') = 'z'
-  and internal.generasi('2012-12-31') = 'z'     and internal.generasi('2013-01-01') = 'alpha'
-  and internal.generasi('2024-12-31') = 'alpha' and internal.generasi('2025-01-01') = 'beta'
-  and internal.generasi('1920-05-05') = 'silent' and internal.generasi(null) is null);
+  internal.generasi(1945) = 'silent'  and internal.generasi(1946) = 'boomers'
+  and internal.generasi(1964) = 'boomers' and internal.generasi(1965) = 'x'
+  and internal.generasi(1980) = 'x'     and internal.generasi(1981) = 'y'
+  and internal.generasi(1996) = 'y'     and internal.generasi(1997) = 'z'
+  and internal.generasi(2012) = 'z'     and internal.generasi(2013) = 'alpha'
+  and internal.generasi(2024) = 'alpha' and internal.generasi(2025) = 'beta'
+  and internal.generasi(1920) = 'silent' and internal.generasi(null) is null);
 
 select tests.masuk_sebagai('admin');
 select tests.periksa('Laporan Generasi: jumlah = anggota aktif; Andi (lahir 1990) di Gen Y',
@@ -2350,6 +2352,30 @@ select tests.harus_berhasil('Undangan profil ber-HP: akun baru tanpa nomor HP pr
 update public.akun set anggota_id = tests.id('jenny_profil') where id = tests.id('jenny_akun_2');
 select tests.periksa('Undangan profil ber-HP: setelah tersambung, nomor HP akun terisi dari profil',
   (select nomor_hp from public.akun where id = tests.id('jenny_akun_2')) = '628195857333');
+
+
+-- =====================================================================
+-- UJI 27 · MENGURANGI DATA SENSITIF (keputusan 46)
+-- =====================================================================
+select tests.keluar();
+select tests.periksa('Data sensitif: kolom tanggal lahir, tempat lahir, alamat, kecamatan, kelurahan sudah tidak ada',
+  not exists (select 1 from information_schema.columns
+              where table_schema = 'public' and table_name in ('anggota', 'profil_staf')
+                and column_name in ('tanggal_lahir', 'tempat_lahir', 'alamat', 'kecamatan_kode', 'kelurahan_kode')));
+select tests.periksa('Usia dari tahun lahir: tahun ini - tahun lahir',
+  internal.usia_dari_tahun(extract(year from bantu.hari_ini_wib())::int - 18) = 18
+  and internal.usia_dari_tahun(null) is null);
+select tests.periksa('Rentang usia dari tahun lahir (17 -> 13-17, 18 -> 18-24, 65 -> 65+)',
+  internal.rentang_usia(extract(year from bantu.hari_ini_wib())::int - 17) = '13-17'
+  and internal.rentang_usia(extract(year from bantu.hari_ini_wib())::int - 18) = '18-24'
+  and internal.rentang_usia(extract(year from bantu.hari_ini_wib())::int - 65) = '65+'
+  and internal.rentang_usia(null) is null);
+select tests.masuk_sebagai('admin');
+select tests.harus_gagal('Laporan: dimensi kecamatan sudah tidak ada',
+  $q$ select * from public.laporan_demografi('kecamatan') $q$);
+select tests.harus_berhasil('Laporan: dimensi kota/kabupaten tetap bisa dihitung',
+  $q$ select * from public.laporan_demografi('kota') $q$);
+select tests.keluar();
 
 
 -- =====================================================================
