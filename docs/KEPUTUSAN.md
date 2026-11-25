@@ -219,20 +219,20 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
 
 ## Diputuskan 23 November 2026
 
-44. **Laporan demografi: grafik pie dan persen per kategori.**
+48. **Laporan demografi: grafik pie dan persen per kategori.**
     - Pilihan baru **Bentuk grafik**: Batang (bawaan) atau Pie (donat, jumlah yang sudah mengisi di tengah). Berlaku untuk Ringkasan dan satu dimensi, juga saat dicetak.
     - Setiap kategori selalu menampilkan **jumlah dan persen** (mis. "24 orang · 48%"), di batang maupun keterangan pie. Pilihan "Tampilkan" (jumlah/persen) kini hanya untuk tabel per kelompok dan diberi label **Tabel per kelompok**.
     - Pie paling banyak **6 potongan**: bila kategori lebih banyak, 5 terbesar tampil dan sisanya digabung menjadi **Lainnya**, dengan rinciannya tetap ditulis di keterangan.
     - Warna kategori: palet 6 warna yang lolos uji buta warna (alat dataviz) di mode terang dan gelap; "Lainnya" abu-abu. Untuk gender, status pernikahan, baptis, dan status jemaat, setiap kategori selalu berwarna sama di cakupan mana pun.
     - Ekspor Excel tidak berubah. Tidak ada perubahan database.
-45. **Laporan proyek ketaatan: dikelompokkan per tim, dengan persen per kategori.**
+49. **Laporan proyek ketaatan: dikelompokkan per tim, dengan persen per kategori.**
     - Tabel **Per tim dan kelompok** menggantikan tabel Per kelompok: baris tebal berisi total tiap tim, lalu kelompok-kelompoknya di bawahnya, dan baris **Semua tim** di akhir (bila lebih dari satu tim). Cakupan satu kelompok tetap satu baris.
     - Setiap kategori (Selesai, Sedang, Belum, Tidak dikerjakan, Belum lapor) menampilkan **persen** dari jumlah penugasan di baris itu, dengan jumlahnya di bawah. Kolom **Penugasan** berisi jumlah penugasan dan jumlah proyek.
     - Bagian Per proyek diurutkan per tim, lalu per kelompok. Tidak ada perubahan database.
 
 ## Diputuskan 25 November 2026
 
-46. **Mengurangi data sensitif di profil** (migrasi `…2700`; mengubah keputusan 8, 29, dan aturan wali Fase 1).
+50. **Mengurangi data sensitif di profil** (migrasi `…2700`; mengubah keputusan 8, 29, dan aturan wali Fase 1).
     - **Tahun lahir** menggantikan tempat dan tanggal lahir. Usia dihitung kira-kira: tahun ini − tahun lahir. Tahun lahir 1900 sampai tahun ini.
     - Wilayah cukup **Provinsi** dan **Kota/Kabupaten**. Alamat lengkap, kecamatan, dan kelurahan tidak diisi lagi.
     - Berlaku untuk profil anggota dan profil staf.
@@ -240,3 +240,10 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - **Profil lengkap** = nama, gender, foto, tahun lahir, provinsi + kota/kabupaten, status pernikahan, pendidikan, pekerjaan, baptis (nomor HP tetap tidak wajib).
     - **Nama orang tua/wali tidak wajib.** Isiannya tampil untuk anggota berusia 18 tahun ke bawah. Pengingat: menurut UU PDP Pasal 25, data anak diproses dengan persetujuan orang tua/wali; pemimpin tetap memastikan persetujuan itu walau namanya tidak dicatat.
     - Laporan demografi: rentang usia dan generasi dihitung dari tahun lahir; dimensi kecamatan/kelurahan dihapus dari database.
+    - Catatan penomoran: komentar di migrasi `…2700` (sudah dijalankan, tidak diubah) menyebut "keputusan 46"; nomor yang benar adalah **50**. Keputusan 44–47 adalah keputusan 20 November.
+51. **Akun & peran: daftar ringkas per tim/kelompok dengan pencarian** (tanpa perubahan database).
+    - **Daftar akun** hanya berisi nama, cara masuk, label peran, dan tombol **Pilih**, dikelompokkan per **tim** lalu **kelompok** (A→Z). Ketua Tim tampil di "Pengurus tim". Akun yang terhubung ke beberapa tempat muncul di setiap tempat itu.
+    - Akun **tanpa tim/kelompok** (termasuk Admin yang tidak memegang tim/kelompok) di kelompok **paling atas**.
+    - **Kotak pencarian** menyaring langsung saat mengetik: nama, nama pengguna, email, nomor HP, tim, kelompok, atau peran.
+    - **Pilih** membuka halaman detail akun (`/admin/akun/[id]`): peran (Cabut, Beri peran), tautan atur ulang kata sandi, ubah cara masuk, ubah nama akun, dan hapus akun. Setelah akun dihapus, kembali ke daftar.
+    - Kotak **Buat akun baru** dan **Beri peran** di halaman daftar dilipat.

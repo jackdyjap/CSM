@@ -96,7 +96,7 @@ export async function simpanProfil(anggotaId: string, _: HasilAksi, fd: FormData
 
   const tahun = bacaTahunLahir(fd);
   if (tahun === "salah") return { galat: `Tahun lahir harus 4 angka antara ${TAHUN_LAHIR_MIN} dan ${tahunIni()}.` };
-  // Isian wali hanya untuk usia 18 tahun ke bawah, dan tidak wajib (keputusan 46).
+  // Isian wali hanya untuk usia 18 tahun ke bawah, dan tidak wajib (keputusan 50).
   const usia = usiaDariTahun(tahun);
   const bolehWali = usia !== null && usia <= BATAS_USIA_WALI;
 

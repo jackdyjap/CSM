@@ -63,7 +63,7 @@ export async function buatAkunBaru(_: HasilAksi, fd: FormData): Promise<HasilAks
   await admin.rpc("layanan_tandai_sandi", { p_akun: dibuat.akunId, p_sementara: true });
 
   if (kelompokId) revalidatePath(`/kelompok/${kelompokId}`);
-  revalidatePath("/admin/akun");
+  revalidatePath("/admin/akun", "layout");
   const caraMasuk = [dibuat.rapi.nama_pengguna, dibuat.rapi.email, tampilHp(dibuat.rapi.nomor_hp)]
     .filter(Boolean)
     .join(" / ");

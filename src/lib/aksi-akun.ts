@@ -95,7 +95,7 @@ export async function simpanProfilStaf(_: HasilAksi, fd: FormData): Promise<Hasi
   const tahun = bacaTahunLahir(fd);
   if (tahun === "salah") return { galat: `Tahun lahir harus 4 angka antara ${TAHUN_LAHIR_MIN} dan ${tahunIni()}.` };
 
-  // Wilayah: provinsi lalu kota/kabupaten, tanpa celah (keputusan 46).
+  // Wilayah: provinsi lalu kota/kabupaten, tanpa celah (keputusan 50).
   const provinsi = teks(fd, "provinsi_kode");
   const kota = provinsi ? teks(fd, "kota_kode") : null;
 

@@ -228,7 +228,7 @@ select tests.harus_berhasil('Budi: bisa mencatat persetujuan Ani sekaligus mengi
 select tests.periksa('Budi: persetujuan Ani tercatat "pemimpin" oleh akun Budi',
   (select persetujuan_dicatat_oleh = 'pemimpin' and persetujuan_dicatat_akun = tests.id('budi')
    from public.anggota where id = tests.id('ani')));
-select tests.harus_berhasil('Budi: anggota <= 18 tahun tanpa wali diterima (wali tidak wajib, keputusan 46)',
+select tests.harus_berhasil('Budi: anggota <= 18 tahun tanpa wali diterima (wali tidak wajib, keputusan 50)',
   $q$ insert into public.anggota (kelompok_id, nama_lengkap, persetujuan_pada, tahun_lahir)
       values (tests.id('kel_a1'), 'Remaja', now(), extract(year from bantu.hari_ini_wib())::int - 15) $q$);
 select tests.harus_berhasil('Budi: anggota <= 18 tahun dengan wali diterima',
@@ -2355,7 +2355,7 @@ select tests.periksa('Undangan profil ber-HP: setelah tersambung, nomor HP akun 
 
 
 -- =====================================================================
--- UJI 27 · MENGURANGI DATA SENSITIF (keputusan 46)
+-- UJI 27 · MENGURANGI DATA SENSITIF (keputusan 50)
 -- =====================================================================
 select tests.keluar();
 select tests.periksa('Data sensitif: kolom tanggal lahir, tempat lahir, alamat, kecamatan, kelurahan sudah tidak ada',

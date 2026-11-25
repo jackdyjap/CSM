@@ -42,7 +42,7 @@ export async function tambahKelompok(_: HasilAksi, fd: FormData): Promise<HasilA
 /** Admin mengubah nama pengguna, email, dan nomor HP sebuah akun (keputusan 25). */
 export async function ubahLoginAkun(akunId: string, _: HasilAksi, fd: FormData): Promise<HasilAksi> {
   const { supabase } = await wajibAdmin();
-  return simpanLogin(supabase, akunId, bacaDataLogin(fd), ["/admin/akun"]);
+  return simpanLogin(supabase, akunId, bacaDataLogin(fd), ["/admin/akun", `/admin/akun/${akunId}`]);
 }
 
 export async function beriPeran(_: HasilAksi, fd: FormData): Promise<HasilAksi> {
@@ -72,7 +72,7 @@ export async function beriPeran(_: HasilAksi, fd: FormData): Promise<HasilAksi> 
   if (error) {
     return { galat: error.code === "23505" ? "Akun ini sudah memiliki peran tersebut." : pesanGalat(error) };
   }
-  revalidatePath("/admin/akun");
+  revalidatePath("/admin/akun", "layout");
   return { sukses: "Peran diberikan." };
 }
 
@@ -90,7 +90,7 @@ export async function hapusPeran(penugasanId: string): Promise<HasilAksi> {
 
   const { error } = await supabase.from("penugasan_peran").delete().eq("id", penugasanId);
   if (error) return { galat: pesanGalat(error) };
-  revalidatePath("/admin/akun");
+  revalidatePath("/admin/akun", "layout");
   return { sukses: "Peran dicabut." };
 }
 
@@ -172,8 +172,8 @@ export async function hapusAkun(akunId: string, _: HasilAksi, fd: FormData): Pro
     p_hapus_profil: fd.get("hapus_profil") === "ya",
   });
   if (error) return { galat: pesanGalat(error) };
-  revalidatePath("/admin/akun");
-  return { sukses: "Akun dihapus." };
+  revalidatePath("/admin/akun", "layout");
+  redirect("/admin/akun?dihapus=1");
 }
 
 export async function ubahNamaAkun(akunId: string, _: HasilAksi, fd: FormData): Promise<HasilAksi> {
@@ -183,7 +183,7 @@ export async function ubahNamaAkun(akunId: string, _: HasilAksi, fd: FormData): 
   const { data, error } = await supabase.from("akun").update({ nama_tampilan: nama }).eq("id", akunId).select("id");
   if (error) return { galat: pesanGalat(error) };
   if (!data?.length) return { galat: "Akun tidak ditemukan." };
-  revalidatePath("/admin/akun");
+  revalidatePath("/admin/akun", "layout");
   return { sukses: "Nama akun diubah." };
 }
 

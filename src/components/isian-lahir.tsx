@@ -5,7 +5,7 @@ import { BATAS_USIA_WALI, TAHUN_LAHIR_MIN, tahunIni, usiaDariTahun } from "@/lib
 import { Isian } from "./ui";
 
 /**
- * Tahun lahir dengan usia kira-kira (keputusan 46). Untuk anggota berusia
+ * Tahun lahir dengan usia kira-kira (keputusan 50). Untuk anggota berusia
  * 18 tahun ke bawah, isian orang tua/wali muncul, tetapi TIDAK wajib.
  */
 export function IsianLahir({

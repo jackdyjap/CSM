@@ -64,7 +64,7 @@ export type Profil = {
   nama_lengkap: string;
   gender: keyof typeof PILIHAN_GENDER | null;
   foto_path: string | null;
-  /** Tahun lahir saja (keputusan 46). */
+  /** Tahun lahir saja (keputusan 50). */
   tahun_lahir: number | null;
   provinsi_kode: string | null;
   kota_kode: string | null;
@@ -88,7 +88,7 @@ type KolomKelengkapan = Pick<
 >;
 
 // Profil lengkap = semua isian terisi, kecuali nomor HP (opsional).
-// Wilayah dianggap terisi bila sudah sampai kota/kabupaten (keputusan 46).
+// Wilayah dianggap terisi bila sudah sampai kota/kabupaten (keputusan 50).
 const SYARAT_LENGKAP: [keyof KolomKelengkapan, string][] = [
   ["nama_lengkap", "Nama"],
   ["gender", "Gender"],
@@ -115,7 +115,7 @@ export function tahunIni(): number {
   return Number(hariIniWib().slice(0, 4));
 }
 
-/** Usia kira-kira dari tahun lahir: tahun ini - tahun lahir (keputusan 46). */
+/** Usia kira-kira dari tahun lahir: tahun ini - tahun lahir (keputusan 50). */
 export function usiaDariTahun(tahunLahir: number | null | undefined, tahun = tahunIni()): number | null {
   return tahunLahir ? tahun - tahunLahir : null;
 }
@@ -125,6 +125,6 @@ export function hariIniWib(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(new Date());
 }
 
-/** Anggota berusia 18 tahun ke bawah: isian orang tua/wali ditampilkan (tidak wajib, keputusan 46). */
+/** Anggota berusia 18 tahun ke bawah: isian orang tua/wali ditampilkan (tidak wajib, keputusan 50). */
 export const BATAS_USIA_WALI = 18;
 export const TAHUN_LAHIR_MIN = 1900;

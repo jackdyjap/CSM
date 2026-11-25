@@ -19,7 +19,7 @@ export function baptis(fd: FormData): boolean | null {
 }
 
 /**
- * Isian Tahun lahir (keputusan 46): null bila kosong, "salah" bila bukan
+ * Isian Tahun lahir (keputusan 50): null bila kosong, "salah" bila bukan
  * 4 angka antara 1900 dan tahun ini, selain itu tahunnya.
  */
 export function tahunLahir(fd: FormData): number | null | "salah" {

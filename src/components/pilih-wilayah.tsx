@@ -11,7 +11,7 @@ const TINGKAT = [
 
 /**
  * Dua menu pilihan wilayah yang saling bergantung: provinsi lalu kota/kabupaten
- * (keputusan 46: tanpa kecamatan dan kelurahan).
+ * (keputusan 50: tanpa kecamatan dan kelurahan).
  * Daftar tingkat berikutnya baru diambil setelah tingkat di atasnya dipilih,
  * supaya ringan di koneksi lambat.
  */
