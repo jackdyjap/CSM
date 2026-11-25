@@ -229,3 +229,10 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - Tabel **Per tim dan kelompok** menggantikan tabel Per kelompok: baris tebal berisi total tiap tim, lalu kelompok-kelompoknya di bawahnya, dan baris **Semua tim** di akhir (bila lebih dari satu tim). Cakupan satu kelompok tetap satu baris.
     - Setiap kategori (Selesai, Sedang, Belum, Tidak dikerjakan, Belum lapor) menampilkan **persen** dari jumlah penugasan di baris itu, dengan jumlahnya di bawah. Kolom **Penugasan** berisi jumlah penugasan dan jumlah proyek.
     - Bagian Per proyek diurutkan per tim, lalu per kelompok. Tidak ada perubahan database.
+
+47. **Akun & peran: daftar ringkas per tim/kelompok dengan pencarian** (tanpa perubahan database).
+    - **Daftar akun** hanya berisi nama, cara masuk, label peran, dan tombol **Pilih**, dikelompokkan per **tim** lalu **kelompok** (A→Z). Ketua Tim tampil di "Pengurus tim". Akun yang terhubung ke beberapa tempat muncul di setiap tempat itu.
+    - Akun **tanpa tim/kelompok** (termasuk Admin yang tidak memegang tim/kelompok) di kelompok **paling atas**.
+    - **Kotak pencarian** menyaring langsung saat mengetik: nama, nama pengguna, email, nomor HP, tim, kelompok, atau peran.
+    - **Pilih** membuka halaman detail akun (`/admin/akun/[id]`): peran (Cabut, Beri peran), tautan atur ulang kata sandi, ubah cara masuk, ubah nama akun, dan hapus akun. Setelah akun dihapus, kembali ke daftar.
+    - Kotak **Buat akun baru** dan **Beri peran** di halaman daftar dilipat.
