@@ -6,7 +6,7 @@ import { ProfilUbah } from "@/components/profil";
 import { KotakProyekSaya } from "@/components/proyek-saya";
 import { RiwayatKehadiran } from "@/components/riwayat-kehadiran";
 import { Judul, Pesan, TautanTombol } from "@/components/ui";
-import { bacaProfil } from "@/lib/profil-server";
+import { bacaProfilAman } from "@/lib/profil-server";
 import { wajibMasuk } from "@/lib/sesi";
 
 /**
@@ -49,7 +49,16 @@ export default async function HalamanAturProfil() {
     );
   }
 
-  const profil = await bacaProfil(supabase, peran.anggota.anggota_id);
+  const { profil, galat } = await bacaProfilAman(supabase, peran.anggota.anggota_id);
+  if (galat) {
+    return (
+      <main>
+        <Judul>Profil saya</Judul>
+        <Pesan jenis="galat">{galat}</Pesan>
+        <TautanTombol href="/beranda">← Beranda</TautanTombol>
+      </main>
+    );
+  }
   if (!profil) redirect("/beranda");
 
   return (

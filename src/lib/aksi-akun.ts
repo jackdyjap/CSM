@@ -86,6 +86,11 @@ export async function catatPersetujuanStaf(_: HasilAksi, fd: FormData): Promise<
   const { supabase, peran } = await wajibMasuk();
   // Waktu persetujuan diisi otomatis oleh database.
   const { error } = await supabase.from("profil_staf").insert({ akun_id: peran.akun_id });
+  // Persetujuan sudah tercatat sebelumnya: anggap berhasil dan buka isiannya.
+  if (error?.code === "23505") {
+    revalidatePath("/profil");
+    return { sukses: "Persetujuan Anda sudah tercatat sebelumnya. Isian data pribadi dibuka." };
+  }
   if (error) return { galat: pesanGalat(error, "Persetujuan tidak bisa dicatat. Coba lagi.") };
   revalidatePath("/profil");
   return { sukses: "Persetujuan tercatat. Sekarang profil bisa diisi." };

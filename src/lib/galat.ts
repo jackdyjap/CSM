@@ -21,3 +21,13 @@ export function pesanGalat(galat: GalatDb, cadangan = "Terjadi kesalahan. Coba l
       return cadangan;
   }
 }
+
+/**
+ * Pesan untuk data yang GAGAL DIBACA (bukan "tidak ada"), beserta kode dan
+ * pesan asli database, supaya penyebabnya langsung terlihat dan bisa
+ * dilaporkan (mis. migrasi database yang belum dijalankan).
+ */
+export function pesanBacaGagal(galat: GalatDb, apa: string): string {
+  const asli = [galat?.code, galat?.message].filter(Boolean).join(": ");
+  return `${apa} belum bisa dibaca. Sampaikan pesan ini kepada Admin${asli ? ` (${asli})` : ""}.`;
+}

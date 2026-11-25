@@ -5,9 +5,9 @@ import { KotakKartu } from "@/components/kotak-kartu";
 import { ProyekAnggota } from "@/components/proyek-anggota";
 import { ProfilBaca, ProfilUbah } from "@/components/profil";
 import { FormAksi } from "@/components/form-aksi";
-import { Judul, Kotak, Lipatan, Pilihan, TautanTombol } from "@/components/ui";
+import { Judul, Kotak, Lipatan, Pesan, Pilihan, TautanTombol } from "@/components/ui";
 import { hapusAnggota, pindahKelompok } from "@/lib/aksi-profil";
-import { bacaProfil } from "@/lib/profil-server";
+import { bacaProfilAman } from "@/lib/profil-server";
 import { aksesKelompok, kelompokKelolaan, wajibMasuk } from "@/lib/sesi";
 
 export default async function HalamanAnggota({ params }: PageProps<"/kelompok/[id]/anggota/[anggota]">) {
@@ -15,7 +15,16 @@ export default async function HalamanAnggota({ params }: PageProps<"/kelompok/[i
   const { supabase, peran } = await wajibMasuk();
 
   // Aturan akses database menentukan siapa yang boleh membaca profil ini.
-  const profil = await bacaProfil(supabase, anggota);
+  const { profil, galat } = await bacaProfilAman(supabase, anggota);
+  if (galat) {
+    return (
+      <main>
+        <Judul>Profil anggota</Judul>
+        <Pesan jenis="galat">{galat}</Pesan>
+        <TautanTombol href={`/kelompok/${id}`}>← Kembali</TautanTombol>
+      </main>
+    );
+  }
   if (!profil || profil.kelompok_id !== id) redirect("/beranda");
 
   const kelompok = await kelompokKelolaan(supabase, peran, id);

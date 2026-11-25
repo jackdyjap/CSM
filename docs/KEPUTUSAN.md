@@ -251,3 +251,7 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - Tampilan awal hanya list kelompok (dikelompokkan per tim, A→Z) dengan jumlah proyek dan persen selesai.
     - **Lihat** membuka rincian kelompok itu di tempat: setiap proyek (tanggal diberikan, tenggat, selesai X dari Y) dan pelaksanaannya per anggota (status, hasil/alasan, catatan pemimpin). **Tutup** menutupnya lagi.
     - Tombol **Buka semua / Tutup semua**; Cetak / simpan PDF mencetak rincian yang sedang terbuka.
+53. **Galat baca data tidak lagi tersamar** (tanpa perubahan database).
+    - Bila profil anggota atau data pribadi staf **gagal dibaca** (mis. migrasi database belum dijalankan), halaman menampilkan pesan galat beserta kode dan pesan asli database untuk dilaporkan ke Admin. Sebelumnya profil staf menampilkan kotak persetujuan lagi, dan profil anggota diam-diam kembali ke Beranda.
+    - **Setuju dan isi profil** yang diketuk padahal persetujuan sudah tercatat dianggap berhasil dan langsung membuka isian (bukan "Data yang sama sudah ada").
+    - Pelajaran 25 November: `susulan_migrasi.sql` harus selalu diambil dari cabang `main`; tautan ke cabang lain bisa memuat versi lama tanpa migrasi terbaru.
