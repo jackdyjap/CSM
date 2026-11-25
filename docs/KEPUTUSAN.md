@@ -265,3 +265,8 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - **Hanya dibaca di aplikasi**: PDF ditampilkan halaman demi halaman (pdf.js 4.10.38, Apache-2.0) tanpa tombol unduh/cetak, tautan berkas berlaku 5 menit; video diputar lewat pemutar YouTube (youtube-nocookie) di dalam aplikasi.
     - **Batas yang disadari**: tautan video YouTube "Tidak publik" tetap bisa dibagikan oleh siapa pun yang mengetahuinya (tombol bawaan pemutar YouTube); tangkapan/rekaman layar tidak bisa dicegah.
     - Unggah dan hapus tercatat di log.
+55. **Aplikasi bisa dipasang di layar utama HP (PWA)**, tetap aplikasi web, tidak lewat App Store/Play Store.
+    - Manifest (`src/app/manifest.ts`): nama "Absensi CSM", mulai di `/beranda`, layar penuh (`standalone`), warna tema biru `#1d5fbf`. Ikon 192/512 px dan ikon *maskable* di `public/ikon/`, ikon iPhone `src/app/apple-icon.png` (dibuat dengan PIL: centang putih + "CSM" di atas biru).
+    - iPhone: `appleWebApp` (layar penuh, judul "Absensi CSM"). Manifest dikecualikan dari halaman login di `src/proxy.ts`.
+    - **Tanpa service worker**: tidak ada mode offline dan tidak ada data yang di-cache di HP, supaya data pribadi dan sesi login tidak tertinggal. Diperiksa Chromium: tidak ada galat kelayakan pasang.
+    - Cara memasang: Android (Chrome) menu ⋮ → Instal aplikasi; iPhone (Safari) Bagikan → Tambahkan ke Layar Utama.
