@@ -1,4 +1,4 @@
-// Grafik progres Saat Teduh (keputusan 61). Warna memakai token yang sama dengan
+// Grafik progres Saat Teduh (keputusan 61) dan ringkasan Masukan (keputusan 63). Warna memakai token yang sama dengan
 // laporan demografi: --kat-1 (biru) untuk "Melaksanakan", --kat-lain (abu-abu,
 // netral) untuk "Belum". Identitas tidak bergantung warna saja: setiap bagian
 // berlabel nama, jumlah, dan persen; tooltip saat disentuh/diarahkan.
@@ -26,14 +26,28 @@ function jalur(awal: number, akhir: number) {
 
 const pct = (a: number, b: number) => (b > 0 ? Math.round((a / b) * 100) : 0);
 
-/** Donat dua bagian: anggota ber-akun yang melaksanakan saat teduh vs belum. */
-export function GrafikPelaksana({ pelaksana, dari }: { pelaksana: number; dari: number }) {
-  if (dari === 0) return <p className="text-sm opacity-70">Belum ada anggota ber-akun untuk digambarkan.</p>;
-  const bagian = [
-    { kunci: "ya", label: "Melaksanakan", total: pelaksana, warna: "var(--kat-1)" },
-    { kunci: "belum", label: "Belum", total: dari - pelaksana, warna: "var(--kat-lain)" },
-  ].filter((b) => b.total > 0);
-  const teks = (n: number) => `${n} anggota · ${pct(n, dari)}%`;
+export type BagianDonat = { kunci: string; label: string; total: number; warna: string };
+
+/**
+ * Donat (pie berlubang) beberapa bagian, dengan keterangan di sampingnya
+ * (warna, nama, jumlah, persen) dan angka utama di tengah.
+ * Potongan dipisah garis 2px warna kartu; tooltip bawaan saat disentuh.
+ */
+export function GrafikDonat({
+  bagian,
+  satuan,
+  tengah,
+  teksTengah,
+}: {
+  bagian: BagianDonat[];
+  satuan: string;
+  tengah: string;
+  teksTengah: string;
+}) {
+  const dari = bagian.reduce((n, b) => n + b.total, 0);
+  if (dari === 0) return <p className="text-sm opacity-70">Belum ada data untuk digambarkan.</p>;
+  const ada = bagian.filter((b) => b.total > 0);
+  const teks = (n: number) => `${n} ${satuan} · ${pct(n, dari)}%`;
   let sudut = 0;
 
   return (
@@ -44,19 +58,12 @@ export function GrafikPelaksana({ pelaksana, dari }: { pelaksana: number; dari: 
         role="img"
         aria-label={bagian.map((b) => `${b.label}: ${teks(b.total)}`).join("; ")}
       >
-        {bagian.length === 1 ? (
-          <circle
-            cx={PUSAT}
-            cy={PUSAT}
-            r={(R_LUAR + R_DALAM) / 2}
-            fill="none"
-            stroke={bagian[0].warna}
-            strokeWidth={R_LUAR - R_DALAM}
-          >
-            <title>{`${bagian[0].label}: ${teks(bagian[0].total)}`}</title>
+        {ada.length === 1 ? (
+          <circle cx={PUSAT} cy={PUSAT} r={(R_LUAR + R_DALAM) / 2} fill="none" stroke={ada[0].warna} strokeWidth={R_LUAR - R_DALAM}>
+            <title>{`${ada[0].label}: ${teks(ada[0].total)}`}</title>
           </circle>
         ) : (
-          bagian.map((b) => {
+          ada.map((b) => {
             const awal = sudut;
             sudut += (b.total / dari) * Math.PI * 2;
             return (
@@ -74,18 +81,15 @@ export function GrafikPelaksana({ pelaksana, dari }: { pelaksana: number; dari: 
           })
         )}
         <text x={PUSAT} y={PUSAT + 2} textAnchor="middle" className="fill-current text-[26px] font-bold">
-          {pct(pelaksana, dari)}%
+          {tengah}
         </text>
         <text x={PUSAT} y={PUSAT + 20} textAnchor="middle" className="fill-current text-[11px] opacity-70">
-          melaksanakan
+          {teksTengah}
         </text>
       </svg>
       <ul className="space-y-1 text-sm">
-        {[
-          { label: "Melaksanakan", total: pelaksana, warna: "var(--kat-1)" },
-          { label: "Belum", total: dari - pelaksana, warna: "var(--kat-lain)" },
-        ].map((b) => (
-          <li key={b.label} className="flex items-center gap-2">
+        {bagian.map((b) => (
+          <li key={b.kunci} className="flex items-center gap-2">
             <span aria-hidden className="inline-block h-3 w-3 flex-none rounded-sm" style={{ background: b.warna }} />
             <span className="flex-1">{b.label}</span>
             <span className="tabular-nums">{teks(b.total)}</span>
@@ -96,7 +100,23 @@ export function GrafikPelaksana({ pelaksana, dari }: { pelaksana: number; dari: 
   );
 }
 
-export type BatangTeduh = { kunci: string; label: string; nilai: number; teks: string };
+/** Donat dua bagian: anggota ber-akun yang melaksanakan saat teduh vs belum. */
+export function GrafikPelaksana({ pelaksana, dari }: { pelaksana: number; dari: number }) {
+  if (dari === 0) return <p className="text-sm opacity-70">Belum ada anggota ber-akun untuk digambarkan.</p>;
+  return (
+    <GrafikDonat
+      satuan="anggota"
+      tengah={`${pct(pelaksana, dari)}%`}
+      teksTengah="melaksanakan"
+      bagian={[
+        { kunci: "ya", label: "Melaksanakan", total: pelaksana, warna: "var(--kat-1)" },
+        { kunci: "belum", label: "Belum", total: dari - pelaksana, warna: "var(--kat-lain)" },
+      ]}
+    />
+  );
+}
+
+export type BatangTeduh = { kunci: string; label: string; nilai: number; teks: string; warna?: string };
 
 /**
  * Batang horizontal satu seri (tanpa legenda; judul kotak menyebut isinya).
@@ -113,12 +133,15 @@ export function GrafikBatangTeduh({ batang, skala }: { batang: BatangTeduh[]; sk
           aria-label={`${b.label}: ${b.teks}`}
           className="group relative grid grid-cols-[minmax(5rem,30%)_1fr] items-center gap-2 rounded outline-offset-2"
         >
-          <span className="truncate text-sm leading-tight">{b.label}</span>
+          <span className="text-sm leading-tight break-words">{b.label}</span>
           <span className="flex items-center gap-2">
             <span
               aria-hidden
               className="block h-5 rounded-r-[4px] bg-seri transition-opacity group-hover:opacity-80"
-              style={{ width: `max(2px, calc((100% - 5.5rem) * ${Math.min(b.nilai, maks) / maks}))` }}
+              style={{
+                width: `max(2px, calc((100% - 5.5rem) * ${Math.min(b.nilai, maks) / maks}))`,
+                ...(b.warna ? { background: b.warna } : {}),
+              }}
             />
             <span className="text-sm whitespace-nowrap tabular-nums">{b.teks}</span>
           </span>
