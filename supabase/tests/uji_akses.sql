@@ -2639,6 +2639,84 @@ select tests.periksa('Saat teduh: catatan ikut terhapus bila akunnya dihapus',
 
 
 -- =====================================================================
+-- UJI 30 · RINGKASAN SAAT TEDUH PER BULAN (keputusan 59)
+-- Memakai tim/kelompok/akun dari UJI 29. Bulan uji: Juni 2025.
+-- =====================================================================
+select tests.keluar();
+insert into tests.ids values
+  ('rs_ang_cici', '99999999-0000-0000-0000-000000000001'),
+  ('rs_ang_tanpa','99999999-0000-0000-0000-000000000002'),
+  ('rs_ang_nonak','99999999-0000-0000-0000-000000000003'),
+  ('rs_u_cici',   '99999999-0000-0000-0000-0000000000a1'),
+  ('rs_u_nonak',  '99999999-0000-0000-0000-0000000000a2');
+insert into auth.users (id, email, raw_user_meta_data) values
+  (tests.id('rs_u_cici'),  'rs_cici@contoh.test',  '{"nama":"Cici Teduh"}'),
+  (tests.id('rs_u_nonak'), 'rs_nonak@contoh.test', '{"nama":"Nonaktif Teduh"}');
+insert into public.anggota (id, kelompok_id, nama_lengkap) values
+  (tests.id('rs_ang_cici'),  tests.id('st_kel_a1'), 'Cici Teduh'),
+  (tests.id('rs_ang_tanpa'), tests.id('st_kel_a1'), 'Tanpa Akun Teduh');
+insert into public.anggota (id, kelompok_id, nama_lengkap, aktif, dinonaktifkan_pada) values
+  (tests.id('rs_ang_nonak'), tests.id('st_kel_a1'), 'Nonaktif Teduh', false, now());
+update public.akun set anggota_id = tests.id('rs_ang_cici')  where id = tests.id('rs_u_cici');
+update public.akun set anggota_id = tests.id('rs_ang_nonak') where id = tests.id('rs_u_nonak');
+insert into public.saat_teduh (akun_id, tanggal, jam_mulai, durasi_menit, versi, kitab, pasal) values
+  (tests.id('st_u_andi'),  '2025-06-03', '05:00', 10, 'tb', 1, 1),
+  (tests.id('st_u_andi'),  '2025-06-03', '21:00', 20, 'tb', 1, 2),
+  (tests.id('st_u_andi'),  '2025-06-10', '05:00', 15, 'tb', 1, 3),
+  (tests.id('st_u_andi'),  '2025-07-01', '05:00', 30, 'tb', 1, 4),
+  (tests.id('rs_u_nonak'), '2025-06-05', '05:00', 30, 'tb', 1, 1);
+
+select tests.masuk_sebagai('st_u_pem_a1');
+select tests.periksa('Ringkasan saat teduh: pemimpin hanya melihat kelompoknya',
+  (select array_agg(kelompok_id) from public.ringkasan_saat_teduh('2025-06-15')) = array[tests.id('st_kel_a1')]);
+select tests.periksa('Ringkasan saat teduh: 3 anggota aktif, 2 punya akun, 1 bersaat teduh, 3 catatan, 45 menit',
+  (select (anggota_aktif, punya_akun, bersaat_teduh, jumlah_catatan, total_menit) = (3, 2, 1, 3, 45)
+   from public.ringkasan_saat_teduh('2025-06-15') where kelompok_id = tests.id('st_kel_a1')));
+select tests.periksa('Ringkasan saat teduh: per anggota (Andi 2 hari, 3 catatan, 45 menit; Cici 0; tanpa akun tanpa akun_id)',
+  (select jumlah_hari = 2 and jumlah_catatan = 3 and total_menit = 45
+   from public.saat_teduh_per_anggota(tests.id('st_kel_a1'), '2025-06-01') where anggota_id = tests.id('st_ang_a1'))
+  and (select jumlah_catatan = 0 and akun_id = tests.id('rs_u_cici')
+   from public.saat_teduh_per_anggota(tests.id('st_kel_a1'), '2025-06-01') where anggota_id = tests.id('rs_ang_cici'))
+  and (select akun_id is null
+   from public.saat_teduh_per_anggota(tests.id('st_kel_a1'), '2025-06-01') where anggota_id = tests.id('rs_ang_tanpa')));
+select tests.periksa('Ringkasan saat teduh: anggota tidak aktif tidak ikut dihitung',
+  not exists (select 1 from public.saat_teduh_per_anggota(tests.id('st_kel_a1'), '2025-06-01')
+              where anggota_id = tests.id('rs_ang_nonak')));
+select tests.periksa('Ringkasan saat teduh: bulan lain dihitung terpisah (Juli: 1 catatan)',
+  (select jumlah_catatan = 1 and bersaat_teduh = 1
+   from public.ringkasan_saat_teduh('2025-07-20') where kelompok_id = tests.id('st_kel_a1')));
+select tests.harus_gagal('Ringkasan saat teduh: pemimpin tidak bisa membuka rincian kelompok tim lain',
+  $q$ select * from public.saat_teduh_per_anggota(tests.id('st_kel_b1'), '2025-06-01') $q$);
+
+select tests.masuk_sebagai('st_u_pem_a2');
+select tests.harus_gagal('Ringkasan saat teduh: pemimpin kelompok lain tidak bisa membuka rincian kelompok A1',
+  $q$ select * from public.saat_teduh_per_anggota(tests.id('st_kel_a1'), '2025-06-01') $q$);
+
+select tests.masuk_sebagai('st_u_ketua_a');
+select tests.periksa('Ringkasan saat teduh: Ketua Tim melihat semua kelompok di timnya saja (A1, A2)',
+  (select array_agg(kelompok_id order by kelompok_nama) from public.ringkasan_saat_teduh('2025-06-15'))
+    = array[tests.id('st_kel_a1'), tests.id('st_kel_a2')]);
+select tests.harus_berhasil('Ringkasan saat teduh: Ketua Tim membuka rincian kelompok di timnya',
+  $q$ select * from public.saat_teduh_per_anggota(tests.id('st_kel_a1'), '2025-06-01') $q$);
+
+select tests.masuk_sebagai('admin');
+select tests.periksa('Ringkasan saat teduh: Admin melihat semua kelompok, angkanya sama',
+  (select count(*) from public.ringkasan_saat_teduh('2025-06-15')) = (select count(*) from public.kelompok)
+  and (select bersaat_teduh = 1 and jumlah_catatan = 3
+       from public.ringkasan_saat_teduh('2025-06-15') where kelompok_id = tests.id('st_kel_a1')));
+
+select tests.masuk_sebagai('st_u_kosong');
+select tests.periksa('Ringkasan saat teduh: akun tanpa peran tidak melihat kelompok apa pun',
+  (select count(*) from public.ringkasan_saat_teduh('2025-06-15')) = 0);
+select tests.harus_gagal('Ringkasan saat teduh: akun tanpa peran tidak bisa membuka rincian',
+  $q$ select * from public.saat_teduh_per_anggota(tests.id('st_kel_a1'), '2025-06-01') $q$);
+select tests.masuk_sebagai_tamu();
+select tests.harus_gagal('Ringkasan saat teduh: tamu tidak bisa membuka ringkasan',
+  $q$ select * from public.ringkasan_saat_teduh('2025-06-15') $q$);
+select tests.keluar();
+
+
+-- =====================================================================
 -- RINGKASAN
 -- =====================================================================
 select no, case when lulus then 'LULUS' else 'GAGAL' end as hasil, nama, info
