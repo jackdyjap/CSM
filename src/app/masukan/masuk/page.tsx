@@ -76,7 +76,7 @@ export default async function HalamanMasukanMasuk({ searchParams }: PageProps<"/
 
   return (
     <main>
-      <Judul kecil={peran.admin ? "Admin: semua masukan" : undefined}>Masukan masuk</Judul>
+      <Judul kecil={peran.admin ? "Admin: semua masukan" : undefined}>Laporan Masukan</Judul>
       <div className="mb-4 flex flex-wrap gap-2">
         <TautanTombol href="/beranda">← Beranda</TautanTombol>
         <TautanTombol href="/masukan">Kirim masukan</TautanTombol>

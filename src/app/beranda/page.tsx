@@ -129,7 +129,7 @@ export default async function HalamanBeranda() {
           <TautanTombol href="/masukan">Kirim masukan</TautanTombol>
           {penerimaMasukan ? (
             <TautanTombol href="/masukan/masuk" jenis={masukanBaru ? "utama" : "biasa"}>
-              Masukan masuk{masukanBaru ? ` (${masukanBaru} baru)` : ""}
+              Laporan Masukan{masukanBaru ? ` (${masukanBaru} baru)` : ""}
             </TautanTombol>
           ) : null}
         </div>
