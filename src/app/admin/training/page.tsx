@@ -36,19 +36,25 @@ export default async function HalamanAdminTraining() {
           <SaringCari label="Cari judul, keterangan, atau peruntukan…" jumlah={bahan.length}>
             <ul className="divide-y divide-black/10 dark:divide-white/10">
               {bahan.map((b) => (
-                <ButirTraining key={b.id} b={b} admin>
-                  <Lipatan judul="Ubah / hapus">
+                <ButirTraining
+                  key={b.id}
+                  b={b}
+                  admin
+                  aksi={
+                    <FormAksi
+                      aksi={hapusTraining.bind(null, b.id, b.lokasi)}
+                      tombol="Hapus"
+                      jenisTombol="bahaya"
+                      konfirmasi={`Hapus bahan "${b.judul}"? Tindakan ini tidak bisa dibatalkan.`}
+                    />
+                  }
+                >
+                  <Lipatan judul="Ubah judul, keterangan, atau peruntukan">
                     <FormAksi aksi={ubahTraining.bind(null, b.id)} tombol="Simpan perubahan" jenisTombol="biasa" tanpaReset>
                       <Isian label="Judul" name="judul" defaultValue={b.judul} maxLength={150} required />
                       <IsianPanjang label="Keterangan (opsional)" name="keterangan" defaultValue={b.keterangan ?? ""} maxLength={1000} />
                       <IsianPeruntukan awal={b} />
                     </FormAksi>
-                    <FormAksi
-                      aksi={hapusTraining.bind(null, b.id, b.lokasi)}
-                      tombol="Hapus bahan"
-                      jenisTombol="bahaya"
-                      konfirmasi={`Hapus bahan "${b.judul}"? Tindakan ini tidak bisa dibatalkan.`}
-                    />
                   </Lipatan>
                 </ButirTraining>
               ))}
