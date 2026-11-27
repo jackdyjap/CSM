@@ -14,7 +14,7 @@ export function DaftarSaatTeduh({ catatan, bolehUbah = false }: { catatan: Catat
     <ul className="divide-y divide-black/10 dark:divide-white/10">
       {catatan.map((c) => (
         <li key={c.id}>
-          <details className="group">
+          <details className="group/catatan">
             <summary className="-mx-2 flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-lg px-2 py-1 hover:bg-black/5 dark:hover:bg-white/10 [&::-webkit-details-marker]:hidden">
               <span className="min-w-0 flex-1">
                 <span className="block truncate font-medium">{teksBacaan(c)}</span>
@@ -23,8 +23,8 @@ export function DaftarSaatTeduh({ catatan, bolehUbah = false }: { catatan: Catat
                 </span>
               </span>
               <span className="text-sm opacity-60" aria-hidden>
-                <span className="group-open:hidden">▾</span>
-                <span className="hidden group-open:inline">▴</span>
+                <span className="group-open/catatan:hidden">▾</span>
+                <span className="hidden group-open/catatan:inline">▴</span>
               </span>
             </summary>
             <div className="mb-3 ml-1 mt-1 space-y-2 border-l-2 border-black/10 pl-3 text-sm dark:border-white/15">

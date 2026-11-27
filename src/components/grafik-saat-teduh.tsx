@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 // Grafik progres Saat Teduh (keputusan 61) dan ringkasan Masukan (keputusan 63). Warna memakai token yang sama dengan
 // laporan demografi: --kat-1 (biru) untuk "Melaksanakan", --kat-lain (abu-abu,
 // netral) untuk "Belum". Identitas tidak bergantung warna saja: setiap bagian
@@ -116,7 +118,7 @@ export function GrafikPelaksana({ pelaksana, dari }: { pelaksana: number; dari: 
   );
 }
 
-export type BatangTeduh = { kunci: string; label: string; nilai: number; teks: string; warna?: string };
+export type BatangTeduh = { kunci: string; label: string; nilai: number; teks: string; warna?: string; href?: string };
 
 /**
  * Batang horizontal satu seri (tanpa legenda; judul kotak menyebut isinya).
@@ -133,7 +135,13 @@ export function GrafikBatangTeduh({ batang, skala }: { batang: BatangTeduh[]; sk
           aria-label={`${b.label}: ${b.teks}`}
           className="group relative grid grid-cols-[minmax(5rem,30%)_1fr] items-center gap-2 rounded outline-offset-2"
         >
-          <span className="text-sm leading-tight break-words">{b.label}</span>
+          {b.href ? (
+            <Link href={b.href} className="text-sm leading-tight break-words text-utama underline underline-offset-2">
+              {b.label}
+            </Link>
+          ) : (
+            <span className="text-sm leading-tight break-words">{b.label}</span>
+          )}
           <span className="flex items-center gap-2">
             <span
               aria-hidden
