@@ -23,7 +23,7 @@ export default async function HalamanDashboardTim({ params }: PageProps<"/tim/[i
         <TautanTombol href={peran.admin ? "/admin" : "/beranda"}>← {peran.admin ? "Tim & kelompok" : "Beranda"}</TautanTombol>
       </div>
       <div className="mb-4">
-        <TautanTombol href={`/tim/${id}/saat-teduh`}>Saat teduh per kelompok →</TautanTombol>
+        <TautanTombol href={`/laporan-saat-teduh?cak=tim:${id}`}>Laporan saat teduh →</TautanTombol>
       </div>
 
       {error ? <Pesan jenis="galat">Ringkasan belum bisa dimuat. Coba muat ulang halaman.</Pesan> : null}
