@@ -49,7 +49,13 @@ export function FormLaporanTeduh({
 }: {
   bulan: string;
   grafik: Grafik;
-  cakupan?: { nilai: string; pilihan: { kelompok?: string; isi: { nilai: string; label: string }[] }[] };
+  /** Pilihan tambahan; bawaan bernama "cak" berlabel "Cakupan". */
+  cakupan?: {
+    nilai: string;
+    pilihan: { kelompok?: string; isi: { nilai: string; label: string }[] }[];
+    label?: string;
+    nama?: string;
+  };
 }) {
   return (
     <Kotak>
@@ -76,8 +82,8 @@ export function FormLaporanTeduh({
         </label>
         {cakupan ? (
           <label className="col-span-2 block">
-            <span className="mb-1 block text-sm font-medium">Cakupan</span>
-            <select name="cak" defaultValue={cakupan.nilai} className={pilihGaya}>
+            <span className="mb-1 block text-sm font-medium">{cakupan.label ?? "Cakupan"}</span>
+            <select name={cakupan.nama ?? "cak"} defaultValue={cakupan.nilai} className={pilihGaya}>
               {cakupan.pilihan.map((g, i) =>
                 g.kelompok ? (
                   <optgroup key={g.kelompok} label={g.kelompok}>
