@@ -4,6 +4,7 @@ import { pesanBacaGagal } from "@/lib/galat";
 import {
   awalBulanBerikut,
   daftarBulan,
+  hariIniWib,
   KOLOM_SAAT_TEDUH,
   labelBulan,
   persen,
@@ -296,6 +297,9 @@ export async function LaporanAnggota({
   const belum = punyaAkun - pelaksana.length;
   const [t, b] = bulan.split("-").map(Number);
   const hariDalamBulan = new Date(Date.UTC(t, b, 0)).getUTCDate();
+  // Bulan berjalan: hari ke-berapa hari ini (persen tetap dari seluruh hari di bulan itu).
+  const hariIni = hariIniWib();
+  const hariKe = hariIni.startsWith(bulan) ? Number(hariIni.slice(8, 10)) : null;
 
   return (
     <Kotak judul={judul}>
@@ -313,7 +317,7 @@ export async function LaporanAnggota({
               kunci: a.anggota_id,
               label: a.nama_lengkap,
               nilai: a.jumlah_hari,
-              teks: `${a.jumlah_hari} hari`,
+              teks: `${a.jumlah_hari}/${hariDalamBulan} hari · ${persen(a.jumlah_hari, hariDalamBulan)}`,
             }))}
           />
         </div>
@@ -327,15 +331,19 @@ export async function LaporanAnggota({
           <ul className="divide-y divide-black/10 border-t border-black/10 dark:divide-white/10 dark:border-white/10">
             {pelaksana.map((a) => (
               <li key={a.anggota_id}>
-                <details className="group">
+                <details className="group/agt">
                   <summary className="-mx-2 flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-lg px-2 py-1 hover:bg-black/5 dark:hover:bg-white/10 [&::-webkit-details-marker]:hidden">
-                    <span className="min-w-0 flex-1 truncate font-semibold">{a.nama_lengkap}</span>
-                    <span className="text-sm tabular-nums opacity-80">
-                      {a.jumlah_hari} hari · {a.jumlah_catatan} catatan
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-semibold">{a.nama_lengkap}</span>
+                      <span className="block text-xs tabular-nums opacity-70">
+                        {a.jumlah_hari}/{hariDalamBulan} hari ({persen(a.jumlah_hari, hariDalamBulan)}) · {a.jumlah_catatan}{" "}
+                        catatan
+                      </span>
                     </span>
+                    <span className="flex-none font-semibold tabular-nums">{persen(a.jumlah_hari, hariDalamBulan)}</span>
                     <span className="text-sm opacity-60" aria-hidden>
-                      <span className="group-open:hidden">▾</span>
-                      <span className="hidden group-open:inline">▴</span>
+                      <span className="group-open/agt:hidden">▾</span>
+                      <span className="hidden group-open/agt:inline">▴</span>
                     </span>
                   </summary>
                   <div className="mb-3 ml-1 mt-1 border-l-2 border-black/10 pl-3 dark:border-white/15">
@@ -350,6 +358,12 @@ export async function LaporanAnggota({
       )}
       {belum > 0 ? (
         <p className="mt-2 text-xs opacity-70">{belum} anggota belum ada catatan bulan ini (tidak ditampilkan).</p>
+      ) : null}
+      {pelaksana.length > 0 ? (
+        <p className="mt-1 text-xs opacity-70">
+          Persen per anggota = hari bersaat teduh dari {hariDalamBulan} hari di bulan ini.
+          {hariKe ? ` Bulan berjalan: hari ke-${hariKe} dari ${hariDalamBulan}.` : ""}
+        </p>
       ) : null}
     </Kotak>
   );
