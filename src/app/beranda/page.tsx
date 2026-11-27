@@ -32,7 +32,7 @@ export default async function HalamanBeranda() {
             <TautanTombol href="/admin/akun">Akun &amp; peran</TautanTombol>
             <TautanTombol href="/admin/laporan">Laporan demografi</TautanTombol>
             <TautanTombol href="/admin/laporan-proyek">Laporan proyek ketaatan</TautanTombol>
-            <TautanTombol href="/admin/laporan-saat-teduh">Laporan saat teduh</TautanTombol>
+            <TautanTombol href="/laporan-saat-teduh">Laporan saat teduh</TautanTombol>
             <TautanTombol href="/admin/bahan">Bahan diskusi</TautanTombol>
             <TautanTombol href="/admin/training">Bahan training</TautanTombol>
           </div>
@@ -68,6 +68,11 @@ export default async function HalamanBeranda() {
               </li>
             ))}
           </ul>
+          {!peran.admin ? (
+            <div className="mt-2">
+              <TautanTombol href="/laporan-saat-teduh">Laporan saat teduh</TautanTombol>
+            </div>
+          ) : null}
         </Kotak>
       ) : null}
 
