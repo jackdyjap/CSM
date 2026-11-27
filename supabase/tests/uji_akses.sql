@@ -2549,9 +2549,9 @@ select tests.harus_gagal('Saat teduh: hanya satu ujung ayat ditolak',
 select tests.harus_gagal('Saat teduh: durasi 0 menit ditolak',
   $q$ insert into public.saat_teduh (jam_mulai, durasi_menit, versi, kitab, pasal)
       values ('05:00', 0, 'tb', 1, 1) $q$);
-select tests.harus_gagal('Saat teduh: versi selain TB/AMD ditolak',
+select tests.harus_gagal('Saat teduh: versi yang tidak dikenal ditolak',
   $q$ insert into public.saat_teduh (jam_mulai, durasi_menit, versi, kitab, pasal)
-      values ('05:00', 10, 'kjv', 1, 1) $q$);
+      values ('05:00', 10, 'xyz', 1, 1) $q$);
 select tests.harus_gagal('Saat teduh: kitab di luar 1-66 ditolak',
   $q$ insert into public.saat_teduh (jam_mulai, durasi_menit, versi, kitab, pasal)
       values ('05:00', 10, 'tb', 67, 1) $q$);
@@ -2713,6 +2713,21 @@ select tests.harus_gagal('Ringkasan saat teduh: akun tanpa peran tidak bisa memb
 select tests.masuk_sebagai_tamu();
 select tests.harus_gagal('Ringkasan saat teduh: tamu tidak bisa membuka ringkasan',
   $q$ select * from public.ringkasan_saat_teduh('2025-06-15') $q$);
+select tests.keluar();
+
+
+-- =====================================================================
+-- UJI 31 · VERSI ALKITAB SAAT TEDUH (keputusan 60)
+-- =====================================================================
+select tests.masuk_sebagai('st_u_andi');
+select tests.harus_berhasil('Versi Alkitab: TSI, BIS, BIMK, KJV, NKJV, NLT diterima',
+  $q$ insert into public.saat_teduh (jam_mulai, durasi_menit, versi, kitab, pasal) values
+      ('05:00', 10, 'tsi', 1, 1), ('05:00', 10, 'bis', 1, 1), ('05:00', 10, 'bimk', 1, 1), ('05:00', 10, 'kjv', 1, 1),
+      ('05:00', 10, 'nkjv', 1, 1), ('05:00', 10, 'nlt', 1, 1) $q$);
+select tests.harus_gagal('Versi Alkitab: versi yang tidak dikenal tetap ditolak',
+  $q$ insert into public.saat_teduh (jam_mulai, durasi_menit, versi, kitab, pasal) values ('05:00', 10, 'esv', 1, 1) $q$);
+select tests.harus_gagal('Versi Alkitab: huruf besar ditolak (disimpan huruf kecil)',
+  $q$ insert into public.saat_teduh (jam_mulai, durasi_menit, versi, kitab, pasal) values ('05:00', 10, 'KJV', 1, 1) $q$);
 select tests.keluar();
 
 

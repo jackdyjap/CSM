@@ -4,12 +4,36 @@
 // Jumlah ayat diambil dari data versifikasi bawaan paket
 // bible-passage-reference-parser 4.0.0 (lisensi MIT): 1.189 pasal, 31.103 ayat.
 
-export type VersiAlkitab = "tb" | "amd";
+/** Urutan = urutan di pilihan Versi (keputusan 58, 60). */
+export const DAFTAR_VERSI = ["tb", "amd", "tsi", "bis", "bimk", "kjv", "nkjv", "nlt"] as const;
+export type VersiAlkitab = (typeof DAFTAR_VERSI)[number];
 
 export const NAMA_VERSI: Record<VersiAlkitab, string> = {
   tb: "TB (Terjemahan Baru)",
   amd: "AMD (Alkitab Mudah Dibaca)",
+  tsi: "TSI (Terjemahan Sederhana Indonesia)",
+  bis: "BIS (Bahasa Indonesia Sehari-hari)",
+  bimk: "BIMK (Bahasa Indonesia Masa Kini)",
+  kjv: "KJV (King James Version)",
+  nkjv: "NKJV (New King James Version)",
+  nlt: "NLT (New Living Translation)",
 };
+
+/** Versi bahasa Inggris dibuka di BibleGateway; versi Indonesia di alkitab.sabda.org. */
+const VERSI_INGGRIS: readonly VersiAlkitab[] = ["kjv", "nkjv", "nlt"];
+
+export const versiSah = (v: string): v is VersiAlkitab => (DAFTAR_VERSI as readonly string[]).includes(v);
+
+/** Nama kitab bahasa Inggris (untuk BibleGateway); urutan = nomor kitab 1-66. */
+const KITAB_INGGRIS = [
+  "Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy", "Joshua", "Judges", "Ruth", "1 Samuel", "2 Samuel",
+  "1 Kings", "2 Kings", "1 Chronicles", "2 Chronicles", "Ezra", "Nehemiah", "Esther", "Job", "Psalms", "Proverbs",
+  "Ecclesiastes", "Song of Songs", "Isaiah", "Jeremiah", "Lamentations", "Ezekiel", "Daniel", "Hosea", "Joel", "Amos",
+  "Obadiah", "Jonah", "Micah", "Nahum", "Habakkuk", "Zephaniah", "Haggai", "Zechariah", "Malachi",
+  "Matthew", "Mark", "Luke", "John", "Acts", "Romans", "1 Corinthians", "2 Corinthians", "Galatians", "Ephesians",
+  "Philippians", "Colossians", "1 Thessalonians", "2 Thessalonians", "1 Timothy", "2 Timothy", "Titus", "Philemon",
+  "Hebrews", "James", "1 Peter", "2 Peter", "1 John", "2 John", "3 John", "Jude", "Revelation",
+] as const;
 
 /** [nama kitab, jumlah ayat per pasal]; urutan = nomor kitab 1-66. */
 export const KITAB: readonly (readonly [string, readonly number[]])[] = [
@@ -121,8 +145,23 @@ export function periksaBacaan(b: Bacaan): string | null {
   return null;
 }
 
-/** Tautan untuk membaca bacaan ini di situs resmi alkitab.sabda.org. */
+/** Bagian kitab-pasal-ayat dengan tanda hubung biasa, mis. "John 3:1-16". */
+function bagianAyat(namaKitab: string, b: Bacaan) {
+  const dasar = `${namaKitab} ${b.pasal}`;
+  if (b.ayat_awal == null) return dasar;
+  if (b.ayat_akhir == null || b.ayat_akhir === b.ayat_awal) return `${dasar}:${b.ayat_awal}`;
+  return `${dasar}:${b.ayat_awal}-${b.ayat_akhir}`;
+}
+
+/**
+ * Tautan untuk membaca bacaan ini di situs resminya: versi Indonesia di
+ * alkitab.sabda.org, versi Inggris (KJV, NKJV, NLT) di BibleGateway.
+ */
 export function tautanBaca(versi: VersiAlkitab, b: Bacaan) {
-  const bagian = teksBacaan(b).replace("\u2013", "-");
+  if (VERSI_INGGRIS.includes(versi)) {
+    const bagian = bagianAyat(KITAB_INGGRIS[b.kitab - 1] ?? "", b);
+    return `https://www.biblegateway.com/passage/?search=${encodeURIComponent(bagian)}&version=${versi.toUpperCase()}`;
+  }
+  const bagian = bagianAyat(namaKitab(b.kitab), b);
   return `https://alkitab.sabda.org/passage.php?passage=${encodeURIComponent(bagian)}&version=${versi}`;
 }

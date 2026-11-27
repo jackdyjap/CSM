@@ -26,12 +26,13 @@ M = [
  ("2800","rel","public","bahan_training"),
  ("2900","rel","public","saat_teduh"),
  ("3000","proc","public","ringkasan_saat_teduh"),
+ ("3100","con","public","saat_teduh_versi_check:bimk"),
 ]
 out = ["""-- =====================================================================
 -- SUSULAN MIGRASI · menjalankan file migrasi yang TERLEWAT, sekaligus
 --
 -- Cara pakai: salin SELURUH isi file ini ke Supabase → SQL Editor → Run.
--- File ini memeriksa satu per satu (…0600 sampai …3000) apakah sudah
+-- File ini memeriksa satu per satu (…0600 sampai …3100) apakah sudah
 -- pernah dijalankan, lalu hanya menjalankan yang belum, berurutan.
 -- Aman dijalankan berulang kali. Bila ada galat, semuanya dibatalkan
 -- (tidak ada yang setengah jadi).
@@ -50,6 +51,11 @@ begin
 def ada(jenis, skema, nama):
     if jenis == "rel":
         return f"to_regclass('{skema}.{nama}') is not null"
+    if jenis == "con":  # "nama_constraint:teks yang harus ada di definisinya"
+        con, teks = nama.split(":")
+        return (f"exists (select 1 from pg_constraint c join pg_namespace n on n.oid = c.connamespace "
+                f"where n.nspname = '{skema}' and c.conname = '{con}' "
+                f"and pg_get_constraintdef(c.oid) like '%{teks}%')")
     return (f"exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace "
             f"where n.nspname = '{skema}' and p.proname = '{nama}')")
 for kode, jenis, skema, nama in M:
@@ -78,17 +84,13 @@ end
 $susulan$;
 
 -- Hasil pemeriksaan: semua baris harus "sudah".
-select m.file,
-       case when exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-                         where n.nspname = m.skema and p.proname = m.fungsi)
-                 or to_regclass(m.skema || '.' || m.fungsi) is not null
-            then 'sudah' else 'BELUM' end as status
+select m.file, case when m.ada then 'sudah' else 'BELUM' end as status
 from (values
 """)
 rows=[]
 for kode, jenis, skema, nama in M:
     if kode=="1200": continue
     base=os.path.basename(glob.glob(os.path.join(root, f"supabase/migrations/*{kode}_*.sql"))[0])
-    rows.append(f"  ('{base}', '{skema}', '{nama}')")
-out.append(",\n".join(rows)+"\n) as m(file, skema, fungsi);\n")
+    rows.append(f"  ('{base}', {ada(jenis, skema, nama)})")
+out.append(",\n".join(rows)+"\n) as m(file, ada);\n")
 open(os.path.join(root,"supabase/susulan_migrasi.sql"),"w").write("".join(out))
