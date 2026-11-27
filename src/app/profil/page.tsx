@@ -5,7 +5,9 @@ import { KotakLogin } from "@/components/kotak-login";
 import { ProfilUbah } from "@/components/profil";
 import { KotakProyekSaya } from "@/components/proyek-saya";
 import { RiwayatKehadiran } from "@/components/riwayat-kehadiran";
+import { TombolKirim } from "@/components/tombol-kirim";
 import { Judul, Pesan, TautanTombol } from "@/components/ui";
+import { keluar } from "@/lib/aksi-umum";
 import { bacaProfilAman } from "@/lib/profil-server";
 import { wajibMasuk } from "@/lib/sesi";
 
@@ -20,11 +22,22 @@ export default async function HalamanAturProfil() {
   // Setelah menyimpan, kembali ke layar sebelumnya; tidak saat login pertama (masih harus menekan Selesai).
   const kembali = awal ? undefined : "/beranda";
 
+  // Login pertama: belum bisa ke Beranda, tetapi boleh keluar dan melanjutkan lain kali.
+  const tombolKeluar = (
+    <form action={keluar} className="mb-4">
+      <TombolKirim jenis="biasa" teksProses="Keluar…">
+        Keluar
+      </TombolKirim>
+      <span className="ml-2 text-xs opacity-70">Bisa dilanjutkan saat masuk berikutnya.</span>
+    </form>
+  );
+
   const sambutan = awal ? (
     <Pesan jenis="info">
       Selamat datang! Periksa dan atur akun Anda dulu: kata sandi, nama, cara masuk, foto, dan data pribadi.
       {peran.sandi_sementara ? " Kata sandi sementara dari Admin wajib diganti." : ""} Setelah itu tekan{" "}
-      <strong>Selesai</strong> di bagian bawah.
+      <strong>Selesai</strong> di bagian bawah. Belum sempat? Ketuk <strong>Keluar</strong>; halaman ini muncul lagi saat
+      Anda masuk berikutnya.
     </Pesan>
   ) : null;
 
@@ -33,7 +46,9 @@ export default async function HalamanAturProfil() {
     return (
       <main>
         <Judul kecil={peran.login ?? undefined}>Atur profil</Judul>
-        {awal ? null : (
+        {awal ? (
+          tombolKeluar
+        ) : (
           <div className="mb-4 flex flex-wrap gap-2">
             <TautanTombol href="/beranda">← Beranda</TautanTombol>
           </div>
@@ -64,7 +79,9 @@ export default async function HalamanAturProfil() {
   return (
     <main>
       <Judul kecil={`Anggota ${peran.anggota.kelompok_nama}`}>{awal ? "Atur profil" : "Profil saya"}</Judul>
-      {awal ? null : (
+      {awal ? (
+        tombolKeluar
+      ) : (
         <div className="mb-4 flex flex-wrap gap-2">
           <TautanTombol href="/beranda">← Beranda</TautanTombol>
           <TautanTombol href="/hadir" jenis="utama">

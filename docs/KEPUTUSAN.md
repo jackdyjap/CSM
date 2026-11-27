@@ -270,3 +270,7 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - iPhone: `appleWebApp` (layar penuh, judul "Absensi CSM"). Manifest dikecualikan dari halaman login di `src/proxy.ts`.
     - **Tanpa service worker**: tidak ada mode offline dan tidak ada data yang di-cache di HP, supaya data pribadi dan sesi login tidak tertinggal. Diperiksa Chromium: tidak ada galat kelayakan pasang.
     - Cara memasang: Android (Chrome) menu ⋮ → Instal aplikasi; iPhone (Safari) Bagikan → Tambahkan ke Layar Utama.
+
+## Diputuskan 27 November 2026
+
+56. **Tombol Keluar di Atur profil saat login pertama.** Akun baru tetap wajib mengganti kata sandi sementara dan menekan Selesai sebelum memakai aplikasi (keputusan 27), tetapi kini bisa **Keluar** dari halaman itu dan melanjutkan saat masuk berikutnya. Tidak ada tombol "tunda": kata sandi sementara tidak bisa dipakai untuk membuka menu lain.
