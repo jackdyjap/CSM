@@ -43,7 +43,7 @@ export default async function HalamanMasukan() {
       <Judul>Masukan</Judul>
       <div className="mb-4 flex flex-wrap gap-2">
         <TautanTombol href="/beranda">← Beranda</TautanTombol>
-        {bisaMenerima ? <TautanTombol href="/masukan/masuk">Masukan masuk →</TautanTombol> : null}
+        {bisaMenerima ? <TautanTombol href="/masukan/masuk">Laporan Masukan →</TautanTombol> : null}
       </div>
 
       <Kotak judul="Kirim masukan">

@@ -50,6 +50,7 @@ const bulanWib = (waktu: string) =>
  * Masukan yang ditujukan kepada saya: pemimpin/wakil (kelompoknya), ketua tim
  * (timnya), Admin (semua). Nama pengirim anonim hanya terlihat oleh Admin (keputusan 28).
  * Ringkasan per bulan + grafik, lalu list per status (terbaru dulu); ketuk untuk rincian (keputusan 63).
+ * Pilihan "Ditujukan ke" menyaring ringkasan dan list (keputusan 64).
  */
 export default async function HalamanMasukanMasuk({ searchParams }: PageProps<"/masukan/masuk">) {
   const { supabase, peran } = await wajibMasuk();
@@ -60,7 +61,13 @@ export default async function HalamanMasukanMasuk({ searchParams }: PageProps<"/
   const grafik = bacaGrafik(sp.g);
 
   const { data } = await supabase.rpc("masukan_masuk");
-  const semua = ((data ?? []) as MasukanMasuk[]).sort((x, y) => y.dibuat_pada.localeCompare(x.dibuat_pada));
+  const seluruh = ((data ?? []) as MasukanMasuk[]).sort((x, y) => y.dibuat_pada.localeCompare(x.dibuat_pada));
+
+  // Pilihan "Ditujukan ke": hanya tujuan yang ada di masukan yang boleh saya lihat (keputusan 64).
+  const tujuanAda = (["admin", "ketua_tim", "pemimpin"] as TujuanMasukan[]).filter((t) => seluruh.some((m) => m.tujuan === t));
+  const tujuan = typeof sp.untuk === "string" && tujuanAda.includes(sp.untuk as TujuanMasukan) ? (sp.untuk as TujuanMasukan) : null;
+  const semua = tujuan ? seluruh.filter((m) => m.tujuan === tujuan) : seluruh;
+  const labelTujuan = tujuan ? ` · untuk ${TUJUAN_MASUKAN[tujuan]}` : "";
 
   const diBulan = semua.filter((m) => bulanWib(m.dibuat_pada) === bulan);
   const hitung = Object.fromEntries(
@@ -69,15 +76,35 @@ export default async function HalamanMasukanMasuk({ searchParams }: PageProps<"/
 
   return (
     <main>
-      <Judul kecil={peran.admin ? "Admin: semua masukan" : undefined}>Masukan masuk</Judul>
+      <Judul kecil={peran.admin ? "Admin: semua masukan" : undefined}>Laporan Masukan</Judul>
       <div className="mb-4 flex flex-wrap gap-2">
         <TautanTombol href="/beranda">← Beranda</TautanTombol>
         <TautanTombol href="/masukan">Kirim masukan</TautanTombol>
       </div>
 
-      <FormLaporanTeduh bulan={bulan} grafik={grafik} />
+      <FormLaporanTeduh
+        bulan={bulan}
+        grafik={grafik}
+        cakupan={
+          tujuanAda.length > 1
+            ? {
+                label: "Ditujukan ke",
+                nama: "untuk",
+                nilai: tujuan ?? "semua",
+                pilihan: [
+                  {
+                    isi: [
+                      { nilai: "semua", label: "Semua" },
+                      ...tujuanAda.map((t) => ({ nilai: t, label: TUJUAN_MASUKAN[t] })),
+                    ],
+                  },
+                ],
+              }
+            : undefined
+        }
+      />
 
-      <Kotak judul={`Ringkasan · ${labelBulan(bulan)}`}>
+      <Kotak judul={`Ringkasan · ${labelBulan(bulan)}${labelTujuan}`}>
         <p className="text-lg">
           Diterima: <strong>{diBulan.length}</strong> masukan
         </p>
@@ -121,7 +148,7 @@ export default async function HalamanMasukanMasuk({ searchParams }: PageProps<"/
       </Kotak>
 
       <p className="mb-2 text-sm opacity-70">
-        Semua masukan ({semua.length}), terbaru dulu. Ketuk judul untuk rincian dan tanggapan.
+        {tujuan ? `Masukan untuk ${TUJUAN_MASUKAN[tujuan]}` : "Semua masukan"} ({semua.length}), terbaru dulu. Ketuk judul untuk rincian dan tanggapan.
       </p>
       {URUTAN_STATUS.map((st) => {
         const daftar = semua.filter((m) => m.status === st);
