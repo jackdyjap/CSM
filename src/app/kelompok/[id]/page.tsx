@@ -92,6 +92,9 @@ export default async function HalamanKelompok({ params, searchParams }: PageProp
         <TautanTombol href={`/kelompok/${id}/tindak-lanjut`} className="justify-center">
           Tindak lanjut{jumlahTindakLanjut > 0 ? ` (${jumlahTindakLanjut})` : ""}
         </TautanTombol>
+        <TautanTombol href={`/kelompok/${id}/saat-teduh`} className="col-span-2 justify-center">
+          Saat teduh anggota
+        </TautanTombol>
       </div>
 
       {kelompok.bolehUbah ? (
