@@ -2481,6 +2481,164 @@ select tests.periksa('Training: unggah dan hapus tercatat di log',
 
 
 -- =====================================================================
+-- UJI 29 · SAAT TEDUH (keputusan 58)
+-- =====================================================================
+select tests.keluar();
+insert into tests.ids values
+  ('st_ang_a1',   '88888888-0000-0000-0000-0000000000a1'),
+  ('st_ang_b1',   '88888888-0000-0000-0000-0000000000b1'),
+  ('st_u_andi',   '88888888-0000-0000-0000-000000000001'),
+  ('st_u_beni',   '88888888-0000-0000-0000-000000000002'),
+  ('st_u_pem_a1', '88888888-0000-0000-0000-000000000003'),
+  ('st_u_pem_a2', '88888888-0000-0000-0000-000000000004'),
+  ('st_u_ketua_a','88888888-0000-0000-0000-000000000005'),
+  ('st_u_ketua_b','88888888-0000-0000-0000-000000000006'),
+  ('st_u_kosong', '88888888-0000-0000-0000-000000000007'),
+  ('st_andi',     '88888888-0000-0000-0000-0000000000f1'),
+  ('st_beni',     '88888888-0000-0000-0000-0000000000f2'),
+  ('st_pem',      '88888888-0000-0000-0000-0000000000f3'),
+  ('st_tim_a',    '88888888-0000-0000-0000-0000000000ca'),
+  ('st_tim_b',    '88888888-0000-0000-0000-0000000000cb'),
+  ('st_kel_a1',   '88888888-0000-0000-0000-0000000000d1'),
+  ('st_kel_a2',   '88888888-0000-0000-0000-0000000000d2'),
+  ('st_kel_b1',   '88888888-0000-0000-0000-0000000000d3');
+-- Tim dan kelompok segar (sebagian data lama sudah dihapus uji sebelumnya).
+insert into public.tim (id, nama) values (tests.id('st_tim_a'), 'Tim Teduh A'), (tests.id('st_tim_b'), 'Tim Teduh B');
+insert into public.kelompok (id, tim_id, nama) values
+  (tests.id('st_kel_a1'), tests.id('st_tim_a'), 'Kelompok Teduh A1'),
+  (tests.id('st_kel_a2'), tests.id('st_tim_a'), 'Kelompok Teduh A2'),
+  (tests.id('st_kel_b1'), tests.id('st_tim_b'), 'Kelompok Teduh B1');
+insert into auth.users (id, email, raw_user_meta_data) values
+  (tests.id('st_u_andi'),    'st_andi@contoh.test',    '{"nama":"Andi Teduh"}'),
+  (tests.id('st_u_beni'),    'st_beni@contoh.test',    '{"nama":"Beni Teduh"}'),
+  (tests.id('st_u_pem_a1'),  'st_pem_a1@contoh.test',  '{"nama":"Pemimpin A1 Teduh"}'),
+  (tests.id('st_u_pem_a2'),  'st_pem_a2@contoh.test',  '{"nama":"Pemimpin A2 Teduh"}'),
+  (tests.id('st_u_ketua_a'), 'st_ketua_a@contoh.test', '{"nama":"Ketua A Teduh"}'),
+  (tests.id('st_u_ketua_b'), 'st_ketua_b@contoh.test', '{"nama":"Ketua B Teduh"}'),
+  (tests.id('st_u_kosong'),  'st_kosong@contoh.test',  '{"nama":"Kosong Teduh"}');
+insert into public.anggota (id, kelompok_id, nama_lengkap) values
+  (tests.id('st_ang_a1'), tests.id('st_kel_a1'), 'Andi Teduh'),
+  (tests.id('st_ang_b1'), tests.id('st_kel_b1'), 'Beni Teduh');
+update public.akun set anggota_id = tests.id('st_ang_a1') where id = tests.id('st_u_andi');
+update public.akun set anggota_id = tests.id('st_ang_b1') where id = tests.id('st_u_beni');
+insert into public.penugasan_peran (akun_id, peran, tim_id, kelompok_id, jabatan) values
+  (tests.id('st_u_pem_a1'),  'pemimpin',  null,              tests.id('st_kel_a1'), 'pemimpin'),
+  (tests.id('st_u_pem_a2'),  'pemimpin',  null,              tests.id('st_kel_a2'), 'wakil'),
+  (tests.id('st_u_ketua_a'), 'ketua_tim', tests.id('st_tim_a'), null,               null),
+  (tests.id('st_u_ketua_b'), 'ketua_tim', tests.id('st_tim_b'), null,               null);
+
+select tests.masuk_sebagai('st_u_andi');
+select tests.harus_berhasil('Saat teduh: anggota mencatat saat teduhnya (tanggal bawaan hari ini)',
+  $q$ insert into public.saat_teduh (id, jam_mulai, durasi_menit, versi, kitab, pasal, ayat_awal, ayat_akhir, tuntunan)
+      values (tests.id('st_andi'), '05:30', 20, 'tb', 43, 3, 1, 16, 'Kasih Allah') $q$);
+select tests.periksa('Saat teduh: tanggal bawaan = hari ini (WIB) dan pemiliknya = saya',
+  (select tanggal = bantu.hari_ini_wib() and akun_id = tests.id('st_u_andi')
+   from public.saat_teduh where id = tests.id('st_andi')));
+select tests.harus_berhasil('Saat teduh: tanggal lampau boleh, ayat boleh kosong (satu pasal)',
+  $q$ insert into public.saat_teduh (tanggal, jam_mulai, durasi_menit, versi, kitab, pasal)
+      values (bantu.hari_ini_wib() - 30, '21:00', 15, 'amd', 19, 23) $q$);
+select tests.harus_gagal('Saat teduh: tanggal yang akan datang ditolak',
+  $q$ insert into public.saat_teduh (tanggal, jam_mulai, durasi_menit, versi, kitab, pasal)
+      values (bantu.hari_ini_wib() + 1, '05:00', 10, 'tb', 1, 1) $q$);
+select tests.harus_gagal('Saat teduh: ayat sampai lebih kecil dari ayat dari ditolak',
+  $q$ insert into public.saat_teduh (jam_mulai, durasi_menit, versi, kitab, pasal, ayat_awal, ayat_akhir)
+      values ('05:00', 10, 'tb', 1, 1, 5, 3) $q$);
+select tests.harus_gagal('Saat teduh: hanya satu ujung ayat ditolak',
+  $q$ insert into public.saat_teduh (jam_mulai, durasi_menit, versi, kitab, pasal, ayat_awal)
+      values ('05:00', 10, 'tb', 1, 1, 5) $q$);
+select tests.harus_gagal('Saat teduh: durasi 0 menit ditolak',
+  $q$ insert into public.saat_teduh (jam_mulai, durasi_menit, versi, kitab, pasal)
+      values ('05:00', 0, 'tb', 1, 1) $q$);
+select tests.harus_gagal('Saat teduh: versi selain TB/AMD ditolak',
+  $q$ insert into public.saat_teduh (jam_mulai, durasi_menit, versi, kitab, pasal)
+      values ('05:00', 10, 'kjv', 1, 1) $q$);
+select tests.harus_gagal('Saat teduh: kitab di luar 1-66 ditolak',
+  $q$ insert into public.saat_teduh (jam_mulai, durasi_menit, versi, kitab, pasal)
+      values ('05:00', 10, 'tb', 67, 1) $q$);
+select tests.harus_berhasil('Saat teduh: mencoba mencatat atas nama akun lain',
+  $q$ insert into public.saat_teduh (akun_id, jam_mulai, durasi_menit, versi, kitab, pasal)
+      values (tests.id('st_u_beni'), '06:00', 5, 'tb', 2, 1) $q$);
+select tests.periksa('Saat teduh: catatan tetap menjadi milik saya, bukan akun lain',
+  (select count(*) from public.saat_teduh where akun_id = tests.id('st_u_andi')) = 3);
+
+select tests.masuk_sebagai('st_u_beni');
+select tests.harus_berhasil('Saat teduh: anggota tim lain mencatat',
+  $q$ insert into public.saat_teduh (id, jam_mulai, durasi_menit, versi, kitab, pasal)
+      values (tests.id('st_beni'), '05:00', 30, 'tb', 1, 1) $q$);
+select tests.periksa('Saat teduh: anggota hanya melihat catatannya sendiri',
+  (select count(*) from public.saat_teduh) = 1);
+
+select tests.masuk_sebagai('st_u_pem_a1');
+select tests.harus_berhasil('Saat teduh: pemimpin mencatat saat teduhnya sendiri',
+  $q$ insert into public.saat_teduh (id, jam_mulai, durasi_menit, versi, kitab, pasal)
+      values (tests.id('st_pem'), '04:45', 25, 'tb', 45, 8) $q$);
+select tests.periksa('Saat teduh: pemimpin melihat catatan anggota kelompoknya + miliknya (4), bukan tim lain',
+  (select count(*) from public.saat_teduh) = 4
+  and not exists (select 1 from public.saat_teduh where akun_id = tests.id('st_u_beni')));
+select tests.periksa('Saat teduh: pemimpin tidak bisa mengubah catatan anggota',
+  tests.baris_terkena($q$ update public.saat_teduh set tuntunan = 'x' where id = tests.id('st_andi') $q$) = 0);
+select tests.periksa('Saat teduh: pemimpin tidak bisa menghapus catatan anggota',
+  tests.baris_terkena($q$ delete from public.saat_teduh where id = tests.id('st_andi') $q$) = 0);
+
+select tests.periksa('Saat teduh: pemimpin membaca catatan anggota lewat profil anggota (3)',
+  (select count(*) from public.saat_teduh_anggota(tests.id('st_ang_a1'))) = 3);
+select tests.periksa('Saat teduh: pemimpin tidak membaca catatan anggota kelompok lain lewat profil',
+  (select count(*) from public.saat_teduh_anggota(tests.id('st_ang_b1'))) = 0);
+
+select tests.masuk_sebagai('st_u_pem_a2');
+select tests.periksa('Saat teduh: pemimpin kelompok lain tidak melihat catatan anggota kelompok A1',
+  (select count(*) from public.saat_teduh) = 0);
+
+select tests.masuk_sebagai('st_u_ketua_a');
+select tests.periksa('Saat teduh: Ketua Tim melihat catatan anggota di timnya (3), bukan pengurus/tim lain',
+  (select count(*) from public.saat_teduh) = 3
+  and not exists (select 1 from public.saat_teduh where akun_id in (tests.id('st_u_beni'), tests.id('st_u_pem_a1'))));
+select tests.periksa('Saat teduh: Ketua Tim tidak bisa mengubah catatan anggota',
+  tests.baris_terkena($q$ update public.saat_teduh set tuntunan = 'x' where id = tests.id('st_andi') $q$) = 0);
+
+select tests.periksa('Saat teduh: Ketua Tim membaca catatan anggota timnya lewat profil (3)',
+  (select count(*) from public.saat_teduh_anggota(tests.id('st_ang_a1'))) = 3);
+
+select tests.masuk_sebagai('st_u_ketua_b');
+select tests.periksa('Saat teduh: Ketua Tim B hanya melihat catatan anggota tim B',
+  (select array_agg(id) from public.saat_teduh) = array[tests.id('st_beni')]);
+
+select tests.masuk_sebagai('admin');
+select tests.periksa('Saat teduh: Admin melihat semua catatan, termasuk pengurus (5)',
+  (select count(*) from public.saat_teduh) = 5);
+select tests.periksa('Saat teduh: Admin tidak bisa mengubah catatan orang lain',
+  tests.baris_terkena($q$ update public.saat_teduh set tuntunan = 'x' where id = tests.id('st_andi') $q$) = 0);
+select tests.periksa('Saat teduh: Admin tidak bisa menghapus catatan orang lain',
+  tests.baris_terkena($q$ delete from public.saat_teduh where id = tests.id('st_beni') $q$) = 0);
+
+select tests.masuk_sebagai('st_u_pem_a2');
+select tests.periksa('Saat teduh: pemimpin kelompok lain tidak membaca lewat profil anggota A1',
+  (select count(*) from public.saat_teduh_anggota(tests.id('st_ang_a1'))) = 0);
+select tests.masuk_sebagai('st_u_kosong');
+select tests.periksa('Saat teduh: akun tanpa peran tidak melihat catatan siapa pun',
+  (select count(*) from public.saat_teduh) = 0);
+select tests.masuk_sebagai_tamu();
+select tests.harus_gagal('Saat teduh: tamu tidak bisa membaca',
+  $q$ select * from public.saat_teduh $q$);
+
+select tests.masuk_sebagai('st_u_andi');
+select tests.periksa('Saat teduh: pemilik mengubah catatannya',
+  tests.baris_terkena($q$ update public.saat_teduh set tuntunan = 'Allah mengasihi dunia', durasi_menit = 25 where id = tests.id('st_andi') $q$) = 1);
+select tests.harus_berhasil('Saat teduh: pemilik mencoba memindahkan catatan ke akun lain',
+  $q$ update public.saat_teduh set akun_id = tests.id('st_u_beni') where id = tests.id('st_andi') $q$);
+select tests.periksa('Saat teduh: pemilik catatan tidak berubah',
+  (select akun_id = tests.id('st_u_andi') from public.saat_teduh where id = tests.id('st_andi')));
+select tests.harus_gagal('Saat teduh: mengubah ke tanggal yang akan datang ditolak',
+  $q$ update public.saat_teduh set tanggal = bantu.hari_ini_wib() + 2 where id = tests.id('st_andi') $q$);
+select tests.periksa('Saat teduh: pemilik menghapus catatannya',
+  tests.baris_terkena($q$ delete from public.saat_teduh where id = tests.id('st_andi') $q$) = 1);
+select tests.keluar();
+delete from auth.users where id = tests.id('st_u_beni');
+select tests.periksa('Saat teduh: catatan ikut terhapus bila akunnya dihapus',
+  not exists (select 1 from public.saat_teduh where id = tests.id('st_beni')));
+
+
+-- =====================================================================
 -- RINGKASAN
 -- =====================================================================
 select no, case when lulus then 'LULUS' else 'GAGAL' end as hasil, nama, info

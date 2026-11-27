@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { FormAksi } from "@/components/form-aksi";
 import { FormBeriPeran } from "@/components/form-beri-peran";
 import { IsianLogin } from "@/components/isian-login";
+import { KotakSaatTeduhBaca } from "@/components/saat-teduh-baca";
 import { Isian, Judul, Kotak, Lipatan, TautanTombol } from "@/components/ui";
 import { ambilAkun, labelPenugasan } from "@/lib/akun-admin";
 import { tampilHp } from "@/lib/identitas";
@@ -83,6 +84,8 @@ export default async function HalamanDetailAkun({ params }: PageProps<"/admin/ak
         </Lipatan>
       </Kotak>
 
+      {a.id !== peran.akun_id ? <KotakSaatTeduhBaca supabase={supabase} akunId={a.id} /> : null}
+
       {a.id !== peran.akun_id ? (
         <Kotak judul="Hapus akun">
           <FormAksi
@@ -91,7 +94,7 @@ export default async function HalamanDetailAkun({ params }: PageProps<"/admin/ak
             jenisTombol="bahaya"
             konfirmasi={`Hapus akun ${a.nama_tampilan}? Tindakan ini tidak bisa dibatalkan.`}
           >
-            <p className="mb-3 text-sm opacity-70">Akun login dan semua perannya dihapus; orang ini tidak bisa masuk lagi.</p>
+            <p className="mb-3 text-sm opacity-70">Akun login, semua perannya, dan catatan saat teduhnya dihapus; orang ini tidak bisa masuk lagi.</p>
             {a.anggota_id ? (
               <label className="mb-3 flex items-start gap-3">
                 <input type="checkbox" name="hapus_profil" value="ya" className="mt-1 h-5 w-5 flex-none" />

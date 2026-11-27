@@ -91,6 +91,16 @@ export default async function HalamanBeranda() {
         </Kotak>
       ) : null}
 
+      <Kotak judul="Saat Teduh">
+        <p className="mb-3 text-sm opacity-70">Catat tanggal, waktu, bacaan Alkitab, dan tuntunan dari saat teduh Anda.</p>
+        <div className="flex flex-wrap gap-2">
+          <TautanTombol href="/saat-teduh/baru" jenis="utama">
+            + Catat saat teduh
+          </TautanTombol>
+          <TautanTombol href="/saat-teduh">Riwayat saya</TautanTombol>
+        </div>
+      </Kotak>
+
       {!peran.admin && (peran.ketua_tim.length > 0 || peran.pemimpin.length > 0) ? (
         <Kotak judul="Bahan diskusi">
           <p className="mb-3 text-sm opacity-70">Bahan diskusi PDF dari Admin untuk pengurus.</p>

@@ -3,6 +3,7 @@ import { CatatanKhusus } from "@/components/catatan-khusus";
 import { KotakDataJemaat } from "@/components/data-jemaat";
 import { KotakKartu } from "@/components/kotak-kartu";
 import { ProyekAnggota } from "@/components/proyek-anggota";
+import { KotakSaatTeduhBaca } from "@/components/saat-teduh-baca";
 import { ProfilBaca, ProfilUbah } from "@/components/profil";
 import { FormAksi } from "@/components/form-aksi";
 import { Judul, Kotak, Lipatan, Pesan, Pilihan, TautanTombol } from "@/components/ui";
@@ -74,6 +75,7 @@ export default async function HalamanAnggota({ params }: PageProps<"/kelompok/[i
         </>
       )}
       <ProyekAnggota supabase={supabase} kelompokId={id} anggotaId={profil.id} bolehUbah={bolehUbah} />
+      <KotakSaatTeduhBaca supabase={supabase} anggotaId={profil.id} />
       <CatatanKhusus
         supabase={supabase}
         kelompokId={id}

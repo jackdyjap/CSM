@@ -24,12 +24,13 @@ M = [
  ("2600","proc","public","hapus_akun"),
  ("2700","proc","internal","usia_dari_tahun"),
  ("2800","rel","public","bahan_training"),
+ ("2900","rel","public","saat_teduh"),
 ]
 out = ["""-- =====================================================================
 -- SUSULAN MIGRASI · menjalankan file migrasi yang TERLEWAT, sekaligus
 --
 -- Cara pakai: salin SELURUH isi file ini ke Supabase → SQL Editor → Run.
--- File ini memeriksa satu per satu (…0600 sampai …2800) apakah sudah
+-- File ini memeriksa satu per satu (…0600 sampai …2900) apakah sudah
 -- pernah dijalankan, lalu hanya menjalankan yang belum, berurutan.
 -- Aman dijalankan berulang kali. Bila ada galat, semuanya dibatalkan
 -- (tidak ada yang setengah jadi).
