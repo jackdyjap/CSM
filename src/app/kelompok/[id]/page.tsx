@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { FormAksi } from "@/components/form-aksi";
 import { LabelKelengkapan } from "@/components/profil";
+import { SaringCari } from "@/components/saring-cari";
 import { Isian, Judul, Kotak, Lipatan, Pilihan, TautanTombol } from "@/components/ui";
 import { hapusKelompokTotal, ubahKelompok } from "@/app/admin/aksi";
 import { waktuWib } from "@/lib/format";
@@ -156,54 +156,64 @@ export default async function HalamanKelompok({ params, searchParams }: PageProp
             {hanyaBelumLengkap ? "Semua profil anggota sudah lengkap." : "Belum ada anggota."}
           </p>
         ) : (
-          <ul className="divide-y divide-black/10 dark:divide-white/10">
-            {tampil.map((a) => {
-              const s = statusPer.get(a.id);
-              return (
-                <li key={a.id} className="py-3">
-                  <Link
-                    href={`/kelompok/${id}/anggota/${a.id}`}
-                    className="-mx-2 mb-1 flex min-h-11 flex-wrap items-center gap-2 rounded-lg px-2 hover:bg-black/5 dark:hover:bg-white/10"
-                  >
-                    <span className="font-semibold underline-offset-2 hover:underline">{a.nama_lengkap}</span>
-                    {!a.aktif ? <span className="text-xs opacity-70">(tidak aktif)</span> : null}
-                    <LabelKelengkapan kosong={a.kosong} />
-                    <span className="ml-auto text-sm opacity-60" aria-hidden>
-                      Profil →
-                    </span>
-                  </Link>
-                  {a.kosong.length > 0 ? (
-                    <p className="mb-2 text-xs opacity-70">
-                      {a.persetujuan_pada ? `Belum diisi: ${a.kosong.join(", ")}` : "Persetujuan data belum dicatat"}
-                    </p>
-                  ) : null}
-                  {!kelompok.bolehUbah ? null : s?.punya_akun && s.akun_id ? (
-                    <>
-                      <p className="mb-2 text-sm opacity-70">Punya akun: {s.login ?? "-"}</p>
-                      {bolehReset.has(s.akun_id) ? (
-                        <FormAksi
-                          aksi={buatTautanAturUlang.bind(null, s.akun_id, a.nama_lengkap)}
-                          tombol="Tautan atur ulang kata sandi"
-                          jenisTombol="biasa"
-                        />
-                      ) : (
-                        <p className="text-xs opacity-70">Kata sandi pengurus diatur ulang oleh Ketua Tim atau Admin.</p>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <p className="mb-2 text-sm opacity-70">Belum punya akun (tidak wajib).</p>
-                      <FormAksi
-                        aksi={buatUndangan.bind(null, id, a.id, a.nama_lengkap)}
-                        tombol="Buat tautan undangan untuk orang ini"
-                        jenisTombol="biasa"
-                      />
-                    </>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+          <SaringCari label="Cari nama anggota…" jumlah={tampil.length} satuan="anggota">
+            <ul className="divide-y divide-black/10 dark:divide-white/10">
+              {tampil.map((a) => {
+                const s = statusPer.get(a.id);
+                return (
+                  <li key={a.id} data-cari={a.nama_lengkap.toLowerCase()}>
+                    {/* Ketuk nama untuk membuka rincian; ketuk lagi untuk menutup. */}
+                    <details className="group">
+                      <summary className="-mx-2 flex min-h-11 cursor-pointer list-none flex-wrap items-center gap-2 rounded-lg px-2 py-1 hover:bg-black/5 dark:hover:bg-white/10 [&::-webkit-details-marker]:hidden">
+                        <span className="font-semibold">{a.nama_lengkap}</span>
+                        {!a.aktif ? <span className="text-xs opacity-70">(tidak aktif)</span> : null}
+                        <LabelKelengkapan kosong={a.kosong} />
+                        <span className="ml-auto text-sm opacity-60" aria-hidden>
+                          <span className="group-open:hidden">▾</span>
+                          <span className="hidden group-open:inline">▴</span>
+                        </span>
+                      </summary>
+                      <div className="mb-3 ml-1 mt-1 space-y-2 border-l-2 border-black/10 pl-3 dark:border-white/15">
+                        {a.kosong.length > 0 ? (
+                          <p className="text-xs opacity-70">
+                            {a.persetujuan_pada ? `Belum diisi: ${a.kosong.join(", ")}` : "Persetujuan data belum dicatat"}
+                          </p>
+                        ) : (
+                          <p className="text-xs opacity-70">Profil sudah lengkap.</p>
+                        )}
+                        {!kelompok.bolehUbah ? null : s?.punya_akun && s.akun_id ? (
+                          <>
+                            <p className="text-sm opacity-70">Punya akun: {s.login ?? "-"}</p>
+                            {bolehReset.has(s.akun_id) ? (
+                              <FormAksi
+                                aksi={buatTautanAturUlang.bind(null, s.akun_id, a.nama_lengkap)}
+                                tombol="Tautan atur ulang kata sandi"
+                                jenisTombol="biasa"
+                              />
+                            ) : (
+                              <p className="text-xs opacity-70">Kata sandi pengurus diatur ulang oleh Ketua Tim atau Admin.</p>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-sm opacity-70">Belum punya akun (tidak wajib).</p>
+                            <FormAksi
+                              aksi={buatUndangan.bind(null, id, a.id, a.nama_lengkap)}
+                              tombol="Buat tautan undangan untuk orang ini"
+                              jenisTombol="biasa"
+                            />
+                          </>
+                        )}
+                        <div>
+                          <TautanTombol href={`/kelompok/${id}/anggota/${a.id}`}>Buka profil →</TautanTombol>
+                        </div>
+                      </div>
+                    </details>
+                  </li>
+                );
+              })}
+            </ul>
+          </SaringCari>
         )}
       </Kotak>
 
