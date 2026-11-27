@@ -289,3 +289,7 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - **Ketua Tim**: dashboard tim → **Saat teduh per kelompok →**: ringkasan tim (jumlah dan %), lalu list kelompok dengan jumlah dan %; ketuk kelompok untuk rincian per anggota.
     - **Admin**: Beranda → **Laporan saat teduh**: semua tim, lalu per tim, lalu per kelompok.
     - Fungsi database `ringkasan_saat_teduh(bulan)` dan `saat_teduh_per_anggota(kelompok, bulan)` hanya mengembalikan kelompok di `bantu.kelompok_terbaca()`.
+60. **Versi Alkitab Saat Teduh ditambah** (migrasi `…3100`): selain **TB** dan **AMD**, kini **TSI** (Terjemahan Sederhana Indonesia), **BIS** (Bahasa Indonesia Sehari-hari), **BIMK** (Bahasa Indonesia Masa Kini), **KJV**, **NKJV**, dan **NLT**.
+    - **Baca ayat ↗**: versi Indonesia dibuka di `alkitab.sabda.org/passage.php?passage=…&version=<kode>`; versi Inggris di `biblegateway.com/passage/?search=<nama kitab Inggris>…&version=KJV|NKJV|NLT` (nama kitab Inggris ada di `src/lib/alkitab.ts`).
+    - Teks ayat tetap tidak dimuat (hak cipta). Daftar pasal/ayat sama untuk semua versi. Catatan lama tidak berubah.
+    - `buat_susulan.py` kini juga bisa memeriksa aturan isian (jenis `con`), dan tabel hasilnya memakai pemeriksaan yang sama dengan pemasangannya.

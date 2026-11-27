@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { jumlahAyat, jumlahPasal, KITAB, NAMA_VERSI, tautanBaca, type VersiAlkitab } from "@/lib/alkitab";
+import { DAFTAR_VERSI, jumlahAyat, jumlahPasal, KITAB, NAMA_VERSI, tautanBaca, type VersiAlkitab } from "@/lib/alkitab";
 import { DURASI_MAKS, TUNTUNAN_MAKS, type CatatanSaatTeduh } from "@/lib/saat-teduh";
 import { Isian, IsianPanjang, Pilihan } from "./ui";
 
@@ -56,7 +56,7 @@ export function IsianSaatTeduh({ awal, hariIni }: { awal?: CatatanSaatTeduh; har
       <fieldset className="mb-3 rounded-lg border border-black/10 p-3 dark:border-white/10">
         <legend className="px-1 text-sm font-medium">Ayat Alkitab yang dibaca</legend>
         <Pilihan label="Versi" name="versi" value={versi} onChange={(e) => setVersi(e.target.value as VersiAlkitab)}>
-          {(Object.keys(NAMA_VERSI) as VersiAlkitab[]).map((v) => (
+          {DAFTAR_VERSI.map((v) => (
             <option key={v} value={v}>
               {NAMA_VERSI[v]}
             </option>
@@ -160,7 +160,7 @@ export function IsianSaatTeduh({ awal, hariIni }: { awal?: CatatanSaatTeduh; har
           </a>
         ) : null}
         <p className="text-xs opacity-70">
-          Teks ayat dibuka di alkitab.sabda.org; aplikasi ini hanya mencatat kitab, pasal, dan ayatnya.
+          Teks ayat dibuka di alkitab.sabda.org (versi Indonesia) atau biblegateway.com (versi Inggris); aplikasi ini hanya mencatat kitab, pasal, dan ayatnya.
         </p>
       </fieldset>
 

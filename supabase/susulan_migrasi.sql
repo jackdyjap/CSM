@@ -2,7 +2,7 @@
 -- SUSULAN MIGRASI · menjalankan file migrasi yang TERLEWAT, sekaligus
 --
 -- Cara pakai: salin SELURUH isi file ini ke Supabase → SQL Editor → Run.
--- File ini memeriksa satu per satu (…0600 sampai …3000) apakah sudah
+-- File ini memeriksa satu per satu (…0600 sampai …3100) apakah sudah
 -- pernah dijalankan, lalu hanya menjalankan yang belum, berurutan.
 -- Aman dijalankan berulang kali. Bila ada galat, semuanya dibatalkan
 -- (tidak ada yang setengah jadi).
@@ -4192,6 +4192,24 @@ $mig3000$;
     v_dijalankan := v_dijalankan || '20261128003000_ringkasan_saat_teduh.sql'::text;
   end if;
 
+  -- 20261128003100_versi_alkitab.sql
+  if not (exists (select 1 from pg_constraint c join pg_namespace n on n.oid = c.connamespace where n.nspname = 'public' and c.conname = 'saat_teduh_versi_check' and pg_get_constraintdef(c.oid) like '%bimk%')) then
+    execute $mig3100$
+-- =====================================================================
+-- 31 · VERSI ALKITAB SAAT TEDUH DITAMBAH (keputusan 60)
+--
+-- Selain TB dan AMD: TSI, BIS, BIMK (dibuka di alkitab.sabda.org), serta KJV,
+-- NKJV, NLT (dibuka di BibleGateway). Teks ayat tetap TIDAK disimpan.
+-- Catatan yang sudah ada tidak berubah.
+-- =====================================================================
+alter table public.saat_teduh drop constraint if exists saat_teduh_versi_check;
+alter table public.saat_teduh add constraint saat_teduh_versi_check
+  check (versi in ('tb', 'amd', 'tsi', 'bis', 'bimk', 'kjv', 'nkjv', 'nlt'));
+
+$mig3100$;
+    v_dijalankan := v_dijalankan || '20261128003100_versi_alkitab.sql'::text;
+  end if;
+
   if cardinality(v_dijalankan) = 0 then
     raise notice 'Semua migrasi sudah dijalankan sebelumnya. Tidak ada yang diubah.';
   else
@@ -4201,34 +4219,31 @@ end
 $susulan$;
 
 -- Hasil pemeriksaan: semua baris harus "sudah".
-select m.file,
-       case when exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-                         where n.nspname = m.skema and p.proname = m.fungsi)
-                 or to_regclass(m.skema || '.' || m.fungsi) is not null
-            then 'sudah' else 'BELUM' end as status
+select m.file, case when m.ada then 'sudah' else 'BELUM' end as status
 from (values
-  ('20261112000600_login_undangan.sql', 'internal', 'akun_baru'),
-  ('20261117000700_mode_pertemuan.sql', 'internal', 'jaga_tanggal_pertemuan'),
-  ('20261117000800_admin_kelola_semua.sql', 'bantu', 'kelompok_dipimpin_langsung'),
-  ('20261117000900_koreksi_data.sql', 'public', 'hapus_kelompok_total'),
-  ('20261117001000_bukti_persembahan.sql', 'public', 'bukti_persembahan'),
-  ('20261117001100_tindak_lanjut.sql', 'public', 'tindak_lanjut'),
-  ('20261117001300_ringkasan_tim.sql', 'public', 'ringkasan_tim'),
-  ('20261117001400_kartu_qr.sql', 'public', 'buat_ulang_kode_kartu'),
-  ('20261118001500_login_fleksibel.sql', 'internal', 'normal_hp'),
-  ('20261118001600_atur_profil.sql', 'public', 'selesai_atur_profil'),
-  ('20261118001700_masukan.sql', 'public', 'kirim_masukan'),
-  ('20261118001800_baptis_status_jemaat.sql', 'public', 'ubah_data_jemaat'),
-  ('20261118001900_laporan_generasi.sql', 'internal', 'generasi'),
-  ('20261118002000_reset_ketua_tim.sql', 'public', 'akun_bisa_atur_ulang'),
-  ('20261118002100_masukkan_akun.sql', 'bantu', 'boleh_masukkan_ke_kelompok'),
-  ('20261118002200_laporan_proyek.sql', 'public', 'lapor_proyek_saya'),
-  ('20261118002300_laporan_proyek_admin.sql', 'public', 'laporan_proyek'),
-  ('20261118002400_bahan_diskusi.sql', 'bantu', 'boleh_baca_bahan'),
-  ('20261118002500_penghapus_berkas.sql', 'public', 'layanan_ambil_antrean_berkas'),
-  ('20261119002600_buat_hapus_akun.sql', 'public', 'hapus_akun'),
-  ('20261125002700_kurangi_data_sensitif.sql', 'internal', 'usia_dari_tahun'),
-  ('20261126002800_bahan_training.sql', 'public', 'bahan_training'),
-  ('20261127002900_saat_teduh.sql', 'public', 'saat_teduh'),
-  ('20261128003000_ringkasan_saat_teduh.sql', 'public', 'ringkasan_saat_teduh')
-) as m(file, skema, fungsi);
+  ('20261112000600_login_undangan.sql', exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'internal' and p.proname = 'akun_baru')),
+  ('20261117000700_mode_pertemuan.sql', exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'internal' and p.proname = 'jaga_tanggal_pertemuan')),
+  ('20261117000800_admin_kelola_semua.sql', exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'bantu' and p.proname = 'kelompok_dipimpin_langsung')),
+  ('20261117000900_koreksi_data.sql', exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'hapus_kelompok_total')),
+  ('20261117001000_bukti_persembahan.sql', to_regclass('public.bukti_persembahan') is not null),
+  ('20261117001100_tindak_lanjut.sql', exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'tindak_lanjut')),
+  ('20261117001300_ringkasan_tim.sql', exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ringkasan_tim')),
+  ('20261117001400_kartu_qr.sql', exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'buat_ulang_kode_kartu')),
+  ('20261118001500_login_fleksibel.sql', exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'internal' and p.proname = 'normal_hp')),
+  ('20261118001600_atur_profil.sql', exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'selesai_atur_profil')),
+  ('20261118001700_masukan.sql', exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'kirim_masukan')),
+  ('20261118001800_baptis_status_jemaat.sql', exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ubah_data_jemaat')),
+  ('20261118001900_laporan_generasi.sql', exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'internal' and p.proname = 'generasi')),
+  ('20261118002000_reset_ketua_tim.sql', exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'akun_bisa_atur_ulang')),
+  ('20261118002100_masukkan_akun.sql', exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'bantu' and p.proname = 'boleh_masukkan_ke_kelompok')),
+  ('20261118002200_laporan_proyek.sql', exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'lapor_proyek_saya')),
+  ('20261118002300_laporan_proyek_admin.sql', exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'laporan_proyek')),
+  ('20261118002400_bahan_diskusi.sql', exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'bantu' and p.proname = 'boleh_baca_bahan')),
+  ('20261118002500_penghapus_berkas.sql', exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'layanan_ambil_antrean_berkas')),
+  ('20261119002600_buat_hapus_akun.sql', exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'hapus_akun')),
+  ('20261125002700_kurangi_data_sensitif.sql', exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'internal' and p.proname = 'usia_dari_tahun')),
+  ('20261126002800_bahan_training.sql', to_regclass('public.bahan_training') is not null),
+  ('20261127002900_saat_teduh.sql', to_regclass('public.saat_teduh') is not null),
+  ('20261128003000_ringkasan_saat_teduh.sql', exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ringkasan_saat_teduh')),
+  ('20261128003100_versi_alkitab.sql', exists (select 1 from pg_constraint c join pg_namespace n on n.oid = c.connamespace where n.nspname = 'public' and c.conname = 'saat_teduh_versi_check' and pg_get_constraintdef(c.oid) like '%bimk%'))
+) as m(file, ada);

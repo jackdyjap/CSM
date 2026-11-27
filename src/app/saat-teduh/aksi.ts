@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { periksaBacaan, type VersiAlkitab } from "@/lib/alkitab";
+import { periksaBacaan, versiSah } from "@/lib/alkitab";
 import { pesanGalat } from "@/lib/galat";
 import type { HasilAksi } from "@/lib/hasil";
 import { DURASI_MAKS, hariIniWib, TUNTUNAN_MAKS } from "@/lib/saat-teduh";
@@ -19,7 +19,7 @@ function bacaIsian(fd: FormData) {
   const tanggal = teks(fd, "tanggal");
   const jam = teks(fd, "jam_mulai");
   const durasi = angka(fd, "durasi_menit");
-  const versi = teks(fd, "versi") as VersiAlkitab;
+  const versi = teks(fd, "versi");
   const kitab = angka(fd, "kitab") ?? 0;
   const pasal = angka(fd, "pasal") ?? 0;
   let ayatAwal = angka(fd, "ayat_awal");
@@ -32,7 +32,7 @@ function bacaIsian(fd: FormData) {
   if (durasi == null || !Number.isInteger(durasi) || durasi < 1 || durasi > DURASI_MAKS) {
     return { galat: `Durasi diisi angka menit, 1 sampai ${DURASI_MAKS}.` };
   }
-  if (versi !== "tb" && versi !== "amd") return { galat: "Pilih versi Alkitab." };
+  if (!versiSah(versi)) return { galat: "Pilih versi Alkitab." };
   // Hanya satu ujung ayat diisi = satu ayat saja.
   if (ayatAwal != null && ayatAkhir == null) ayatAkhir = ayatAwal;
   if (ayatAkhir != null && ayatAwal == null) ayatAwal = ayatAkhir;
