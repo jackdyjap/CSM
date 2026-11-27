@@ -274,3 +274,7 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
 ## Diputuskan 27 November 2026
 
 56. **Tombol Keluar di Atur profil saat login pertama.** Akun baru tetap wajib mengganti kata sandi sementara dan menekan Selesai sebelum memakai aplikasi (keputusan 27), tetapi kini bisa **Keluar** dari halaman itu dan melanjutkan saat masuk berikutnya. Tidak ada tombol "tunda": kata sandi sementara tidak bisa dipakai untuk membuka menu lain.
+57. **Daftar anggota di halaman kelompok berupa list ringkas** (tanpa perubahan database).
+    - Tampilan awal hanya nama anggota (urut A→Z) dengan label **Lengkap** / **Belum lengkap (n)** dan tanda **(tidak aktif)**. Ada **kotak pencarian nama** di atas daftar.
+    - **Ketuk nama** untuk membuka rinciannya di tempat: isian yang belum diisi (atau "Persetujuan data belum dicatat"), status akun dengan tombol **Tautan atur ulang kata sandi** atau **Buat tautan undangan untuk orang ini**, dan **Buka profil →**. Ketuk lagi untuk menutup.
+    - Ketua Tim (baca saja) memakai tampilan yang sama; rinciannya hanya kelengkapan dan Buka profil, karena atur ulang kata sandi Ketua Tim tetap di kotak tersendiri.
