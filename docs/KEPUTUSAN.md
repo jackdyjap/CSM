@@ -308,3 +308,8 @@ Daftar keputusan yang sudah disetujui pemilik proyek, sebagai pelengkap `SPESIFI
     - Komponen donat kini umum (`GrafikDonat`), dipakai juga oleh grafik pie Saat Teduh.
 64. **Masukan masuk: pilihan "Ditujukan ke"** (tanpa perubahan database): **Semua** (bawaan), **Admin**, **Ketua tim**, atau **Pemimpin kelompok**. Menyaring ringkasan bulan, grafik, dan list sekaligus; judul ringkasan menyebut pilihannya. Hanya tujuan yang ada di masukan yang boleh dilihat yang ditawarkan (pilihan disembunyikan bila hanya ada satu tujuan). Parameter alamat `untuk=admin|ketua_tim|pemimpin`.
 65. **"Masukan masuk" diganti namanya menjadi "Laporan Masukan"** di tombol Beranda, judul halaman, dan tombol di halaman Kirim masukan. Alamat tetap `/masukan/masuk`.
+66. **Ringkasan Saat Teduh pribadi per bulan atau per tahun** di halaman Saat Teduh (Riwayat saya), tanpa perubahan database.
+    - Pilihan **Periode** (Per bulan: 12 bulan terakhir; Per tahun: sejak catatan pertama), dan **Grafik** (Batang, Pie, Tanpa grafik).
+    - Dihitung dalam **hari** (dua catatan di hari yang sama = 1 hari): "18 dari 30 hari (60%) bersaat teduh", ditambah jumlah catatan, total menit, dan rata-rata menit per catatan. Untuk bulan/tahun berjalan juga "sampai hari ini: x dari y hari".
+    - **Pie** = hari bersaat teduh vs belum (untuk periode berjalan, "belum" hanya sampai hari ini). **Batang** = per minggu (bulan) atau per bulan Jan–Des (tahun; ketuk bulan untuk ringkasannya).
+    - Riwayat di bawahnya mengikuti periode yang dipilih.

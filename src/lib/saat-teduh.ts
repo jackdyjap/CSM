@@ -91,3 +91,19 @@ export type BarisRingkasanTeduh = {
   jumlah_catatan: number;
   total_menit: number;
 };
+
+// ---------------------------------------------------------------- Ringkasan pribadi (keputusan 66)
+
+/** Jumlah hari dalam bulan "YYYY-MM". */
+export function hariDalamBulan(bulan: string) {
+  const [t, b] = bulan.split("-").map(Number);
+  return new Date(Date.UTC(t, b, 0)).getUTCDate();
+}
+
+/** Jumlah hari dalam tahun. */
+export const hariDalamTahun = (tahun: number) => (new Date(Date.UTC(tahun, 1, 29)).getUTCMonth() === 1 ? 366 : 365);
+
+/** Selisih hari (inklusif) dari tanggal awal sampai akhir, format YYYY-MM-DD. */
+export function jumlahHariInklusif(awal: string, akhir: string) {
+  return Math.round((Date.parse(`${akhir}T00:00:00Z`) - Date.parse(`${awal}T00:00:00Z`)) / 86_400_000) + 1;
+}
